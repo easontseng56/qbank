@@ -139,6 +139,9 @@ main { flex: 1; min-height: 0; }
 .paper table.np td { text-align: left; }
 .paper table.np td:first-child, .paper table.np th:first-child { width: 4em; text-align: center; }
 .paper img { display: block; margin: 4px auto; }
+.paper .imgrow { display: flex; flex-wrap: wrap; justify-content: center; gap: 2mm 3mm; margin: 2px 0; }
+.paper .imgrow .imgc { flex: 0 1 calc((100% - 3mm * (var(--k) - 1)) / var(--k)); min-width: 0; text-align: center; }
+.paper .imgrow .imgc img { max-width: 100%; margin: 0 auto; }
 .paper table.tt { width: auto; margin: 3px 0 4px 1em; font-size: 9pt; }
 .paper table.tt td, .paper table.tt th { padding: 1px 6px; }
 .paper .cols table.tt { font-size: 8.5pt; }

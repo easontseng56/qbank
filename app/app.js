@@ -345,7 +345,7 @@ async function renderPreview(id) {
       ${d ? `　難度 ${d}${dd && dd.why ? '（' + esc(dd.why) + '）' : ''}` : ''}${r.ltd ? '　光碟難易：' + r.ltd : ''}
       ${r.tags.length ? '　標籤：' + r.tags.join('、') : ''}<br><span class="used">${usedLabel(r)}</span></div>
       <div class="pv-btn"><button class="${inB ? '' : 'pri'}" id="pvAdd" title="${inB ? '按一下從考卷籃移出' : '加入考卷籃'}">${inB ? '✓ 已加入（移出）' : '＋ 加入考卷籃'}</button><br><button id="pvPrev" title="上一題（↑）">▲ 上一題</button><button id="pvNext" title="下一題（↓）">▼ 下一題</button></div></div>
-    <div class="paper pv">${groupHtml(r, { caption: true })}<div class="q">${questionHtml(r, null, { caption: true })}</div>
+    <div class="paper pv">${(setImgScale(1), '')}${groupHtml(r, { caption: true })}<div class="q">${questionHtml(r, null, { caption: true })}</div>
     <div class="q">${answerHtml(r, true)}</div></div>`;
   $('#pvAdd').onclick = () => { toggleBasket(id); renderPreview(id); };
   $('#pvPrev').onclick = () => stepSel(-1); $('#pvNext').onclick = () => stepSel(1);
@@ -407,7 +407,7 @@ function renderBasket() {
   $('#bConst').value = b.constants.join('\n');
   $('#bCls').innerHTML = '<option value="">（未指定班級）</option>' + S.settings.classes.map(c => `<option ${c === b.cls ? 'selected' : ''}>${esc(c)}</option>`).join('')
     + (b.cls && !S.settings.classes.includes(b.cls) ? `<option selected>${esc(b.cls)}</option>` : '');
-  $('#bWm').checked = !!b.opts.watermark; $('#bTitleImg').checked = !!b.opts.titleImg; $('#bSpace').checked = !!b.opts.space; $('#bHideTag').checked = !!b.opts.hideTag; $('#bShowRange').checked = b.opts.showRange !== false;
+  $('#bWm').checked = !!b.opts.watermark; $('#bTitleImg').checked = !!b.opts.titleImg; $('#bSpace').checked = !!b.opts.space; $('#bHideTag').checked = !!b.opts.hideTag; $('#bShowRange').checked = b.opts.showRange !== false; $('#bImgScale').value = String(b.opts.imgScale || 1);
   $('#bScoreAuto').checked = b.score === 'auto'; $('#bScoreMan').checked = b.score !== 'auto';
   $('#manualScore').style.display = b.score === 'auto' ? 'none' : '';
   ['單選', '多選', '非選'].forEach(g => { $(`#ms${g}`).value = b.manual[g]; });
@@ -763,6 +763,7 @@ function bindUI() {
     codes.sort((a, c) => chapterOrder(a) - chapterOrder(c));
     b().range = codes.map(chapterName).join('、'); $('#bRange').value = b().range; saveDraft(); };
   $('#bShowRange').onchange = e => { b().opts.showRange = e.target.checked; saveDraft(); };
+  $('#bImgScale').onchange = e => { b().opts.imgScale = Number(e.target.value) || 1; saveDraft(); };
   $('#bDate').onchange = e => { b().date = e.target.value; saveDraft(); };
   $('#bCls').onchange = e => { b().cls = e.target.value; saveDraft(); };
   $('#bConst').onchange = e => { b().constants = e.target.value.split('\n').map(s => s.trim()).filter(Boolean); saveDraft(); };

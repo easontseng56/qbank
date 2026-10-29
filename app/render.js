@@ -2,11 +2,20 @@
 'use strict';
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
+// 圖片大小：寬度依題庫 width_cm（預設 12、上限 16 cm）× 考卷選項「圖片大小」；另限高 IMG_MAXH mm（太高的圖等比縮小），
+// 同一處連續多張圖（例如選項各一張圖）排成一列（.imgrow），避免一張接一張疊很長（使用者 2026-10-29）
+let IMG_SCALE = 1; const IMG_MAXH = 75;
+function setImgScale(s) { IMG_SCALE = Number(s) || 1; }
 function imgHtml(dir, im, caption) {
   const p = im.path.startsWith('/') ? im.path : `${dir}/${im.path}`;
-  const w = Math.min(Number(im.width_cm) || 12, 16);
-  return `<img data-src="${esc(p)}" style="width:${w}cm;max-width:100%" alt="">`
+  const w = Math.min(Number(im.width_cm) || 12, 16) * IMG_SCALE;
+  return `<img data-src="${esc(p)}" style="width:${w.toFixed(2)}cm;max-width:100%;max-height:${Math.round(IMG_MAXH * IMG_SCALE)}mm;object-fit:contain" alt="">`
     + (caption && im.caption ? `<p class="cap">〔圖說〕${esc(im.caption)}</p>` : '');
+}
+function imgsHtml(dir, list, caption) {
+  if (list.length < 2) return list.map(i => imgHtml(dir, i, caption)).join('');
+  const k = list.length <= 4 ? list.length : 3;   // 每列張數：≤4 張一列排完，更多則每列 3 張
+  return `<div class="imgrow" style="--k:${k}">` + list.map(i => `<div class="imgc">${imgHtml(dir, i, caption)}</div>`).join('') + '</div>';
 }
 // 原卷表格截圖（images 內 kind:'table'）：at＝表格前面有幾段非表格文字，對到「｜」文字表格的位置；有截圖就不再畫文字表格
 const isTbl = i => i.kind === 'table';
@@ -16,7 +25,7 @@ function groupHtml(r, opt) {
   if (!g) return '';
   let h = `<div class="grp"><p class="gl">${esc(g.label || '題組')}</p>`;
   h += blocks(lines(g.stem), '', '', '', tblFor(r.dir, g.images, opt.caption)).join('');
-  h += (g.images || []).filter(i => !isTbl(i)).map(i => imgHtml(r.dir, i, opt.caption)).join('');
+  h += imgsHtml(r.dir, (g.images || []).filter(i => !isTbl(i)), opt.caption);
   return h + '</div>';
 }
 // 「｜」分隔的文字表格（題庫轉錄時用文字寫的表）畫成真正的表格；連續 ≥2 行、每行 ≥2 個分隔符才算
@@ -54,7 +63,7 @@ function questionHtml(r, n, opt = {}) {
   const imgs = q.images || [];
   const tagSpan = opt.tag === false ? '' : `<span class="tag">${esc(r.tag)}</span>`;
   h.push(...blocks(lines(q.stem), n != null ? `<b>${n}.</b> ` : '', tagSpan, '', tblFor(dir, imgs, opt.caption)));
-  for (const i of imgs) if (!isTbl(i) && !/after/.test(i.pos || '')) h.push(imgHtml(dir, i, opt.caption));
+  h.push(imgsHtml(dir, imgs.filter(i => !isTbl(i) && !/after/.test(i.pos || '')), opt.caption));
   const optTbl = imgs.filter(i => isTbl(i) && i.site === 'options');
   for (const i of optTbl) h.push(imgHtml(dir, i, opt.caption));
   const ops = optionsInImage(q) || optTbl.length ? [] : lines(q.options);
@@ -63,11 +72,11 @@ function questionHtml(r, n, opt = {}) {
     const cols = L <= 12 ? Math.min(ops.length, 5) : (L <= 28 ? 2 : 1);
     h.push(`<div class="opts" style="grid-template-columns:repeat(${cols},1fr)">${ops.map(o => `<p>${esc(o)}</p>`).join('')}</div>`);
   }
-  for (const i of imgs) if (!isTbl(i) && /after/.test(i.pos || '')) h.push(imgHtml(dir, i, opt.caption));
+  h.push(imgsHtml(dir, imgs.filter(i => !isTbl(i) && /after/.test(i.pos || '')), opt.caption));
   for (const pt of q.parts || []) {
     h.push(...blocks(lines(pt.stem), `<span class="pl">${esc(pt.label)}</span> `, '', 'pt', tblFor(dir, pt.images, opt.caption)));
     h.push(...lines(pt.options).map(o => `<p class="pt opt">${esc(o)}</p>`));
-    h.push(...(pt.images || []).filter(i => !isTbl(i)).map(i => imgHtml(dir, i, opt.caption)));
+    h.push(imgsHtml(dir, (pt.images || []).filter(i => !isTbl(i)), opt.caption));
     if (opt.space) h.push('<div class="pspace"></div>');
   }
   if (opt.space && r.tg === '非選' && !(q.parts || []).length) h.push('<div class="space"></div>');
@@ -82,7 +91,7 @@ function ansBlock(o, dir, lab = '') {
   const h = [`<p class="ans"><b>【簡答】</b>${lab ? esc(lab) + ' ' : ''}${esc(String(o.answer == null ? '' : o.answer).trim())}${o.answer_src ? '（' + esc(o.answer_src) + '）' : ''}</p>`];
   const sol = lines(o.solution);
   if (sol.length) { h.push('<p class="sol"><b>【詳解】</b></p>'); h.push(...blocks(sol, '', '', 'soli')); }
-  h.push(...(o.answer_images || []).map(i => imgHtml(dir, i, false)));
+  h.push(imgsHtml(dir, o.answer_images || [], false));
   h.push(...lines(o.notes).map(x => `<p class="note"><b>【注意】</b>${esc(x)}</p>`));
   return h.join('');
 }
@@ -153,6 +162,7 @@ function examHead(exam, kind) {
 }
 function questionPaperHtml(exam) {
   const secs = examSections(exam), o = exam.opts || {};
+  setImgScale(o.imgScale || 1);
   const out = [examHead(exam, '題目卷'),
     '<div class="info">' + (exam.range && o.showRange !== false ? `<span class="rng">出題範圍：${esc(exam.range)}</span>` : '')
     + '<span class="blanks">班級：<span class="bl w3"></span>座號：<span class="bl w2"></span>姓名：<span class="bl w5"></span>得分：<span class="bl w3"></span></span></div>'];
@@ -172,6 +182,7 @@ function questionPaperHtml(exam) {
 }
 function answerPaperHtml(exam) {
   const secs = examSections(exam), o = exam.opts || {};
+  setImgScale(o.imgScale || 1);
   const all = secs.flatMap(s => s.qs);
   const mc = all.filter(x => x.r.tg !== '非選'), non = all.filter(x => x.r.tg === '非選');
   const out = [examHead(exam, '解答卷'), '<h2 style="margin-top:4px">簡答表</h2><table>'];

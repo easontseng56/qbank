@@ -344,11 +344,13 @@ async function renderPreview(id) {
       ${r.type}　${tierLabel(r.tiers)}（Tier ${esc(r.tiers.join('、'))}）　${r.mains.map(chapterName).join('、')}${r.secs.length ? '　次要：' + r.secs.map(chapterName).join('、') : ''}
       ${d ? `　難度 ${d}${dd && dd.why ? '（' + esc(dd.why) + '）' : ''}` : ''}${r.ltd ? '　光碟難易：' + r.ltd : ''}
       ${r.tags.length ? '　標籤：' + r.tags.join('、') : ''}<br><span class="used">${usedLabel(r)}</span></div>
-      <div class="pv-btn"><button class="${inB ? '' : 'pri'}" id="pvAdd" title="${inB ? '按一下從考卷籃移出' : '加入考卷籃'}">${inB ? '✓ 已加入（移出）' : '＋ 加入考卷籃'}</button><br><button id="pvPrev" title="上一題（↑）">▲ 上一題</button><button id="pvNext" title="下一題（↓）">▼ 下一題</button></div></div>
+      <div class="pv-btn"><button id="pvClose" title="關閉預覽">✕ 關閉</button> <button class="${inB ? '' : 'pri'}" id="pvAdd" title="${inB ? '按一下從考卷籃移出' : '加入考卷籃'}">${inB ? '✓ 已加入（移出）' : '＋ 加入考卷籃'}</button><br><button id="pvPrev" title="上一題（↑）">▲ 上一題</button><button id="pvNext" title="下一題（↓）">▼ 下一題</button></div></div>
     <div class="paper pv">${groupHtml(r, { caption: true })}<div class="q">${questionHtml(r, null, { caption: true })}</div>
     <div class="q">${answerHtml(r, true)}</div></div>`;
   $('#pvAdd').onclick = () => { toggleBasket(id); renderPreview(id); };
   $('#pvPrev').onclick = () => stepSel(-1); $('#pvNext').onclick = () => stepSel(1);
+  $('#pvClose').onclick = () => document.body.classList.remove('pvopen');
+  if (window.matchMedia('(max-width: 900px)').matches) { document.body.classList.add('pvopen'); $('#preview').scrollTop = 0; }  // 手機：預覽整頁彈出
   await hydrateImages($('#preview'));
 }
 async function imgUrl(path) {

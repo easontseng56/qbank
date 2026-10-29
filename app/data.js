@@ -41,6 +41,7 @@ class DirFS {
     const w = await h.createWritable();
     await w.write(text); await w.close();
   }
+  async writeBlob(path, blob) { const h = await this._file(path, true); const w = await h.createWritable(); await w.write(blob); await w.close(); }
 }
 
 class HttpFS {   // 以 http 伺服器提供整個資料夾時（例如放上 GitHub Pages）；需要 題庫/manifest.json
@@ -72,6 +73,7 @@ class ServerFS {   // 由 離線出題系統.exe 本機伺服器提供（可讀�
     const r = await fetch('/api/write?path=' + encodeURIComponent(path), { method: 'POST', body: text });
     if (!r.ok) throw new Error(await r.text());
   }
+  async writeBlob(path, blob) { return this.writeText(path, blob); }
 }
 
 // ---------- IndexedDB 快取 ----------

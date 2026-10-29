@@ -777,6 +777,21 @@ function bindUI() {
   $('#btnPrintQ').onclick = () => openPrint('題目卷'); $('#btnPrintA').onclick = () => openPrint('解答卷');
   $('#btnDoPrint').onclick = () => window.print(); $('#btnClosePrint').onclick = closePrint;
   $('#btnSwitchPrint').onclick = () => openPrint(S.printKind === '題目卷' ? '解答卷' : '題目卷');
+  $('#btnPdf').onclick = async () => {
+    const btn = $('#btnPdf'); if (btn.disabled) return;
+    const ex = examObject(), kind = S.printKind, stem = (ex.title || '化學測驗').replace(/[\\/:*?"<>|]/g, '_');
+    btn.disabled = true; btn.textContent = '產生中…'; toast('正在產生 PDF，請稍候（約 10～30 秒）', 30000);
+    try {
+      const wm = ex.opts.watermark ? await imgUrl('素材/浮水印_周逸.png') : '';
+      const { blob, pages } = await PDF.make($('#printArea .paper'), { watermark: wm, title: `${ex.title}_${kind}` });
+      const fn = `${stem}_${kind}.pdf`;
+      let saved = '';
+      try { if (S.fs && S.fs.writeBlob) { await S.fs.writeBlob(`${examDir()}/${fn}`, blob, 'application/pdf'); saved = `，已存到 ${examDir()}/${fn}`; } } catch (e) {}
+      const how = await PDF.shareOrDownload(blob, fn);
+      toast(`PDF 共 ${pages} 頁（${(blob.size / 1048576).toFixed(1)} MB）${how === 'shared' ? '，已送出分享' : how === 'downloaded' ? '，已下載' : ''}${saved}`, 6000);
+    } catch (e) { console.error(e); toast('產生 PDF 失敗：' + e.message, 8000); }
+    btn.disabled = false; btn.textContent = '產生 PDF（分享／下載）';
+  };
   // 紀錄
   $('#hList').addEventListener('click', e => {
     const btn = e.target.closest('button'); if (!btn) return;

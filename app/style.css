@@ -147,6 +147,7 @@ main { flex: 1; min-height: 0; }
 .paper .wm { display: none; }
 /* 預覽時不用兩欄 */
 .paper.pv .cols { column-count: 1; font-size: inherit; }
+.paper.pdf .cols { column-count: 1; }   /* 瀏覽器內產生 PDF 時用單欄，切頁才不會切到行中 */
 .paper.pv .space, .paper.pv .pspace { display: none; }
 
 /* ---------- 列印 ---------- */
@@ -240,6 +241,12 @@ button.del:hover { background: #fdeeee; }
   .pv-head { flex-wrap: wrap; }
   .pv-head .pv-btn { flex-basis: 100%; text-align: left; }
   .pv-btn button { min-height: 36px; }
+  /* 列印預覽列：按鈕換行、隱藏電腦版列印步驟說明；考卷可左右捲動 */
+  #printBar { flex-wrap: wrap; gap: 6px 8px; padding: 8px; }
+  #printBar .steps { display: none; }
+  #printBar span#printTitle { flex-basis: 100%; }
+  #printBar button { min-height: 38px; font-size: 15px; }
+  #printWrap { overflow: auto; -webkit-overflow-scrolling: touch; }
   #flowBar { position: sticky; left: 0; bottom: 0; }
   #listPane { padding-bottom: 0; }
   #page-basket.on { flex-direction: column; }

@@ -8,7 +8,11 @@ let IMG_SCALE = 1; const IMG_MAXH = 75;
 function setImgScale(s) { IMG_SCALE = Number(s) || 1; }
 function imgHtml(dir, im, caption) {
   const p = im.path.startsWith('/') ? im.path : `${dir}/${im.path}`;
-  const w = Math.min(Number(im.width_cm) || 12, 16) * IMG_SCALE;
+  // 寬度：題庫 width_cm；若 題庫/圖片尺寸.json 有量測值（圖內文字≈考卷字級），沒填 width_cm 時直接用，有填時只允許縮小（估值 < 0.7 倍才改）
+  let w0 = Number(im.width_cm) || 0;
+  const auto = (window.IMG_SIZES || {})[p]; const ac = auto && auto.cm;
+  if (ac) { if (!w0 || ac < w0 * 0.7) w0 = ac; }
+  const w = Math.min(w0 || 12, 16) * IMG_SCALE;
   return `<img data-src="${esc(p)}" style="width:${w.toFixed(2)}cm;max-width:100%;max-height:${Math.round(IMG_MAXH * IMG_SCALE)}mm;object-fit:contain" alt="">`
     + (caption && im.caption ? `<p class="cap">〔圖說〕${esc(im.caption)}</p>` : '');
 }

@@ -125,6 +125,7 @@ async function loadSideFiles() {
   S.history = await readJson(histPath(), { exams: [] });
   if (!Array.isArray(S.history.exams)) S.history.exams = [];
   rebuildUsed();
+  window.IMG_SIZES = await readJson('題庫/圖片尺寸.json', {});   // 自動量測的圖片建議寬度（圖內文字≈考卷字級），鍵＝圖檔路徑
   S.diff = await readJson('難度/難度.json', {});
   if (S.diff && S.diff.levels) S.diff = S.diff.levels;
   S.diffCount = Object.keys(S.diff).length;

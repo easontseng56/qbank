@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>離線出題系統</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="app/style.css">
+</head>
+<body>
+<header id="top">
+  <span class="logo">周逸化學　離線出題系統</span>
+  <nav>
+    <button class="tab on" data-tab="browse" title="第 1 步：篩選題庫、把題目加入考卷籃"><span class="step">1</span>挑題</button>
+    <button class="tab" data-tab="basket" id="basketBadge" title="第 2 步：排題、配分、輸出題目卷與解答卷"><span class="step">2</span>組卷輸出</button>
+    <button class="tab" data-tab="history" title="每份出過的考卷與題目">出題紀錄</button>
+    <button class="tab" data-tab="bank" title="看各題庫份數，上傳新的 JSON／zip 加入題庫">題庫管理</button>
+    <button class="tab" data-tab="settings" title="班級、預設參考數據、浮水印、字級">設定</button>
+  </nav>
+  <span id="status" class="status"></span>
+  <span class="topbtn"><button id="btnConnect" title="備用：瀏覽器直接開 index.html 時，先選「離線出題系統」資料夾">選擇資料夾</button><button id="btnScan" title="題庫資料夾有新增或修改 JSON 時按一下">重新讀取題庫</button></span>
+</header>
+
+<main>
+<!-- 1 挑題 -->
+<section id="page-browse" class="page on">
+  <aside id="filters">
+    <div class="fbox kw"><input id="fKw" placeholder="關鍵字（可多個，空白隔開）" title="搜尋題幹、選項、詳解；多個關鍵字＝同時符合"><button id="btnKw" class="pri">搜尋</button></div>
+    <div class="fbox"><div class="fh">章節 <label class="sm" title="勾選後，次要章節含這些章節的題也會列出"><input type="checkbox" id="fSecondary"> 含次要章節</label></div><div id="chapTree"></div></div>
+    <div class="fbox"><div class="fh">來源等級</div><div id="fTiers" class="chk"></div></div>
+    <div class="fbox"><div class="fh">來源</div><div id="fSources" class="chk"></div><div id="fSubs" class="subs"></div></div>
+    <div class="fbox closed"><div class="fh">年份</div><div class="hint">學年度；競賽以西元 −1911</div><input id="fYMin" class="yr"> ～ <input id="fYMax" class="yr"></div>
+    <div class="fbox"><div class="fh">題型</div><div id="fTypes" class="chk"></div></div>
+    <div class="fbox"><div class="fh">特殊標籤</div><div id="fTags" class="chk"></div></div>
+    <div class="fbox" id="diffBox"><div class="fh">難度</div><div id="fDiff" class="chk"></div></div>
+    <div class="fbox closed"><div class="fh">龍騰光碟原難易度</div><div id="fLtd" class="chk"></div></div>
+    <div class="fbox"><label title="出題紀錄裡出過的題不列出"><input type="checkbox" id="fHideUsed"> 隱藏已出過的題</label></div>
+  </aside>
+  <div id="listPane">
+    <div class="lbar">
+      <b id="count">0 題</b>
+      <select id="fSort" title="排序"><option value="yearDesc">年份新→舊</option><option value="yearAsc">年份舊→新</option><option value="diffAsc">難度低→高</option><option value="diffDesc">難度高→低</option><option value="chap">章節順序</option><option value="source">來源</option></select>
+      <span class="pg"><button id="prev" title="上一頁（←）">◀</button><span id="pager"></span><button id="next" title="下一頁（→）">▶</button></span>
+      <button id="btnAddAll" title="把這一頁列出的題全部加入考卷籃">本頁全加入</button>
+      <span class="rnd" title="從目前篩選出的全部題目中隨機挑 N 題加入考卷籃（已在籃內的不重複）">隨機抽 <input id="rndN" class="num" value="10"> 題<button class="pri" id="btnRandom">抽題加入</button></span>
+    </div>
+    <div id="chips" class="chips"></div>
+    <div id="list"></div>
+    <div class="lfoot hint">單擊看整題；按「＋」加入考卷籃（也可雙擊）。鍵盤：↑↓ 換題、空白鍵 加入／移出。</div>
+  </div>
+  <div id="preview"><div class="empty"><p>在左邊清單點一題，這裡會顯示整題、答案與詳解。</p></div></div>
+  <div id="flowBar"><span id="flowInfo">考卷籃是空的</span><button class="pri" id="btnGoBasket">下一步：組卷輸出 →</button></div>
+</section>
+
+<!-- 2 組卷輸出 -->
+<section id="page-basket" class="page">
+  <div class="bcol">
+    <div class="card">
+      <h3>① 考卷資訊</h3>
+      <div class="grid2">
+        <label>考卷名稱 <span class="hint">（也是儲存的檔名）</span><input id="bTitle" placeholder="例：選II 1-1 氫原子光譜 15 題"></label>
+        <label>副標<input id="bSub" placeholder="例：競賽精選（共 15 題）"></label>
+        <label>日期<input type="date" id="bDate"></label>
+        <label>班級／對象 <span class="hint">（在「設定」可新增）</span><select id="bCls"></select></label>
+      </div>
+      <label>參考數據 <span class="hint">（每行一條，印在卷首；留空則不印）</span><textarea id="bConst" rows="2"></textarea></label>
+    </div>
+    <div class="card">
+      <h3>② 配分與版面</h3>
+      <div class="opts-row">
+        <span>配分：<label><input type="radio" name="sc" id="bScoreAuto"> 自動（總分 100）</label> <label><input type="radio" name="sc" id="bScoreMan"> 手動</label></span>
+        <span id="manualScore">單選每題 <input id="ms單選" class="num"> 多選每題 <input id="ms多選" class="num"> 非選每小題 <input id="ms非選" class="num"></span>
+      </div>
+      <div class="opts-row">
+        <label><input type="checkbox" id="bTitleImg"> 卷首加「周逸化學小考卷」標題圖</label>
+        <label><input type="checkbox" id="bWm"> 加「周逸」浮水印</label>
+        <label><input type="checkbox" id="bSpace"> 非選題留計算空白</label>
+        <label><input type="checkbox" id="bHideTag"> 題目卷不印來源標籤</label>
+      </div>
+      <table id="bSum" class="sumtab"></table>
+    </div>
+    <div class="card">
+      <h3>③ 題目清單 <span id="bCount" class="org"></span><span id="bTotal" class="org"></span><span id="bRecorded" class="ok"></span></h3>
+      <div class="opts-row">
+        <button id="btnGoBrowse">＋ 去挑題</button><button id="btnSortDiff" title="依難度由淺到深重新排列（需有難度檔）">由淺到深排序</button>
+      </div>
+      <div id="bList"></div>
+    </div>
+  </div>
+  <div class="bcol narrow">
+    <div class="card act">
+      <h3>④ 輸出</h3>
+      <button class="pri big" id="btnPrintQ" title="開啟列印預覽，另存為 PDF；同時自動記錄到出題紀錄並儲存考卷">輸出題目卷</button>
+      <button class="pri big" id="btnPrintA" title="開啟列印預覽，另存為 PDF">輸出解答卷</button>
+      <p class="hint">在預覽畫面按「列印／另存 PDF」→ 目的地選「另存為 PDF」→ 取消「頁首及頁尾」、勾「背景圖形」→ 儲存。<br>輸出題目卷時會自動記錄到出題紀錄並儲存考卷。</p>
+      <div class="opts-row">
+        <button id="btnSaveExam" title="存成 考卷\考卷名稱.json，之後可載入再改">儲存考卷</button>
+        <button id="btnLoadExam" title="開啟之前儲存的考卷">載入考卷…</button>
+        <button id="btnRecord" title="不輸出也先記錄為已出題">只記錄不輸出</button>
+      </div>
+      <div id="examFiles" class="files" style="display:none"></div>
+      <div class="opts-row danger">
+        <button id="btnNewExam" title="清空考卷籃、重設名稱與日期，開始下一份">開新考卷</button>
+        <button id="btnClearBasket" title="只移除題目，保留考卷資訊">清空題目</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3>自動抽題</h3>
+      <p class="hint">候選範圍＝「挑題」頁目前的篩選條件：<br><span id="drawFilter"></span></p>
+      <div class="opts-row">單選 <input id="dn單選" class="num" value="10"> 多選 <input id="dn多選" class="num" value="5"> 非選 <input id="dn非選" class="num" value="0"> 題</div>
+      <div id="drawDiffBox" class="opts-row">難易比例　易(1–2) <input id="drEasy" class="num" value="3"> 中(3) <input id="drMid" class="num" value="5"> 難(4–5) <input id="drHard" class="num" value="2"></div>
+      <div class="opts-row"><label><input type="checkbox" id="drawRecent" checked> 近年優先</label><label><input type="checkbox" id="drawExUsed" checked> 排除已出過</label></div>
+      <button class="pri" id="btnDraw">抽題加入清單</button>
+      <p class="hint">抽完可在題目清單逐題按「換一題」。</p>
+    </div>
+  </div>
+</section>
+
+<!-- 出題紀錄 -->
+<section id="page-history" class="page">
+  <div class="card"><h3>出題紀錄</h3><p class="hint">輸出題目卷時自動記錄。同一題出過幾次、最近給哪個班，會顯示在挑題清單與題目清單上。紀錄存在「紀錄\出題紀錄.json」。</p><div id="hList"></div></div>
+</section>
+
+<!-- 題庫管理 -->
+<section id="page-bank" class="page">
+  <div class="card">
+    <h3>新增題庫</h3>
+    <p class="hint">把題庫 <b>zip</b>（內含 Tier 開頭的題庫資料夾、JSON 與 img）或單份 <b>JSON</b> 拖進下面的框，或按「選檔案」。zip 內已有題庫資料夾層時會自動放到對應位置；單份 JSON 要先選目標題庫。上傳後自動重新讀取，同名檔會覆蓋（＝更新）。</p>
+    <div class="opts-row">目標題庫：<select id="upFolder"></select><input id="upNewFolder" placeholder="或輸入新資料夾名（例：Tier2_段考_116）" style="width:20em"></div>
+    <div id="dropZone" class="drop">拖曳 zip／JSON 到這裡<br><button id="btnPick">選檔案…</button><input type="file" id="upFiles" multiple accept=".zip,.json,.png,.jpg,.jpeg" style="display:none"></div>
+    <div id="upLog" class="hint"></div>
+  </div>
+  <div class="card">
+    <h3>目前題庫</h3>
+    <table id="bankTab" class="sumtab"></table>
+  </div>
+</section>
+
+<!-- 設定 -->
+<section id="page-settings" class="page">
+  <div class="card">
+    <h3>設定</h3>
+    <p id="sInfo" class="hint"></p>
+    <p id="driveBox" style="display:none"><button id="btnLogout">登出 Google</button> <span class="hint">登出後別人用這台裝置開網頁也看不到題庫。</span></p>
+    <label>班級／對象（每行一個，會出現在考卷資訊的下拉選單）<textarea id="sClasses" rows="5"></textarea></label>
+    <label>預設參考數據（每行一條，開新考卷時自動帶入）<textarea id="sConst" rows="3"></textarea></label>
+    <div class="opts-row"><label><input type="checkbox" id="sTitleImg"> 新考卷預設加「周逸化學小考卷」標題圖</label><label><input type="checkbox" id="sWm"> 新考卷預設加浮水印</label><label>考卷字級 <input id="sFont" class="num"> pt</label></div>
+    <button class="pri" id="btnSaveSettings">儲存設定</button>
+    <h3>使用流程</h3>
+    <ol class="hint">
+      <li><b>挑題</b>：左邊勾章節、來源、題型，或打關鍵字；清單按「＋」加入考卷籃。也可到「組卷輸出」用自動抽題。</li>
+      <li><b>組卷輸出</b>：填考卷名稱、班級，調整順序與配分，按「輸出題目卷」「輸出解答卷」另存 PDF。</li>
+      <li>輸出題目卷時會自動記錄到「出題紀錄」並儲存考卷；之後可「載入考卷」改題再出。</li>
+    </ol>
+    <h3>其他說明</h3>
+    <ul class="hint">
+      <li>啟動：雙擊「離線出題系統.exe」會自動開瀏覽器。備用：用 Chrome 開 index.html，按右上「選擇資料夾」選「離線出題系統」資料夾。</li>
+      <li>題庫更新：把新的 JSON（和 img 資料夾）放進「題庫」下對應的題庫資料夾，再按「重新讀取題庫」；只會重讀有變動的檔。</li>
+      <li>難度：把「難度\難度.json」放進資料夾後重新整理頁面即生效；篩選欄會多出「難度」。</li>
+    </ul>
+  </div>
+</section>
+</main>
+
+<!-- 列印 -->
+<div id="printWrap">
+  <div id="printBar">
+    <span id="printTitle"></span>
+    <span class="steps">列印／另存 PDF → 目的地「另存為 PDF」→ 取消「頁首及頁尾」、勾「背景圖形」→ 儲存</span>
+    <button id="btnSwitchPrint" title="切換題目卷／解答卷">切換</button>
+    <button class="pri" id="btnDoPrint">列印／另存 PDF</button>
+    <button id="btnClosePrint">返回（Esc）</button>
+  </div>
+  <div id="printArea"></div>
+</div>
+<div id="toast"></div>
+
+<script src="app/config.js"></script>
+<script src="app/drive.js"></script>
+<script src="app/chapters.js"></script>
+<script src="app/data.js"></script>
+<script src="app/render.js"></script>
+<script src="app/app.js"></script>
+</body>
+</html>

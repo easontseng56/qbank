@@ -192,7 +192,6 @@ button.del:hover { background: #fdeeee; }
 .addb.on { background: #fff3e8; border-color: var(--o); color: var(--o); }
 .pv-btn { text-align: right; white-space: nowrap; }
 .pv-btn button { margin: 0 0 4px 4px; }
-#pvClose { display: none; }
 #flowBar { position: absolute; right: 0; bottom: 0; left: 300px; display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding: 6px 14px; background: #fffaf0; border-top: 1px solid #f0d9b5; font-size: 13px; }
 #page-browse { position: relative; }
 #listPane, #preview { padding-bottom: 40px; }
@@ -213,48 +212,4 @@ button.del:hover { background: #fdeeee; }
 .drop.over { background: #e3eefa; border-color: var(--b); }
 .drop.off { opacity: .5; pointer-events: none; }
 
-/* ---------- 手機／窄螢幕 ---------- */
-@media (max-width: 900px) {
-  body { font-size: 14px; }
-  #top { flex-wrap: wrap; gap: 6px 10px; padding: 6px 8px; }
-  .status { flex-basis: 100%; white-space: normal; }
-  #page-browse.on { flex-direction: column; overflow: auto; }
-  #filters { width: 100%; max-height: 45vh; border-right: none; border-bottom: 1px solid var(--line); }
-  #listPane { border-right: none; min-height: 50vh; }
-  /* 篩選區放大：字級 15px、章節樹每列加高、勾選框加大 */
-  #filters { font-size: 15px; max-height: 60vh; padding: 8px 10px; }
-  #filters .fbox { padding: 8px 0; }
-  #chapTree .node, #chapTree .sec, .chk label { line-height: 1.9; }
-  #chapTree .node .node { margin-left: 18px; }
-  #chapTree .tw { width: 20px; font-size: 17px; }
-  .chk { gap: 4px 14px; }
-  #filters input[type=checkbox] { width: 20px; height: 20px; vertical-align: -4px; }
-  /* 清單列：隨機抽獨立成一列、輸入框與按鈕加大 */
-  .lbar { flex-wrap: wrap; gap: 6px 10px; }
-  .lbar .rnd { flex-basis: 100%; padding: 8px 0 2px; border-left: none; border-top: 1px solid var(--line); font-size: 15px; flex-wrap: wrap; gap: 6px; }
-  .lbar .rnd input.num { width: 3.2em; font-size: 16px; min-height: 38px; }
-  .lbar .rnd button { font-size: 15px; min-height: 38px; padding: 0 14px; margin-left: auto; }
-  /* 預覽：平時隱藏，點題目後整頁彈出，右上「✕ 關閉」 */
-  #preview { display: none; }
-  body.pvopen #preview { display: block; position: fixed; inset: 0; z-index: 40; width: 100%; min-width: 0; padding: 8px 10px 60px; background: #fff; overflow: auto; }
-  #pvClose { display: inline-block; }
-  .pv-head { flex-wrap: wrap; }
-  .pv-head .pv-btn { flex-basis: 100%; text-align: left; }
-  .pv-btn button { min-height: 36px; }
-  /* 列印預覽列：按鈕換行、隱藏電腦版列印步驟說明；考卷可左右捲動 */
-  #printBar { flex-wrap: wrap; gap: 6px 8px; padding: 8px; }
-  #printBar .steps { display: none; }
-  #printBar span#printTitle { flex-basis: 100%; }
-  #printBar button { min-height: 38px; font-size: 15px; }
-  #printWrap { overflow: auto; -webkit-overflow-scrolling: touch; }
-  #flowBar { position: sticky; left: 0; bottom: 0; }
-  #listPane { padding-bottom: 0; }
-  #page-basket.on { flex-direction: column; }
-  .bcol.narrow { flex: none; }
-  .grid2 { grid-template-columns: 1fr; }
-  .row { flex-wrap: wrap; }
-  .addb { margin-left: auto; }
-  button, input, select { min-height: 32px; }
-  input[type=checkbox], input[type=radio] { min-height: 0; width: 18px; height: 18px; }
-}
-@media (max-width: 900px) { .tab { white-space: nowrap; padding: 5px 7px; } #top nav { flex-wrap: wrap; } }
+/* 手機：使用者 2026-10-29 要求不做手機版排版，一律用電腦版（viewport 固定 1200px，可縮放） */

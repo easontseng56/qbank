@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <title>離線出題系統</title>
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<link rel="stylesheet" href="app/style.css?v=202610290846">
+<meta name="viewport" content="width=1200">
+<link rel="stylesheet" href="app/style.css?v=202610290856">
 </head>
 <body>
 <header id="top">
@@ -167,23 +167,23 @@
 <div id="printWrap">
   <div id="printBar">
     <span id="printTitle"></span>
-    <span class="steps">列印／另存 PDF → 目的地「另存為 PDF」→ 取消「頁首及頁尾」、勾「背景圖形」→ 儲存</span>
+    <span class="steps">電腦版 → 目的地「另存為 PDF」→ 取消「頁首及頁尾」、勾「背景圖形」→ 儲存</span>
     <button id="btnSwitchPrint" title="切換題目卷／解答卷">切換</button>
-    <button class="pri" id="btnPdf" title="在瀏覽器內直接做成 PDF：手機會跳出分享選單（可傳 LINE），電腦則下載；同時存一份到考卷資料夾">產生 PDF（分享／下載）</button>
-    <button id="btnDoPrint">列印／另存 PDF</button>
+    <button class="pri" id="btnPdf" title="直接做成 PDF 並跳出分享選單（可傳 LINE）；同時存一份到考卷資料夾">手機版（分享）</button>
+    <button class="pri" id="btnDoPrint" title="開啟列印視窗，目的地選「另存為 PDF」">電腦版（另存 PDF）</button>
     <button id="btnClosePrint">返回（Esc）</button>
   </div>
   <div id="printArea"></div>
 </div>
 <div id="toast"></div>
 
-<script src="app/config.js?v=202610290846"></script>
-<script src="app/drive.js?v=202610290846"></script>
-<script src="app/chapters.js?v=202610290846"></script>
-<script src="app/data.js?v=202610290846"></script>
-<script src="app/render.js?v=202610290846"></script>
-<script src="app/html2canvas.min.js?v=202610290846"></script>
-<script src="app/pdf.js?v=202610290846"></script>
-<script src="app/app.js?v=202610290846"></script>
+<script src="app/config.js?v=202610290856"></script>
+<script src="app/drive.js?v=202610290856"></script>
+<script src="app/chapters.js?v=202610290856"></script>
+<script src="app/data.js?v=202610290856"></script>
+<script src="app/render.js?v=202610290856"></script>
+<script src="app/html2canvas.min.js?v=202610290856"></script>
+<script src="app/pdf.js?v=202610290856"></script>
+<script src="app/app.js?v=202610290856"></script>
 </body>
 </html>

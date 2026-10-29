@@ -206,3 +206,24 @@ button.del:hover { background: #fdeeee; }
 .drop { border: 2px dashed #9ab; border-radius: 8px; padding: 26px; text-align: center; color: #557; background: #f8fafd; margin: 6px 0; line-height: 2; }
 .drop.over { background: #e3eefa; border-color: var(--b); }
 .drop.off { opacity: .5; pointer-events: none; }
+
+/* ---------- 手機／窄螢幕 ---------- */
+@media (max-width: 900px) {
+  body { font-size: 14px; }
+  #top { flex-wrap: wrap; gap: 6px 10px; padding: 6px 8px; }
+  .status { flex-basis: 100%; white-space: normal; }
+  #page-browse.on { flex-direction: column; overflow: auto; }
+  #filters { width: 100%; max-height: 45vh; border-right: none; border-bottom: 1px solid var(--line); }
+  #listPane { border-right: none; min-height: 50vh; }
+  #preview { width: 100%; min-width: 0; border-top: 2px solid var(--b); padding: 8px; }
+  #flowBar { position: sticky; left: 0; bottom: 0; }
+  #listPane, #preview { padding-bottom: 0; }
+  #page-basket.on { flex-direction: column; }
+  .bcol.narrow { flex: none; }
+  .grid2 { grid-template-columns: 1fr; }
+  .row { flex-wrap: wrap; }
+  .addb { margin-left: auto; }
+  button, input, select { min-height: 32px; }
+  input[type=checkbox], input[type=radio] { min-height: 0; width: 18px; height: 18px; }
+}
+@media (max-width: 900px) { .tab { white-space: nowrap; padding: 5px 7px; } #top nav { flex-wrap: wrap; } }

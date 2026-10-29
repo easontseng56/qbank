@@ -11,7 +11,8 @@ class DriveFS {
     this.token = null; this.exp = 0; this.rootId = null; this.root = cfg.rootPath;
     this.children = new Map();   // folderId → Map(name → entry)
     this.tokenClient = null;
-    try { const t = JSON.parse(sessionStorage.getItem('gtoken') || 'null'); if (t && t.exp > Date.now() + 60000) { this.token = t.token; this.exp = t.exp; } } catch (e) { }
+    this.user = '';
+    try { const t = JSON.parse(sessionStorage.getItem('gtoken') || 'null'); if (t && t.exp > Date.now() + 60000) { this.token = t.token; this.exp = t.exp; this.user = t.user || ''; } } catch (e) { }
   }
   // ---- 登入 ----
   async loadGis() {
@@ -21,21 +22,23 @@ class DriveFS {
   async login(interactive = true) {
     await this.loadGis();
     if (!this.tokenClient) {
-      this.tokenClient = google.accounts.oauth2.initTokenClient({ client_id: this.cfg.clientId, scope: 'https://www.googleapis.com/auth/drive', callback: () => { } });
+      this.tokenClient = google.accounts.oauth2.initTokenClient({ client_id: this.cfg.clientId, scope: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email', callback: () => { } });
     }
     return new Promise((res, rej) => {
       this.tokenClient.callback = r => {
         if (r.error) return rej(new Error(r.error_description || r.error));
         this.token = r.access_token; this.exp = Date.now() + (Number(r.expires_in) - 60) * 1000;
-        sessionStorage.setItem('gtoken', JSON.stringify({ token: this.token, exp: this.exp }));
-        res();
+        this.whoami().then(() => { sessionStorage.setItem('gtoken', JSON.stringify({ token: this.token, exp: this.exp, user: this.user })); res(); }, res);
       };
       this.tokenClient.error_callback = e => rej(new Error(e.message || e.type || '登入取消'));
       this.tokenClient.requestAccessToken({ prompt: interactive ? '' : 'none' });
     });
   }
+  async whoami() {   // 登入帳號（用來分開各帳號的紀錄）
+    try { const r = await fetch((this.cfg.userinfo || 'https://www.googleapis.com/oauth2/v3/userinfo'), { headers: { Authorization: 'Bearer ' + this.token } }); if (r.ok) this.user = ((await r.json()).email || '').toLowerCase(); } catch (e) { }
+  }
   loggedIn() { return !!this.token && Date.now() < this.exp; }
-  logout() { this.token = null; this.exp = 0; sessionStorage.removeItem('gtoken'); }
+  logout() { this.token = null; this.exp = 0; this.user = ''; sessionStorage.removeItem('gtoken'); }
   async ensure() { if (!this.loggedIn()) await this.login(true); }
   // ---- REST ----
   async req(url, opt = {}, retry = 0) {

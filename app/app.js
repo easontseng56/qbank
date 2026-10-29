@@ -39,6 +39,10 @@ function toast(msg, ms = 3500) {
   clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('on'), ms);
 }
 function status(msg) { $('#status').textContent = msg; }
+// 網路版多帳號：主帳號用原本的檔；其他帳號各自一份（紀錄/出題紀錄_帳號.json、考卷/帳號/）
+function acctSuffix() { const u = S.fs && S.fs.kind === 'drive' && S.fs.user; return u && u !== (CONFIG.primaryAccount || '') ? u.split('@')[0].replace(/[^\w.-]/g, '_') : ''; }
+function histPath() { const a = acctSuffix(); return a ? `紀錄/出題紀錄_${a}.json` : '紀錄/出題紀錄.json'; }
+function examDir() { const a = acctSuffix(); return a ? `考卷/${a}` : '考卷'; }
 
 // ---------- 啟動 ----------
 async function init() {
@@ -118,7 +122,7 @@ async function rescan() {
 }
 async function loadSideFiles() {
   S.settings = Object.assign({ classes: [], constants: DEFAULT_CONST, watermark: false, titleImg: true, fontSize: 10 }, await readJson('設定/設定.json', {}));
-  S.history = await readJson('紀錄/出題紀錄.json', { exams: [] });
+  S.history = await readJson(histPath(), { exams: [] });
   if (!Array.isArray(S.history.exams)) S.history.exams = [];
   rebuildUsed();
   S.diff = await readJson('難度/難度.json', {});
@@ -478,12 +482,12 @@ async function saveExam(silent) {
   const b = S.basket;
   if (!b.title) { toast('請先填考卷名稱'); return false; }
   const stem = b.title.replace(/[\\/:*?"<>|]/g, '_');
-  const ok = await writeJson(`考卷/${stem}.json`, basketFile());
-  if (ok && !silent) toast(`已儲存 考卷/${stem}.json`);
+  const ok = await writeJson(`${examDir()}/${stem}.json`, basketFile());
+  if (ok && !silent) toast(`已儲存 ${examDir()}/${stem}.json`);
   return ok;
 }
 async function listExams() {
-  try { return (await S.fs.listJson('考卷')).sort((a, b) => b.mtime - a.mtime); } catch (e) { return []; }
+  try { return (await S.fs.listJson(examDir())).filter(f => f.path.split('/').length === examDir().split('/').length + 1).sort((a, b) => b.mtime - a.mtime); } catch (e) { return []; }
 }
 async function loadExamFile(path) {
   const d = await readJson(path, null); if (!d) return toast('讀取失敗');
@@ -522,7 +526,7 @@ async function recordExam(auto) {
   S.history.exams.push({ id: b.id, date: b.date, name: b.title, cls: b.cls, n: ex.items.length, qids: ex.items.map(r => r.id), tags: ex.items.map(r => r.tag) });
   S.history.exams.sort((a, b2) => a.date.localeCompare(b2.date));
   b.recorded = true; rebuildUsed();
-  await writeJson('紀錄/出題紀錄.json', S.history);
+  await writeJson(histPath(), S.history);
   await saveExam(true);
   saveDraft(); renderBasket(); renderHistory(); renderList();
   if (!auto) toast('已記錄到出題紀錄，並儲存考卷');
@@ -540,7 +544,7 @@ async function deleteHistory(id) {
   if (!confirm('刪除這筆紀錄？刪除後這些題目就不算出過。')) return;
   S.history.exams = S.history.exams.filter(e => e.id !== id); rebuildUsed();
   if (S.basket.id === id) S.basket.recorded = false;
-  await writeJson('紀錄/出題紀錄.json', S.history); renderHistory(); renderList(); renderBasket();
+  await writeJson(histPath(), S.history); renderHistory(); renderList(); renderBasket();
 }
 
 // ---------- 題庫管理 ----------
@@ -631,7 +635,7 @@ async function uploadToDrive(files, folder) {
 function renderSettings() {
   $('#sClasses').value = S.settings.classes.join('\n'); $('#sConst').value = (S.settings.constants || []).join('\n');
   $('#sWm').checked = !!S.settings.watermark; $('#sTitleImg').checked = S.settings.titleImg !== false; $('#sFont').value = S.settings.fontSize || 10;
-  $('#sInfo').textContent = S.fs ? (S.fs.kind === 'server' ? '由 離線出題系統.exe 提供：' + S.fs.root : S.fs.kind === 'http' ? '以網頁伺服器模式執行（唯讀；紀錄與設定存在瀏覽器）' : S.fs.kind === 'drive' ? '網路版：資料在你的 Google 雲端硬碟 ' + S.fs.root + (S.fs.loggedIn() ? '（已登入）' : '（未登入）') : '已連線資料夾：' + S.fs.root.name) : '尚未連線資料夾';
+  $('#sInfo').textContent = S.fs ? (S.fs.kind === 'server' ? '由 離線出題系統.exe 提供：' + S.fs.root : S.fs.kind === 'http' ? '以網頁伺服器模式執行（唯讀；紀錄與設定存在瀏覽器）' : S.fs.kind === 'drive' ? '網路版：資料在 Google 雲端硬碟 ' + S.fs.root + (S.fs.loggedIn() ? '（已登入 ' + (S.fs.user || '') + '；出題紀錄檔 ' + histPath() + '）' : '（未登入）') : '已連線資料夾：' + S.fs.root.name) : '尚未連線資料夾';
   $('#driveBox').style.display = S.fs && S.fs.kind === 'drive' ? '' : 'none';
 }
 async function saveSettings() {
@@ -752,7 +756,7 @@ function bindUI() {
     const files = await listExams();
     const box = $('#examFiles');
     box.style.display = '';
-    box.innerHTML = '<div class="hint">點一份載入（會取代目前的題目）：</div>' + (files.length ? files.map(f => `<button class="lnk" data-path="${esc(f.path)}">${esc(f.path.replace(/^考卷\//, '').replace(/\.json$/, ''))}</button>`).join('') : '<span class="hint">「考卷」資料夾裡還沒有儲存過的考卷</span>') + ' <button data-close="1">關閉</button>';
+    box.innerHTML = '<div class="hint">點一份載入（會取代目前的題目）：</div>' + (files.length ? files.map(f => `<button class="lnk" data-path="${esc(f.path)}">${esc(f.path.slice(examDir().length + 1).replace(/\.json$/, ''))}</button>`).join('') : '<span class="hint">「考卷」資料夾裡還沒有儲存過的考卷</span>') + ' <button data-close="1">關閉</button>';
   };
   $('#examFiles').addEventListener('click', e => { const t = e.target.closest('button'); if (!t) return; if (t.dataset.close) $('#examFiles').style.display = 'none'; else loadExamFile(t.dataset.path); });
   $('#btnPrintQ').onclick = () => openPrint('題目卷'); $('#btnPrintA').onclick = () => openPrint('解答卷');

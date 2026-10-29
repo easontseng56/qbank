@@ -108,7 +108,7 @@ main { flex: 1; min-height: 0; }
 .paper .title { font-size: 16pt; text-align: center; margin: 0 0 2px; }
 .paper .subtitle { text-align: center; font-size: 11.5pt; margin-bottom: 8px; }
 .paper .info { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 2px 12px; margin: 4px 0 8px; }
-.paper .info .rng { flex: 1 1 auto; }
+.paper .info .rng { flex: 1 1 auto; font-size: 8.5pt; color: #333; }
 .paper .info .blanks { margin-left: auto; white-space: nowrap; }
 .paper .bl { display: inline-block; border-bottom: 1px solid #111; height: 1em; vertical-align: baseline; margin-right: 10px; }
 .paper .bl.w2 { width: 12mm; } .paper .bl.w3 { width: 18mm; } .paper .bl.w5 { width: 30mm; }
@@ -202,7 +202,7 @@ button.del:hover { background: #fdeeee; }
 .lbar button, .lbar b { white-space: nowrap; }
 .pg { margin-left: 0; }
 
-.paper .timg { text-align: center; margin: 0 0 4px; }
+.paper .timg { text-align: center; margin: 0 0 2px; }
 .paper .timg img { display: inline-block; width: 120mm; margin: 0; }
 
 #page-bank { padding: 10px; overflow: auto; display: none; flex-direction: column; gap: 10px; }

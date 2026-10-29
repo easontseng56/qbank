@@ -742,7 +742,10 @@ function bindUI() {
     const codes = []; for (const r of basketItems()) for (const c of r.mains) if (!codes.includes(c)) codes.push(c);
     if (!codes.length) return toast('籃子裡還沒有題目');
     codes.sort((a, c) => chapterOrder(a) - chapterOrder(c));
-    b().range = codes.map(chapterName).join('、'); $('#bRange').value = b().range; saveDraft(); };
+    // 只列代號、同冊合併（例：選I 2-4、選II 1-4、2-3），盡量一行放得下
+    const parts = []; let lastBook = '';
+    for (const c of codes) { const [bk, sec] = c.split(' '); parts.push(bk === lastBook ? sec : c); lastBook = bk; }
+    b().range = parts.join('、'); $('#bRange').value = b().range; saveDraft(); };
   $('#bDate').onchange = e => { b().date = e.target.value; saveDraft(); };
   $('#bCls').onchange = e => { b().cls = e.target.value; saveDraft(); };
   $('#bConst').onchange = e => { b().constants = e.target.value.split('\n').map(s => s.trim()).filter(Boolean); saveDraft(); };

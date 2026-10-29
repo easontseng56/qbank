@@ -146,7 +146,10 @@ function examHead(exam, kind) {
   // 浮水印：周逸書法圖（素材/浮水印_周逸.png，使用者 2026-10-28）；卷首標題圖可選
   return (o.watermark ? '<div class="wm"><img data-src="素材/浮水印_周逸.png" alt=""></div>' : '')
     + (o.titleImg ? '<div class="timg"><img data-src="素材/標題_周逸化學小考卷.png" alt="周逸化學小考卷"></div>' : '')
-    + `<div class="title">${esc(exam.title)}</div><p class="subtitle">${esc(exam.subtitle || '')}　${kind}</p>`;
+    // 有標題圖時不印「化學測驗／題目卷」字樣（使用者 2026-10-29）；解答卷仍標「解答卷」以免混淆
+    + (o.titleImg
+      ? ((exam.subtitle || kind !== '題目卷') ? `<p class="subtitle">${esc(exam.subtitle || '')}${kind !== '題目卷' ? '　' + kind : ''}</p>` : '')
+      : `<div class="title">${esc(exam.title)}</div><p class="subtitle">${esc(exam.subtitle || '')}　${kind}</p>`);
 }
 function questionPaperHtml(exam) {
   const secs = examSections(exam), o = exam.opts || {};

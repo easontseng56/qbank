@@ -20,6 +20,11 @@ class DriveFS {
     await new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.onload = res; s.onerror = () => rej(new Error('無法載入 Google 登入元件，請確認有網路')); document.head.appendChild(s); });
   }
   async login(interactive = true) {
+    if (this._login) return this._login;   // 同時多個請求只彈一次登入視窗（手機上多個圖片同時讀取時）
+    this._login = this._loginImpl(interactive).finally(() => { this._login = null; });
+    return this._login;
+  }
+  async _loginImpl(interactive) {
     await this.loadGis();
     if (!this.tokenClient) {
       this.tokenClient = google.accounts.oauth2.initTokenClient({ client_id: this.cfg.clientId, scope: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email', callback: () => { } });

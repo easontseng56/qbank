@@ -37,6 +37,7 @@ const PDF = (() => {
   async function renderPages(paper, opts = {}) {
     const scale = opts.scale || 2;
     const usableW = (PAGE.w - PAGE.ml - PAGE.mr) * MM, usableH = (PAGE.h - PAGE.mt - PAGE.mb) * MM;
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
     paper.classList.add('pdf');          // 單欄排版（.cols 兩欄在切頁時會被切到行中）
     const canvas = await html2canvas(paper, { scale, backgroundColor: null, useCORS: true, logging: false, windowWidth: document.documentElement.clientWidth });
     const cp = cutPoints(paper, scale);

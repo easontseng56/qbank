@@ -355,16 +355,34 @@ async function renderPreview(id) {
 }
 async function imgUrl(path) {
   if (S.imgCache.has(path)) return S.imgCache.get(path);
-  try { const f = await S.fs.readFile(path); const u = URL.createObjectURL(f); S.imgCache.set(path, u); return u; }
-  catch (e) { S.imgCache.set(path, ''); return ''; }
+  // 素材（標題圖、浮水印）網站本身就有，先直接抓，不必經過雲端硬碟
+  if (path.startsWith('素材/') && /^https?:/.test(location.protocol)) {
+    try { const r = await fetch(path); if (r.ok) { const u = URL.createObjectURL(await r.blob()); S.imgCache.set(path, u); return u; } } catch (e) { }
+  }
+  for (let t = 0; t < 2; t++) {   // 失敗不快取，重試一次
+    try { const f = await S.fs.readFile(path); const u = URL.createObjectURL(f); S.imgCache.set(path, u); return u; }
+    catch (e) { console.warn('讀圖失敗', path, e.message); if (/登入|取消|401/.test(e.message)) break; }
+  }
+  return '';
+}
+async function ensureLogin() {   // 雲端硬碟版：授權一小時過期，先在使用者點按時重新登入（手機瀏覽器只允許點按時開登入視窗）
+  if (S.fs && S.fs.kind === 'drive' && !S.fs.loggedIn()) {
+    try { await S.fs.login(true); } catch (e) { toast('Google 登入已過期，請重新登入後再試', 6000); throw e; }
+  }
 }
 async function hydrateImages(root) {
   const imgs = [...root.querySelectorAll('img[data-src]')];
-  await Promise.all(imgs.map(async im => {
-    const u = await imgUrl(im.dataset.src);
-    if (u) { im.src = u; await new Promise(res => { im.onload = im.onerror = res; }); }
-    else { im.replaceWith(Object.assign(document.createElement('p'), { className: 'cap', textContent: '〔圖檔遺失：' + im.dataset.src + '〕' })); }
-  }));
+  if (imgs.length) { try { await ensureLogin(); } catch (e) { } }
+  let i = 0;
+  const worker = async () => {   // 最多 4 張同時讀，避免手機／雲端硬碟一次太多請求失敗
+    while (i < imgs.length) {
+      const im = imgs[i++];
+      const u = await imgUrl(im.dataset.src);
+      if (u) { im.src = u; await new Promise(res => { im.onload = im.onerror = res; }); }
+      else { im.replaceWith(Object.assign(document.createElement('p'), { className: 'cap', textContent: '〔圖檔遺失：' + im.dataset.src + '〕' })); }
+    }
+  };
+  await Promise.all([0, 1, 2, 3].map(worker));
 }
 
 // ---------- 考卷籃 ----------
@@ -508,6 +526,7 @@ function loadExamData(d) {
 async function openPrint(kind) {
   const ex = examObject();
   if (!ex.items.length) return toast('考卷裡還沒有題目');
+  try { await ensureLogin(); } catch (e) { return; }
   S.printKind = kind;
   $('#btnSwitchPrint').textContent = kind === '題目卷' ? '改看解答卷' : '改看題目卷';
   if (kind === '題目卷' && !S.basket.recorded) await recordExam(true);
@@ -782,6 +801,9 @@ function bindUI() {
     const ex = examObject(), kind = S.printKind, stem = (ex.title || '化學測驗').replace(/[\\/:*?"<>|]/g, '_');
     btn.disabled = true; btn.textContent = '產生中…'; toast('正在產生 PDF，請稍候（約 10～30 秒）', 30000);
     try {
+      await ensureLogin();
+      const miss = $$('#printArea .cap').filter(p => p.textContent.startsWith('〔圖檔遺失')).length;
+      if (miss) { toast(`有 ${miss} 張圖讀不到，重新載入圖片中…`, 4000); await openPrint(kind); }
       const wm = ex.opts.watermark ? await imgUrl('素材/浮水印_周逸.png') : '';
       const { blob, pages } = await PDF.make($('#printArea .paper'), { watermark: wm, title: `${ex.title}_${kind}` });
       const fn = `${stem}_${kind}.pdf`;

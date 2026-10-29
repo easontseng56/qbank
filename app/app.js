@@ -706,17 +706,23 @@ function bindUI() {
     else if (e.key === 'ArrowRight') $('#next').click();
   });
   $('#btnGoBasket').onclick = () => showTab('basket');
-  $('#btnRandom').onclick = () => {   // 從目前篩選結果隨機抽 N 題
-    const n = Math.max(1, Number($('#rndN').value) || 0);
+  $('#btnRandom').onclick = () => {   // 從目前篩選結果，依題型各隨機抽 N 題（使用者 2026-10-29：單選／多選／非選分開輸入）
+    const want = { '單選': Number($('#rn單選').value) || 0, '多選': Number($('#rn多選').value) || 0, '非選': Number($('#rn非選').value) || 0 };
+    if (!want['單選'] && !want['多選'] && !want['非選']) return toast('請先填要抽的題數');
     const inB = new Set(S.basket.items);
-    const pool = S.filtered.filter(r => !inB.has(r.id));
-    if (!pool.length) return toast('目前篩選結果沒有可加入的題目（可能都已在考卷籃）');
-    for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
-    const picked = pool.slice(0, n);
-    S.basket.items.push(...picked.map(r => r.id));
+    const got = [], short = [];
+    for (const g of ['單選', '多選', '非選']) {
+      if (!want[g]) continue;
+      const pool = S.filtered.filter(r => r.tg === g && !inB.has(r.id));
+      for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+      const picked = pool.slice(0, want[g]);
+      if (picked.length < want[g]) short.push(`${g}只有 ${picked.length}/${want[g]} 題可抽`);
+      got.push(...picked);
+    }
+    if (!got.length) return toast('目前篩選結果沒有可加入的題目（' + short.join('；') + '）', 5000);
+    S.basket.items.push(...got.map(r => r.id));
     S.basket.recorded = false; saveDraft(); renderBasket(); renderList();
-    const cnt = {}; for (const r of picked) cnt[r.tg] = (cnt[r.tg] || 0) + 1;
-    toast(`已隨機加入 ${picked.length} 題（${Object.entries(cnt).map(([k, v]) => k + ' ' + v).join('、')}）${picked.length < n ? '，候選只有這麼多' : ''}；要指定題型數量可用「組卷輸出」頁的自動抽題`, 5000);
+    toast(`已隨機加入 ${got.length} 題` + (short.length ? '；' + short.join('；') + '，請放寬篩選' : ''), 5000);
   };
   $('#btnGoBrowse').onclick = () => showTab('browse');
   $('#list').addEventListener('dblclick', e => { const row = e.target.closest('.row'); if (row) { toggleBasket(row.dataset.id); if (S.sel === row.dataset.id) renderPreview(S.sel); } });

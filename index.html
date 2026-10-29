@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <title>離線出題系統</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<link rel="stylesheet" href="app/style.css?v=202610290801">
+<link rel="stylesheet" href="app/style.css?v=202610290810">
 </head>
 <body>
 <header id="top">
@@ -41,7 +41,7 @@
       <select id="fSort" title="排序"><option value="yearDesc">年份新→舊</option><option value="yearAsc">年份舊→新</option><option value="diffAsc">難度低→高</option><option value="diffDesc">難度高→低</option><option value="chap">章節順序</option><option value="source">來源</option></select>
       <span class="pg"><button id="prev" title="上一頁（←）">◀</button><span id="pager"></span><button id="next" title="下一頁（→）">▶</button></span>
       <button id="btnAddAll" title="把這一頁列出的題全部加入考卷籃">本頁全加入</button>
-      <span class="rnd" title="從目前篩選出的全部題目中隨機挑 N 題加入考卷籃（已在籃內的不重複）">隨機抽 <input id="rndN" class="num" value="10"> 題<button class="pri" id="btnRandom">抽題加入</button></span>
+      <span class="rnd" title="從目前篩選出的題目中，依題型各隨機挑幾題加入考卷籃（已在籃內的不重複）">隨機抽：單選 <input id="rn單選" class="num" value="10"> 多選 <input id="rn多選" class="num" value="5"> 非選 <input id="rn非選" class="num" value="0"> 題<button class="pri" id="btnRandom">隨機抽題加入</button></span>
     </div>
     <div id="chips" class="chips"></div>
     <div id="list"></div>
@@ -174,11 +174,11 @@
 </div>
 <div id="toast"></div>
 
-<script src="app/config.js?v=202610290801"></script>
-<script src="app/drive.js?v=202610290801"></script>
-<script src="app/chapters.js?v=202610290801"></script>
-<script src="app/data.js?v=202610290801"></script>
-<script src="app/render.js?v=202610290801"></script>
-<script src="app/app.js?v=202610290801"></script>
+<script src="app/config.js?v=202610290810"></script>
+<script src="app/drive.js?v=202610290810"></script>
+<script src="app/chapters.js?v=202610290810"></script>
+<script src="app/data.js?v=202610290810"></script>
+<script src="app/render.js?v=202610290810"></script>
+<script src="app/app.js?v=202610290810"></script>
 </body>
 </html>

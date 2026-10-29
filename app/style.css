@@ -107,7 +107,11 @@ main { flex: 1; min-height: 0; }
 .paper p { margin: 0; }
 .paper .title { font-size: 16pt; text-align: center; margin: 0 0 2px; }
 .paper .subtitle { text-align: center; font-size: 11.5pt; margin-bottom: 8px; }
-.paper .info { text-align: right; margin: 4px 0 8px; }
+.paper .info { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 2px 12px; margin: 4px 0 8px; }
+.paper .info .rng { flex: 1 1 auto; }
+.paper .info .blanks { margin-left: auto; white-space: nowrap; }
+.paper .bl { display: inline-block; border-bottom: 1px solid #111; height: 1em; vertical-align: baseline; margin-right: 10px; }
+.paper .bl.w2 { width: 12mm; } .paper .bl.w3 { width: 18mm; } .paper .bl.w5 { width: 30mm; }
 .paper .const { font-size: 9.5pt; border: 1px solid #999; padding: 4px 8px; margin: 0 0 6px; }
 .paper h2 { font-size: 12pt; font-weight: normal; color: #2E74B5; border-bottom: 1.5px solid #2E74B5; padding-bottom: 2px; margin: 8px 0 4px; break-after: avoid; }
 .paper .sintro { font-size: 9.5pt; color: #444; margin: 0 0 4px; }
@@ -199,7 +203,7 @@ button.del:hover { background: #fdeeee; }
 .pg { margin-left: 0; }
 
 .paper .timg { text-align: center; margin: 0 0 4px; }
-.paper .timg img { display: inline-block; width: 85mm; margin: 0; }
+.paper .timg img { display: inline-block; width: 120mm; margin: 0; }
 
 #page-bank { padding: 10px; overflow: auto; display: none; flex-direction: column; gap: 10px; }
 #page-bank.on { display: flex; }

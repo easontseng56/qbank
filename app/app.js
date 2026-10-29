@@ -19,7 +19,7 @@ const S = {
   facets: { subs: {} }, imgCache: new Map(),
 };
 function newBasket() {
-  return { id: 'E' + Date.now().toString(36), title: '', subtitle: '', cls: '', date: today(), constants: [...S.settings.constants],
+  return { id: 'E' + Date.now().toString(36), title: '', subtitle: '', range: '', cls: '', date: today(), constants: [...S.settings.constants],
     items: [], score: 'auto', manual: { '單選': 4, '多選': 6, '非選': 6 }, opts: { watermark: !!S.settings.watermark, titleImg: S.settings.titleImg !== false, space: false, hideTag: false }, recorded: false };
 }
 
@@ -376,7 +376,7 @@ function basketItems() { return S.basket.items.map(id => S.byId.get(id)).filter(
 function examObject() {
   const b = S.basket, items = [];
   for (const g of ['單選', '多選', '非選']) for (const r of basketItems()) if (r.tg === g) items.push(r);
-  const ex = { title: b.title || '化學測驗', subtitle: b.subtitle, constants: b.constants.filter(Boolean), items, opts: b.opts, score: null, total: 0 };
+  const ex = { title: b.title || '化學測驗', subtitle: b.subtitle, range: b.range || '', constants: b.constants.filter(Boolean), items, opts: b.opts, score: null, total: 0 };
   if (items.length) {
     if (b.score === 'auto') { const a = autoScore(items); ex.score = a.score; ex.total = a.total; }
     else { ex.score = b.manual; const a = autoScore(items); ex.total = a.cnt['單選'] * b.manual['單選'] + a.cnt['多選'] * b.manual['多選'] + a.cnt['非選'] * b.manual['非選']; }
@@ -385,7 +385,7 @@ function examObject() {
 }
 function renderBasket() {
   const b = S.basket; if (!b) return;
-  $('#bTitle').value = b.title; $('#bSub').value = b.subtitle; $('#bDate').value = b.date;
+  $('#bTitle').value = b.title; $('#bSub').value = b.subtitle; $('#bRange').value = b.range || ''; $('#bDate').value = b.date;
   $('#bConst').value = b.constants.join('\n');
   $('#bCls').innerHTML = '<option value="">（未指定班級）</option>' + S.settings.classes.map(c => `<option ${c === b.cls ? 'selected' : ''}>${esc(c)}</option>`).join('')
     + (b.cls && !S.settings.classes.includes(b.cls) ? `<option selected>${esc(b.cls)}</option>` : '');
@@ -475,7 +475,7 @@ function swapItem(id) {
 }
 function basketFile() {
   const b = S.basket, ex = examObject();
-  return { id: b.id, title: b.title, subtitle: b.subtitle, cls: b.cls, date: b.date, constants: b.constants, score: b.score, manual: b.manual, opts: b.opts,
+  return { id: b.id, title: b.title, subtitle: b.subtitle, range: b.range || '', cls: b.cls, date: b.date, constants: b.constants, score: b.score, manual: b.manual, opts: b.opts,
     total: ex.total, recorded: b.recorded, items: ex.items.map(r => ({ id: r.id, path: r.path.replace(/^題庫\//, ''), si: r.si, qi: r.qi, tag: r.tag, type: r.type })) };
 }
 async function saveExam(silent) {
@@ -495,7 +495,7 @@ async function loadExamFile(path) {
 }
 function loadExamData(d) {
   const b = newBasket();
-  Object.assign(b, { id: d.id || b.id, title: d.title || '', subtitle: d.subtitle || '', cls: d.cls || '', date: d.date || today(), constants: d.constants || b.constants,
+  Object.assign(b, { id: d.id || b.id, title: d.title || '', subtitle: d.subtitle || '', range: d.range || '', cls: d.cls || '', date: d.date || today(), constants: d.constants || b.constants,
     score: d.score || 'auto', manual: d.manual || b.manual, opts: Object.assign(b.opts, d.opts || {}), recorded: !!d.recorded });
   b.items = (d.items || []).map(it => it.id || `題庫/${it.path}#${it.si}#${it.qi}`).filter(id => S.byId.has(id));
   if (b.items.length < (d.items || []).length) toast(`有 ${(d.items || []).length - b.items.length} 題在目前題庫找不到，已略過`);
@@ -737,6 +737,12 @@ function bindUI() {
   const b = () => S.basket;
   $('#bTitle').oninput = e => { b().title = e.target.value; saveDraft(); };
   $('#bSub').oninput = e => { b().subtitle = e.target.value; saveDraft(); };
+  $('#bRange').oninput = e => { b().range = e.target.value; saveDraft(); };
+  $('#bRangeAuto').onclick = e => { e.preventDefault();
+    const codes = []; for (const r of basketItems()) for (const c of r.mains) if (!codes.includes(c)) codes.push(c);
+    if (!codes.length) return toast('籃子裡還沒有題目');
+    codes.sort((a, c) => chapterOrder(a) - chapterOrder(c));
+    b().range = codes.map(chapterName).join('、'); $('#bRange').value = b().range; saveDraft(); };
   $('#bDate').onchange = e => { b().date = e.target.value; saveDraft(); };
   $('#bCls').onchange = e => { b().cls = e.target.value; saveDraft(); };
   $('#bConst').onchange = e => { b().constants = e.target.value.split('\n').map(s => s.trim()).filter(Boolean); saveDraft(); };

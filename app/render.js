@@ -154,7 +154,7 @@ function examHead(exam, kind) {
 function questionPaperHtml(exam) {
   const secs = examSections(exam), o = exam.opts || {};
   const out = [examHead(exam, '題目卷'),
-    '<div class="info">' + (exam.range ? `<span class="rng">出題範圍：${esc(exam.range)}</span>` : '')
+    '<div class="info">' + (exam.range && o.showRange !== false ? `<span class="rng">出題範圍：${esc(exam.range)}</span>` : '')
     + '<span class="blanks">班級：<span class="bl w3"></span>座號：<span class="bl w2"></span>姓名：<span class="bl w5"></span>得分：<span class="bl w3"></span></span></div>'];
   if (exam.total) out.push(`<p class="sintro">本卷共 ${exam.total} 分${exam.total > 100 ? '，超過 100 分以 100 分計。' : '。'}</p>`);
   if ((exam.constants || []).length) out.push('<div class="const">' + exam.constants.map(c => `<p>${esc(c)}</p>`).join('') + '</div>');

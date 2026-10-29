@@ -389,7 +389,7 @@ function renderBasket() {
   $('#bConst').value = b.constants.join('\n');
   $('#bCls').innerHTML = '<option value="">（未指定班級）</option>' + S.settings.classes.map(c => `<option ${c === b.cls ? 'selected' : ''}>${esc(c)}</option>`).join('')
     + (b.cls && !S.settings.classes.includes(b.cls) ? `<option selected>${esc(b.cls)}</option>` : '');
-  $('#bWm').checked = !!b.opts.watermark; $('#bTitleImg').checked = !!b.opts.titleImg; $('#bSpace').checked = !!b.opts.space; $('#bHideTag').checked = !!b.opts.hideTag;
+  $('#bWm').checked = !!b.opts.watermark; $('#bTitleImg').checked = !!b.opts.titleImg; $('#bSpace').checked = !!b.opts.space; $('#bHideTag').checked = !!b.opts.hideTag; $('#bShowRange').checked = b.opts.showRange !== false;
   $('#bScoreAuto').checked = b.score === 'auto'; $('#bScoreMan').checked = b.score !== 'auto';
   $('#manualScore').style.display = b.score === 'auto' ? 'none' : '';
   ['單選', '多選', '非選'].forEach(g => { $(`#ms${g}`).value = b.manual[g]; });
@@ -742,10 +742,8 @@ function bindUI() {
     const codes = []; for (const r of basketItems()) for (const c of r.mains) if (!codes.includes(c)) codes.push(c);
     if (!codes.length) return toast('籃子裡還沒有題目');
     codes.sort((a, c) => chapterOrder(a) - chapterOrder(c));
-    // 只列代號、同冊合併（例：選I 2-4、選II 1-4、2-3），盡量一行放得下
-    const parts = []; let lastBook = '';
-    for (const c of codes) { const [bk, sec] = c.split(' '); parts.push(bk === lastBook ? sec : c); lastBook = bk; }
-    b().range = parts.join('、'); $('#bRange').value = b().range; saveDraft(); };
+    b().range = codes.map(chapterName).join('、'); $('#bRange').value = b().range; saveDraft(); };
+  $('#bShowRange').onchange = e => { b().opts.showRange = e.target.checked; saveDraft(); };
   $('#bDate').onchange = e => { b().date = e.target.value; saveDraft(); };
   $('#bCls').onchange = e => { b().cls = e.target.value; saveDraft(); };
   $('#bConst').onchange = e => { b().constants = e.target.value.split('\n').map(s => s.trim()).filter(Boolean); saveDraft(); };

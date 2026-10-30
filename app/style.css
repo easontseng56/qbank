@@ -216,3 +216,45 @@ button.del:hover { background: #fdeeee; }
 .drop.off { opacity: .5; pointer-events: none; }
 
 /* 手機：使用者 2026-10-29 要求不做手機版排版，一律用電腦版（viewport 固定 1200px，可縮放） */
+
+/* ---------- 2026-10-30 介面清爽化（參考龍騰版型）＋ 整卷試題清單 ---------- */
+:root { --bg: #f5f6f8; --line: #e3e6ea; }
+button { border-color: #cfd5dd; border-radius: 6px; padding: 4px 11px; }
+input, select, textarea { border-color: #cfd5dd; border-radius: 6px; padding: 4px 7px; }
+.card { border: none; box-shadow: 0 1px 3px rgba(20, 30, 50, .08); border-radius: 8px; padding: 12px 14px; }
+.card.act { box-shadow: 0 0 0 1.5px var(--b); }
+.card h3 { display: flex; align-items: center; gap: 6px; font-size: 14px; margin: 0 0 8px; }
+.card h3 .step { display: inline-block; width: 18px; height: 18px; line-height: 18px; border-radius: 50%; background: var(--b); color: #fff; font-size: 11px; text-align: center; }
+.card h3 .h3r { margin-left: auto; display: flex; gap: 6px; align-items: center; font-weight: normal; font-size: 12px; }
+.card h3 .h3r button { padding: 2px 9px; }
+.sw { display: inline; color: #555; }
+.grid3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 6px 12px; }
+.grid3 label { font-size: 12px; color: #555; }
+.grid3 input, .grid3 select, .grid3 textarea { margin-top: 2px; color: #222; font-size: 13px; }
+.grid3 textarea { resize: vertical; min-height: 28px; }
+.lnk2 { color: var(--b); font-size: 12px; margin-left: 4px; }
+.opts-col label { display: block; margin: 3px 0; }
+.sel-s { width: auto; display: inline-block; }
+button.wide { display: block; width: 100%; margin: 6px 0; padding: 6px; }
+details.adv { margin: 2px 0 8px; font-size: 12px; }
+details.adv summary { cursor: pointer; color: #666; }
+.sumtab { width: 100%; }
+.sumtab th, .sumtab td { padding: 3px 6px; }
+.sumtab td.lack { color: #c33; font-weight: bold; } .sumtab td.over { color: #c80; } .sumtab td.okc { color: #2a7; }
+.sumtab tr.tot td { border-top: 1.5px solid #bbb; border-bottom: none; font-weight: bold; }
+.opts-row .sp { flex: 1; }
+#bList h4 { margin: 10px 0 4px; font-size: 13px; color: #333; border-left: 3px solid var(--b); padding-left: 6px; }
+.brow { border-color: var(--line); }
+.brow.full { display: block; padding: 8px 12px 6px; }
+.brow.full .bq { font-size: 12.5px; line-height: 1.5; }
+.brow.full .bq .tag { font-size: 11px; }
+.brow.full .bq .opts { margin-left: 1.5em; }
+.brow.full .bans { margin-top: 6px; padding-top: 6px; border-top: 1px dashed #ddd; }
+.bfoot { display: flex; align-items: center; gap: 6px; margin-top: 6px; padding-top: 5px; border-top: 1px solid #f0f0f0; font-size: 11.5px; color: #555; }
+.bfoot .bbtn { margin-left: auto; }
+.bbtn button { padding: 1px 7px; }
+.bbtn button.swap { color: var(--b); border-color: #b9cde5; }
+#top { padding: 8px 14px; }
+.tab.on { border-bottom-width: 2.5px; }
+.tgt { display: flex; align-items: center; gap: 4px 6px; white-space: nowrap; margin: 4px 0; }
+.tgt input.num { width: 3.2em; }

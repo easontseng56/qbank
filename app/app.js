@@ -417,23 +417,37 @@ function renderBasket() {
   for (const r of ex.items) { cnt[r.tg][0]++; cnt[r.tg][1] += r.tg === '非選' ? Math.max(1, (r.q.parts || []).length) : 1; }
   $('#bCount').textContent = `${ex.items.length} 題`;
   $('#bTotal').textContent = ex.items.length ? `總分 ${ex.total}${ex.total > 100 ? '（超過 100 分以 100 分計）' : ''}` : '';
-  $('#bSum').innerHTML = '<tr><th>題型</th><th>題數</th><th>格數</th><th>每格配分</th><th>小計</th></tr>' + ['單選', '多選', '非選'].filter(g => cnt[g][0]).map(g =>
-    `<tr><td>${SEC_NAME[g]}</td><td>${cnt[g][0]}</td><td>${cnt[g][1]}</td><td>${ex.score ? ex.score[g] : ''}</td><td>${ex.score ? ex.score[g] * cnt[g][1] : ''}</td></tr>`).join('');
+  $('#bSum').innerHTML = '<tr><th>題型</th><th>已選</th><th>目標</th><th>格數</th><th>每格</th><th>小計</th></tr>' + ['單選', '多選', '非選'].map(g => {
+    const want = Number($(`#dn${g}`).value) || 0; if (!cnt[g][0] && !want) return '';
+    return `<tr><td>${SEC_NAME[g]}</td><td class="${cnt[g][0] < want ? 'lack' : cnt[g][0] > want ? 'over' : 'okc'}">${cnt[g][0]}</td><td>${want}</td><td>${cnt[g][1]}</td><td>${ex.score ? ex.score[g] : ''}</td><td>${ex.score ? ex.score[g] * cnt[g][1] : ''}</td></tr>`; }).join('')
+    + `<tr class="tot"><td>合計</td><td>${ex.items.length}</td><td></td><td></td><td></td><td>${ex.total}</td></tr>`;
   $('#basketBadge').innerHTML = `<span class="step">2</span>組卷輸出${ex.items.length ? ` <span class="badge">${ex.items.length}</span>` : ''}`;
   $('#bRecorded').textContent = b.recorded ? '✔ 已記錄為出過' : '';
   $('#btnPrintQ').disabled = $('#btnPrintA').disabled = !ex.items.length;
   renderFlow();
+  const full = $('#bFull').checked;
   let h = '';
+  setImgScale(1);
   for (const g of ['單選', '多選', '非選']) {
     const rows = basketItems().filter(r => r.tg === g); if (!rows.length) continue;
     h += `<h4>${SEC_NAME[g]}（${rows.length}）</h4>`;
+    let lastGroup = null;
     rows.forEach((r, i) => {
       const d = diffOf(r);
-      h += `<div class="brow" data-id="${esc(r.id)}"><span class="n">${i + 1}</span><div class="bmain"><span class="tag">${esc(r.tag)}</span> <span class="pill tier">${tierLabel(r.tiers)}</span>${d ? `<span class="pill d${d}">難${d}</span>` : ''} <span class="chapters">${r.mains.join('、')}</span><span class="used">${usedLabel(r)}</span><br><span class="head">${esc(r.head).slice(0, 90)}</span></div>
-        <span class="bbtn"><button data-act="up" title="往上移一題">▲</button><button data-act="down" title="往下移一題">▼</button><button data-act="view" title="到挑題頁看整題">看題目</button><button data-act="swap" title="換成同篩選條件、同難度的另一題">換一題</button><button data-act="del" class="del" title="從考卷移除">✕ 移除</button></span></div>`;
+      const meta = `<span class="pill tier">${tierLabel(r.tiers)}</span>${d ? `<span class="pill d${d}">難${d}</span>` : ''} <span class="chapters">${r.mains.join('、')}</span><span class="used">${usedLabel(r)}</span>`;
+      const btns = `<span class="bbtn"><button data-act="up" title="往上移">▲</button><button data-act="down" title="往下移">▼</button><button data-act="ans" title="顯示／隱藏答案與詳解">答案</button><button data-act="swap" class="swap" title="換成同題型、同章節、相近難度的另一題">抽換試題</button><button data-act="del" class="del" title="從考卷移除">移除</button></span>`;
+      if (full) {
+        const gk = r.q.group ? `${r.path}#${r.si}#${r.q.group.label}` : null;
+        const showGroup = gk && gk !== lastGroup; lastGroup = gk;
+        h += `<div class="brow full" data-id="${esc(r.id)}"><div class="bq paper pv">${showGroup ? groupHtml(r, { caption: false }) : ''}${questionHtml(r, i + 1, { tag: true, caption: false })}<div class="bans" style="display:none">${answerHtml(r, false)}</div></div>
+          <div class="bfoot">${meta}${btns}</div></div>`;
+      } else {
+        h += `<div class="brow" data-id="${esc(r.id)}"><span class="n">${i + 1}</span><div class="bmain"><span class="tag">${esc(r.tag)}</span> ${meta}<br><span class="head">${esc(r.head).slice(0, 90)}</span></div>${btns}</div>`;
+      }
     });
   }
-  $('#bList').innerHTML = h || '<div class="empty"><p>還沒有題目。</p><p>到「<b>1 挑題</b>」按「＋」把題目加進來，或用右邊的「<b>自動抽題</b>」。</p></div>';
+  $('#bList').innerHTML = h || '<div class="empty"><p>還沒有題目。</p><p>到「<b>1 挑題</b>」按「＋」把題目加進來，或在右邊填目標題數後按「<b>自動補題</b>」。</p></div>';
+  if (full) hydrateImages($('#bList'));
   $('#drawFilter').textContent = filterSummary();
   $('#drawDiffBox').style.display = S.diffCount ? '' : 'none';
 }
@@ -468,6 +482,9 @@ function autoDraw() {
   const recent = $('#drawRecent').checked;
   const ratio = S.diffCount ? { easy: Number($('#drEasy').value) || 0, mid: Number($('#drMid').value) || 0, hard: Number($('#drHard').value) || 0 } : null;
   const short = [];
+  const have = {}; for (const r of basketItems()) have[r.tg] = (have[r.tg] || 0) + 1;   // 補到目標：只抽差額
+  for (const g of ['單選', '多選', '非選']) want[g] = Math.max(0, want[g] - (have[g] || 0));
+  if (!want['單選'] && !want['多選'] && !want['非選']) return toast('各題型都已達目標題數');
   for (const g of ['單選', '多選', '非選']) {
     if (!want[g]) continue;
     let picked = [];
@@ -482,13 +499,20 @@ function autoDraw() {
     S.basket.items.push(...picked.map(r => r.id));
   }
   S.basket.recorded = false; saveDraft(); renderBasket(); renderList();
-  toast(short.length ? '候選題不足：' + short.join('；') + '，請放寬篩選條件' : '已抽題加入考卷籃');
+  toast(short.length ? '候選題不足：' + short.join('；') + '，請放寬篩選條件' : '已補足到目標題數');
 }
 function swapItem(id) {
   const r = S.byId.get(id), d = diffOf(r);
-  let pool = candidates(r.tg, d ? [d] : null);
+  const inB = new Set(S.basket.items), exUsed = $('#drawExUsed').checked;
+  const base = x => x.tg === r.tg && x.id !== id && !inB.has(x.id) && !(exUsed && S.used.has(x.id));
+  const sameCh = x => x.mains.some(c => r.mains.includes(c));
+  const near = x => d == null || Math.abs((diffOf(x) ?? 3) - d) <= 1;
+  // 依序：同章節＋相近難度 → 同章節 → 目前篩選＋同難度 → 目前篩選
+  let pool = S.all.filter(x => base(x) && sameCh(x) && near(x));
+  if (!pool.length) pool = S.all.filter(x => base(x) && sameCh(x));
+  if (!pool.length) pool = candidates(r.tg, d ? [d] : null);
   if (!pool.length) pool = candidates(r.tg, null);
-  if (!pool.length) return toast('沒有符合目前篩選條件的其他題目可換');
+  if (!pool.length) return toast('沒有可換的題目');
   const n = weightedPick(pool, 1, $('#drawRecent').checked)[0];
   S.basket.items[S.basket.items.indexOf(id)] = n.id; S.basket.recorded = false; saveDraft(); renderBasket(); renderList();
 }
@@ -778,9 +802,13 @@ function bindUI() {
     const btn = e.target.closest('button'); if (!btn) return;
     const id = btn.closest('.brow').dataset.id, act = btn.dataset.act;
     if (act === 'up') moveItem(id, -1); else if (act === 'down') moveItem(id, 1); else if (act === 'del') toggleBasket(id);
-    else if (act === 'swap') swapItem(id); else if (act === 'view') { showTab('browse'); selectRow(id); }
+    else if (act === 'swap') swapItem(id);
+    else if (act === 'ans') { const row = btn.closest('.brow'); const a = row.querySelector('.bans'); if (a) { a.style.display = a.style.display === 'none' ? '' : 'none'; hydrateImages(a); } else { showTab('browse'); selectRow(id); } }
   });
   $('#btnSortDiff').onclick = sortBasketByDiff;
+  $('#bFull').onchange = () => { localStorage.setItem('bFull', $('#bFull').checked ? '1' : '0'); renderBasket(); };
+  if (localStorage.getItem('bFull') === '0') $('#bFull').checked = false;
+  ['單選', '多選', '非選'].forEach(g => { $(`#dn${g}`).oninput = renderBasket; });
   $('#btnDraw').onclick = autoDraw;
   $('#btnClearBasket').onclick = () => { if (!b().items.length) return toast('目前沒有題目'); if (confirm(`移除考卷裡的 ${b().items.length} 題？考卷名稱等資訊會保留。`)) { b().items = []; b().recorded = false; saveDraft(); renderBasket(); renderList(); } };
   $('#btnNewExam').onclick = () => { if (!b().items.length || confirm('開新考卷會清掉目前的題目與考卷資訊（已儲存、已記錄的不受影響）。繼續？')) { S.basket = newBasket(); saveDraft(); renderBasket(); renderList(); toast('已開新考卷'); } };

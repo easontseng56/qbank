@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <title>離線出題系統</title>
 <meta name="viewport" content="width=1200">
-<link rel="stylesheet" href="app/style.css?v=202610290910">
+<link rel="stylesheet" href="app/style.css?v=202610300153">
 </head>
 <body>
 <header id="top">
@@ -51,69 +51,64 @@
   <div id="flowBar"><span id="flowInfo">考卷籃是空的</span><button class="pri" id="btnGoBasket">下一步：組卷輸出 →</button></div>
 </section>
 
-<!-- 2 組卷輸出 -->
+<!-- 2 組卷輸出（2026-10-30 依龍騰版型整理：左＝考卷資訊＋整卷試題，右＝題數配分／版面／輸出）-->
 <section id="page-basket" class="page">
   <div class="bcol">
     <div class="card">
-      <h3>① 考卷資訊</h3>
-      <div class="grid2">
-        <label>考卷名稱 <span class="hint">（也是儲存的檔名）</span><input id="bTitle" placeholder="例：選II 1-1 氫原子光譜 15 題"></label>
-        <label>副標<input id="bSub" placeholder="例：競賽精選（共 15 題）"></label>
-        <label>出題範圍 <span class="hint">（印在卷首；</span><a href="#" id="bRangeAuto" class="hint">依籃內題目自動填入</a><span class="hint">）</span><input id="bRange" placeholder="例：選II 1-1～1-3"></label>
+      <h3><span class="step">1</span>考卷資訊</h3>
+      <div class="grid3">
+        <label>考卷名稱<input id="bTitle" placeholder="例：選II 1-1 氫原子光譜 15 題"></label>
+        <label>副標<input id="bSub" placeholder="例：競賽精選"></label>
         <label>日期<input type="date" id="bDate"></label>
-        <label>班級／對象 <span class="hint">（在「設定」可新增）</span><select id="bCls"></select></label>
+        <label>出題範圍 <a href="#" id="bRangeAuto" class="lnk2">自動填入</a><input id="bRange" placeholder="例：選II 1-1～1-3"></label>
+        <label>班級／對象<select id="bCls"></select></label>
+        <label>參考數據 <span class="hint">（每行一條）</span><textarea id="bConst" rows="1"></textarea></label>
       </div>
-      <label>參考數據 <span class="hint">（每行一條，印在卷首；留空則不印）</span><textarea id="bConst" rows="2"></textarea></label>
     </div>
     <div class="card">
-      <h3>② 配分與版面</h3>
-      <div class="opts-row">
-        <span>配分：<label><input type="radio" name="sc" id="bScoreAuto"> 自動（總分 100）</label> <label><input type="radio" name="sc" id="bScoreMan"> 手動</label></span>
-        <span id="manualScore">單選每題 <input id="ms單選" class="num"> 多選每題 <input id="ms多選" class="num"> 非選每小題 <input id="ms非選" class="num"></span>
-      </div>
-      <div class="opts-row">
-        <label><input type="checkbox" id="bTitleImg"> 卷首加「周逸化學小考卷」標題圖</label>
-        <label><input type="checkbox" id="bWm"> 加「周逸」浮水印</label>
-        <label><input type="checkbox" id="bSpace"> 非選題留計算空白</label>
-        <label><input type="checkbox" id="bHideTag"> 題目卷不印來源標籤</label>
-        <label><input type="checkbox" id="bShowRange" checked> 卷首印出題範圍</label>
-        <label title="題目圖片整體縮放；圖太大、占太多版面時調小">圖片大小 <select id="bImgScale"><option value="1">100%</option><option value="0.85">85%</option><option value="0.7">70%</option><option value="0.55">55%</option></select></label>
-      </div>
-      <table id="bSum" class="sumtab"></table>
-    </div>
-    <div class="card">
-      <h3>③ 題目清單 <span id="bCount" class="org"></span><span id="bTotal" class="org"></span><span id="bRecorded" class="ok"></span></h3>
-      <div class="opts-row">
-        <button id="btnGoBrowse">＋ 去挑題</button><button id="btnSortDiff" title="依難度由淺到深重新排列（需有難度檔）">由淺到深排序</button>
-      </div>
+      <h3><span class="step">2</span>試題 <span id="bCount" class="org"></span><span id="bTotal" class="org"></span><span id="bRecorded" class="ok"></span>
+        <span class="h3r"><label class="sw"><input type="checkbox" id="bFull" checked> 顯示全文</label><button id="btnSortDiff" title="依難度由淺到深重新排列">由淺到深</button><button id="btnGoBrowse">＋ 去挑題</button></span></h3>
       <div id="bList"></div>
     </div>
   </div>
   <div class="bcol narrow">
-    <div class="card act">
-      <h3>④ 輸出</h3>
-      <button class="pri big" id="btnPrintQ" title="開啟列印預覽，另存為 PDF；同時自動記錄到出題紀錄並儲存考卷">輸出題目卷</button>
-      <button class="pri big" id="btnPrintA" title="開啟列印預覽，另存為 PDF">輸出解答卷</button>
-      <p class="hint">在預覽畫面按「列印／另存 PDF」→ 目的地選「另存為 PDF」→ 取消「頁首及頁尾」、勾「背景圖形」→ 儲存。<br>輸出題目卷時會自動記錄到出題紀錄並儲存考卷。</p>
-      <div class="opts-row">
-        <button id="btnSaveExam" title="存成 考卷\考卷名稱.json，之後可載入再改">儲存考卷</button>
-        <button id="btnLoadExam" title="開啟之前儲存的考卷">載入考卷…</button>
-        <button id="btnRecord" title="不輸出也先記錄為已出題">只記錄不輸出</button>
-      </div>
-      <div id="examFiles" class="files" style="display:none"></div>
-      <div class="opts-row danger">
-        <button id="btnNewExam" title="清空考卷籃、重設名稱與日期，開始下一份">開新考卷</button>
-        <button id="btnClearBasket" title="只移除題目，保留考卷資訊">清空題目</button>
-      </div>
+    <div class="card">
+      <h3>題數與配分</h3>
+      <div class="tgt">目標題數　單選 <input id="dn單選" class="num" value="10"> 多選 <input id="dn多選" class="num" value="5"> 非選 <input id="dn非選" class="num" value="0"></div>
+      <table id="bSum" class="sumtab"></table>
+      <button class="pri wide" id="btnDraw" title="依目前「挑題」頁的篩選條件，把各題型補到目標題數（已選的不動）">自動補題</button>
+      <details class="adv"><summary>補題條件</summary>
+        <p class="hint">候選範圍＝挑題頁目前的篩選：<span id="drawFilter"></span></p>
+        <div id="drawDiffBox" class="opts-row">難易比例　易 <input id="drEasy" class="num" value="3"> 中 <input id="drMid" class="num" value="5"> 難 <input id="drHard" class="num" value="2"></div>
+        <div class="opts-row"><label><input type="checkbox" id="drawRecent" checked> 近年優先</label><label><input type="checkbox" id="drawExUsed" checked> 排除已出過</label></div>
+      </details>
+      <div class="opts-row">配分 <label><input type="radio" name="sc" id="bScoreAuto"> 自動（100 分）</label><label><input type="radio" name="sc" id="bScoreMan"> 手動</label></div>
+      <div id="manualScore" class="opts-row">單選 <input id="ms單選" class="num"> 多選 <input id="ms多選" class="num"> 非選每小題 <input id="ms非選" class="num"> 分</div>
     </div>
     <div class="card">
-      <h3>自動抽題</h3>
-      <p class="hint">候選範圍＝「挑題」頁目前的篩選條件：<br><span id="drawFilter"></span></p>
-      <div class="opts-row">單選 <input id="dn單選" class="num" value="10"> 多選 <input id="dn多選" class="num" value="5"> 非選 <input id="dn非選" class="num" value="0"> 題</div>
-      <div id="drawDiffBox" class="opts-row">難易比例　易(1–2) <input id="drEasy" class="num" value="3"> 中(3) <input id="drMid" class="num" value="5"> 難(4–5) <input id="drHard" class="num" value="2"></div>
-      <div class="opts-row"><label><input type="checkbox" id="drawRecent" checked> 近年優先</label><label><input type="checkbox" id="drawExUsed" checked> 排除已出過</label></div>
-      <button class="pri" id="btnDraw">抽題加入清單</button>
-      <p class="hint">抽完可在題目清單逐題按「換一題」。</p>
+      <h3>版面</h3>
+      <div class="opts-col">
+        <label><input type="checkbox" id="bTitleImg"> 「周逸化學小考卷」標題圖</label>
+        <label><input type="checkbox" id="bWm"> 「周逸」浮水印</label>
+        <label><input type="checkbox" id="bShowRange" checked> 卷首印出題範圍</label>
+        <label><input type="checkbox" id="bHideTag"> 不印來源標籤</label>
+        <label><input type="checkbox" id="bSpace"> 非選題留計算空白</label>
+        <label>圖片大小 <select id="bImgScale" class="sel-s"><option value="1">100%</option><option value="0.85">85%</option><option value="0.7">70%</option><option value="0.55">55%</option></select></label>
+      </div>
+    </div>
+    <div class="card act">
+      <h3>輸出</h3>
+      <button class="pri big" id="btnPrintQ" title="開啟預覽：手機版可分享 PDF，電腦版另存 PDF；同時記錄到出題紀錄並儲存考卷">輸出題目卷</button>
+      <button class="pri big" id="btnPrintA">輸出解答卷</button>
+      <div class="opts-row">
+        <button id="btnSaveExam" title="存成 考卷\考卷名稱.json">儲存</button>
+        <button id="btnLoadExam">載入…</button>
+        <button id="btnRecord" title="不輸出也先記錄為已出題">只記錄</button>
+        <span class="sp"></span>
+        <button id="btnNewExam" title="清空題目與考卷資訊，開始下一份">開新考卷</button>
+        <button id="btnClearBasket" class="del" title="只移除題目">清空題目</button>
+      </div>
+      <div id="examFiles" class="files" style="display:none"></div>
     </div>
   </div>
 </section>
@@ -178,13 +173,13 @@
 </div>
 <div id="toast"></div>
 
-<script src="app/config.js?v=202610290910"></script>
-<script src="app/drive.js?v=202610290910"></script>
-<script src="app/chapters.js?v=202610290910"></script>
-<script src="app/data.js?v=202610290910"></script>
-<script src="app/render.js?v=202610290910"></script>
-<script src="app/html2canvas.min.js?v=202610290910"></script>
-<script src="app/pdf.js?v=202610290910"></script>
-<script src="app/app.js?v=202610290910"></script>
+<script src="app/config.js?v=202610300153"></script>
+<script src="app/drive.js?v=202610300153"></script>
+<script src="app/chapters.js?v=202610300153"></script>
+<script src="app/data.js?v=202610300153"></script>
+<script src="app/render.js?v=202610300153"></script>
+<script src="app/html2canvas.min.js?v=202610300153"></script>
+<script src="app/pdf.js?v=202610300153"></script>
+<script src="app/app.js?v=202610300153"></script>
 </body>
 </html>

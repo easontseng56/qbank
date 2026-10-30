@@ -258,3 +258,34 @@ details.adv summary { cursor: pointer; color: #666; }
 .tab.on { border-bottom-width: 2.5px; }
 .tgt { display: flex; align-items: center; gap: 4px 6px; white-space: nowrap; margin: 4px 0; }
 .tgt input.num { width: 3.2em; }
+
+/* ---------- 2026-10-30 四步驟版型（參考龍騰）---------- */
+#top nav.steps { display: flex; align-items: center; gap: 2px; }
+#top nav.steps .dash { color: #bbb; margin: 0 2px; }
+#top nav.side { display: flex; gap: 2px; }
+#top nav.side .tab { color: #666; font-size: 12px; padding: 5px 8px; }
+.tab.on { color: var(--b); }
+.slotF { display: flex; flex: 0 0 320px; min-height: 0; }
+.slotF #filters { width: 320px; }
+#page-range.on { display: flex; position: relative; }
+#page-range .rcol { flex: 1; min-width: 0; padding: 12px; display: flex; flex-direction: column; gap: 10px; overflow: auto; padding-bottom: 56px; max-width: 760px; }
+#page-browse.on { display: flex; position: relative; }
+#listPane { padding-bottom: 48px; }
+.stepbar { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 10px; padding: 7px 16px; background: #fff; border-top: 1px solid var(--line); z-index: 3; }
+.stepbar span { flex: 1; color: #555; }
+.stepbar button { padding: 5px 16px; }
+.stepbar button.pri { margin-left: auto; }
+#page-basket.on, #page-setup.on { display: flex; position: relative; gap: 10px; padding: 10px; padding-bottom: 54px; overflow: auto; }
+#cardCounts { margin: 0; }
+#page-range #cardCounts { max-width: 560px; }
+/* 第 2 步：全文清單 */
+.row.full { align-items: flex-start; padding: 8px 12px 6px; cursor: default; }
+.row.full .rn { width: 2em; font-weight: bold; color: #555; text-align: right; padding-top: 2px; }
+.row.full .rmain .paper { font-size: 12.5px; line-height: 1.5; }
+.row.full .rmain .paper .opts { margin-left: 1.5em; }
+.row.full .r1 { margin-top: 6px; padding-top: 5px; border-top: 1px solid #f0f0f0; }
+.row.full .r1 .addb { margin-right: 6px; }
+.row.full .bans { margin-top: 6px; padding-top: 6px; border-top: 1px dashed #ddd; }
+.row.inb { border-left: 4px solid var(--o); }
+.lbar .sw { margin-left: 4px; }
+#preview { display: none; }

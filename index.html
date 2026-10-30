@@ -4,25 +4,43 @@
 <meta charset="utf-8">
 <title>離線出題系統</title>
 <meta name="viewport" content="width=1200">
-<link rel="stylesheet" href="app/style.css?v=202610300153">
+<link rel="stylesheet" href="app/style.css?v=202610300213">
 </head>
 <body>
 <header id="top">
-  <span class="logo">周逸化學　離線出題系統</span>
-  <nav>
-    <button class="tab on" data-tab="browse" title="第 1 步：篩選題庫、把題目加入考卷籃"><span class="step">1</span>挑題</button>
-    <button class="tab" data-tab="basket" id="basketBadge" title="第 2 步：排題、配分、輸出題目卷與解答卷"><span class="step">2</span>組卷輸出</button>
-    <button class="tab" data-tab="history" title="每份出過的考卷與題目">出題紀錄</button>
-    <button class="tab" data-tab="bank" title="看各題庫份數，上傳新的 JSON／zip 加入題庫">題庫管理</button>
-    <button class="tab" data-tab="settings" title="班級、預設參考數據、浮水印、字級">設定</button>
+  <span class="logo">周逸化學　出題系統</span>
+  <nav class="steps">
+    <button class="tab on" data-tab="range" title="第 1 步：勾範圍、來源，填各題型題數，自動補題"><span class="step">1</span>範圍與題數</button><span class="dash">—</span>
+    <button class="tab" data-tab="browse" title="第 2 步（可略過）：逐題瀏覽、手動加入"><span class="step">2</span>手動挑題</button><span class="dash">—</span>
+    <button class="tab" data-tab="basket" id="basketBadge" title="第 3 步：整卷預覽，排序、抽換、移除"><span class="step">3</span>預覽試題</button><span class="dash">—</span>
+    <button class="tab" data-tab="setup" title="第 4 步：考卷資訊、版面、輸出"><span class="step">4</span>試卷設定</button>
   </nav>
   <span id="status" class="status"></span>
+  <nav class="side">
+    <button class="tab" data-tab="history">出題紀錄</button>
+    <button class="tab" data-tab="bank">題庫管理</button>
+    <button class="tab" data-tab="settings">設定</button>
+  </nav>
   <span class="topbtn"><button id="btnConnect" title="備用：瀏覽器直接開 index.html 時，先選「離線出題系統」資料夾">選擇資料夾</button><button id="btnScan" title="題庫資料夾有新增或修改 JSON 時按一下">重新讀取題庫</button></span>
 </header>
 
 <main>
-<!-- 1 挑題 -->
-<section id="page-browse" class="page on">
+<!-- 1 範圍與題數 -->
+<section id="page-range" class="page on">
+  <div id="slotF1" class="slotF"></div>
+  <div class="rcol">
+    <div id="slotC1"></div>
+    <div class="card">
+      <h3>目前範圍</h3>
+      <p id="rangeInfo" class="hint"></p>
+    </div>
+  </div>
+  <div class="stepbar"><span id="flowInfo"></span><button data-go="browse">手動挑題 →</button><button class="pri" data-go="basket">預覽試題 →</button></div>
+</section>
+
+<!-- 2 手動挑題 -->
+<section id="page-browse" class="page">
+  <div id="slotF2" class="slotF">
   <aside id="filters">
     <div class="fbox kw"><input id="fKw" placeholder="關鍵字（可多個，空白隔開）" title="搜尋題幹、選項、詳解；多個關鍵字＝同時符合"><button id="btnKw" class="pri">搜尋</button></div>
     <div class="fbox"><div class="fh">章節 <label class="sm" title="勾選後，次要章節含這些章節的題也會列出"><input type="checkbox" id="fSecondary"> 含次要章節</label></div><div id="chapTree"></div></div>
@@ -35,27 +53,56 @@
     <div class="fbox closed"><div class="fh">龍騰光碟原難易度</div><div id="fLtd" class="chk"></div></div>
     <div class="fbox"><label title="出題紀錄裡出過的題不列出"><input type="checkbox" id="fHideUsed"> 隱藏已出過的題</label></div>
   </aside>
+  </div>
   <div id="listPane">
     <div class="lbar">
       <b id="count">0 題</b>
       <select id="fSort" title="排序"><option value="yearDesc">年份新→舊</option><option value="yearAsc">年份舊→新</option><option value="diffAsc">難度低→高</option><option value="diffDesc">難度高→低</option><option value="chap">章節順序</option><option value="source">來源</option></select>
       <span class="pg"><button id="prev" title="上一頁（←）">◀</button><span id="pager"></span><button id="next" title="下一頁（→）">▶</button></span>
-      <button id="btnAddAll" title="把這一頁列出的題全部加入考卷籃">本頁全加入</button>
+      <button id="btnAddAll" title="把這一頁列出的題全部加入">本頁全加入</button>
+      <label class="sw"><input type="checkbox" id="showAns"> 顯示答案解析</label>
+      <label class="sw"><input type="checkbox" id="hideSel"> 過濾已選試題</label>
       <span class="rnd" title="從目前篩選出的題目中，依題型各隨機挑幾題加入考卷籃（已在籃內的不重複）">隨機抽：單選 <input id="rn單選" class="num" value="10"> 多選 <input id="rn多選" class="num" value="5"> 非選 <input id="rn非選" class="num" value="0"> 題<button class="pri" id="btnRandom">隨機抽題加入</button></span>
     </div>
     <div id="chips" class="chips"></div>
     <div id="list"></div>
-    <div class="lfoot hint">單擊看整題；按「＋」加入考卷籃（也可雙擊）。鍵盤：↑↓ 換題、空白鍵 加入／移出。</div>
   </div>
-  <div id="preview"><div class="empty"><p>在左邊清單點一題，這裡會顯示整題、答案與詳解。</p></div></div>
-  <div id="flowBar"><span id="flowInfo">考卷籃是空的</span><button class="pri" id="btnGoBasket">下一步：組卷輸出 →</button></div>
+  <div class="stepbar"><button data-go="range">← 範圍與題數</button><span id="flowInfo2"></span><button class="pri" id="btnGoBasket" data-go="basket">預覽試題 →</button></div>
 </section>
 
-<!-- 2 組卷輸出（2026-10-30 依龍騰版型整理：左＝考卷資訊＋整卷試題，右＝題數配分／版面／輸出）-->
+<!-- 3 預覽試題 -->
 <section id="page-basket" class="page">
   <div class="bcol">
     <div class="card">
-      <h3><span class="step">1</span>考卷資訊</h3>
+      <h3><span class="step">3</span>試題 <span id="bCount" class="org"></span><span id="bTotal" class="org"></span><span id="bRecorded" class="ok"></span>
+        <span class="h3r"><label class="sw"><input type="checkbox" id="bFull" checked> 顯示全文</label><button id="btnSortDiff" title="依難度由淺到深重新排列">由淺到深</button><button id="btnGoBrowse" data-go="browse">＋ 手動挑題</button></span></h3>
+      <div id="bList"></div>
+    </div>
+  </div>
+  <div class="bcol narrow"><div id="slotC3"></div></div>
+  <div class="stepbar"><button data-go="browse">← 手動挑題</button><button class="pri" data-go="setup">試卷設定 →</button></div>
+</section>
+
+<!-- 題數與配分卡片：第 1 步與第 3 步共用，由 JS 搬動 -->
+<div id="cardCounts" class="card">
+  <h3>題型題數</h3>
+  <div class="tgt">目標題數　單選 <input id="dn單選" class="num" value="10"> 多選 <input id="dn多選" class="num" value="5"> 非選 <input id="dn非選" class="num" value="0"></div>
+  <table id="bSum" class="sumtab"></table>
+  <button class="pri wide" id="btnDraw" title="依目前範圍，把各題型補到目標題數（已選的不動）">自動補題</button>
+  <details class="adv"><summary>補題條件</summary>
+    <p class="hint">候選範圍＝目前勾選的範圍：<span id="drawFilter"></span></p>
+    <div id="drawDiffBox" class="opts-row">難易比例　易 <input id="drEasy" class="num" value="3"> 中 <input id="drMid" class="num" value="5"> 難 <input id="drHard" class="num" value="2"></div>
+    <div class="opts-row"><label><input type="checkbox" id="drawRecent" checked> 近年優先</label><label><input type="checkbox" id="drawExUsed" checked> 排除已出過</label></div>
+  </details>
+  <div class="opts-row">配分 <label><input type="radio" name="sc" id="bScoreAuto"> 自動（100 分）</label><label><input type="radio" name="sc" id="bScoreMan"> 手動</label></div>
+  <div id="manualScore" class="opts-row">單選 <input id="ms單選" class="num"> 多選 <input id="ms多選" class="num"> 非選每小題 <input id="ms非選" class="num"> 分</div>
+</div>
+
+<!-- 4 試卷設定 -->
+<section id="page-setup" class="page">
+  <div class="bcol">
+    <div class="card">
+      <h3><span class="step">4</span>考卷資訊</h3>
       <div class="grid3">
         <label>考卷名稱<input id="bTitle" placeholder="例：選II 1-1 氫原子光譜 15 題"></label>
         <label>副標<input id="bSub" placeholder="例：競賽精選"></label>
@@ -66,28 +113,8 @@
       </div>
     </div>
     <div class="card">
-      <h3><span class="step">2</span>試題 <span id="bCount" class="org"></span><span id="bTotal" class="org"></span><span id="bRecorded" class="ok"></span>
-        <span class="h3r"><label class="sw"><input type="checkbox" id="bFull" checked> 顯示全文</label><button id="btnSortDiff" title="依難度由淺到深重新排列">由淺到深</button><button id="btnGoBrowse">＋ 去挑題</button></span></h3>
-      <div id="bList"></div>
-    </div>
-  </div>
-  <div class="bcol narrow">
-    <div class="card">
-      <h3>題數與配分</h3>
-      <div class="tgt">目標題數　單選 <input id="dn單選" class="num" value="10"> 多選 <input id="dn多選" class="num" value="5"> 非選 <input id="dn非選" class="num" value="0"></div>
-      <table id="bSum" class="sumtab"></table>
-      <button class="pri wide" id="btnDraw" title="依目前「挑題」頁的篩選條件，把各題型補到目標題數（已選的不動）">自動補題</button>
-      <details class="adv"><summary>補題條件</summary>
-        <p class="hint">候選範圍＝挑題頁目前的篩選：<span id="drawFilter"></span></p>
-        <div id="drawDiffBox" class="opts-row">難易比例　易 <input id="drEasy" class="num" value="3"> 中 <input id="drMid" class="num" value="5"> 難 <input id="drHard" class="num" value="2"></div>
-        <div class="opts-row"><label><input type="checkbox" id="drawRecent" checked> 近年優先</label><label><input type="checkbox" id="drawExUsed" checked> 排除已出過</label></div>
-      </details>
-      <div class="opts-row">配分 <label><input type="radio" name="sc" id="bScoreAuto"> 自動（100 分）</label><label><input type="radio" name="sc" id="bScoreMan"> 手動</label></div>
-      <div id="manualScore" class="opts-row">單選 <input id="ms單選" class="num"> 多選 <input id="ms多選" class="num"> 非選每小題 <input id="ms非選" class="num"> 分</div>
-    </div>
-    <div class="card">
       <h3>版面</h3>
-      <div class="opts-col">
+      <div class="opts-row">
         <label><input type="checkbox" id="bTitleImg"> 「周逸化學小考卷」標題圖</label>
         <label><input type="checkbox" id="bWm"> 「周逸」浮水印</label>
         <label><input type="checkbox" id="bShowRange" checked> 卷首印出題範圍</label>
@@ -96,21 +123,25 @@
         <label>圖片大小 <select id="bImgScale" class="sel-s"><option value="1">100%</option><option value="0.85">85%</option><option value="0.7">70%</option><option value="0.55">55%</option></select></label>
       </div>
     </div>
+  </div>
+  <div class="bcol narrow">
     <div class="card act">
-      <h3>輸出</h3>
+      <h3>輸出 <span id="bCount2" class="org"></span></h3>
       <button class="pri big" id="btnPrintQ" title="開啟預覽：手機版可分享 PDF，電腦版另存 PDF；同時記錄到出題紀錄並儲存考卷">輸出題目卷</button>
       <button class="pri big" id="btnPrintA">輸出解答卷</button>
       <div class="opts-row">
         <button id="btnSaveExam" title="存成 考卷\考卷名稱.json">儲存</button>
         <button id="btnLoadExam">載入…</button>
         <button id="btnRecord" title="不輸出也先記錄為已出題">只記錄</button>
-        <span class="sp"></span>
+      </div>
+      <div id="examFiles" class="files" style="display:none"></div>
+      <div class="opts-row danger">
         <button id="btnNewExam" title="清空題目與考卷資訊，開始下一份">開新考卷</button>
         <button id="btnClearBasket" class="del" title="只移除題目">清空題目</button>
       </div>
-      <div id="examFiles" class="files" style="display:none"></div>
     </div>
   </div>
+  <div class="stepbar"><button data-go="basket">← 預覽試題</button></div>
 </section>
 
 <!-- 出題紀錄 -->
@@ -145,8 +176,10 @@
     <button class="pri" id="btnSaveSettings">儲存設定</button>
     <h3>使用流程</h3>
     <ol class="hint">
-      <li><b>挑題</b>：左邊勾章節、來源、題型，或打關鍵字；清單按「＋」加入考卷籃。也可到「組卷輸出」用自動抽題。</li>
-      <li><b>組卷輸出</b>：填考卷名稱、班級，調整順序與配分，按「輸出題目卷」「輸出解答卷」另存 PDF。</li>
+      <li><b>①範圍與題數</b>：勾章節、來源，填各題型目標題數，按「自動補題」。</li>
+      <li><b>②手動挑題</b>（可略過）：逐題看全文、按「加入」。</li>
+      <li><b>③預覽試題</b>：整卷排序、抽換、移除。</li>
+      <li><b>④試卷設定</b>：考卷名稱、班級、版面，輸出題目卷／解答卷。</li>
       <li>輸出題目卷時會自動記錄到「出題紀錄」並儲存考卷；之後可「載入考卷」改題再出。</li>
     </ol>
     <h3>其他說明</h3>
@@ -173,13 +206,13 @@
 </div>
 <div id="toast"></div>
 
-<script src="app/config.js?v=202610300153"></script>
-<script src="app/drive.js?v=202610300153"></script>
-<script src="app/chapters.js?v=202610300153"></script>
-<script src="app/data.js?v=202610300153"></script>
-<script src="app/render.js?v=202610300153"></script>
-<script src="app/html2canvas.min.js?v=202610300153"></script>
-<script src="app/pdf.js?v=202610300153"></script>
-<script src="app/app.js?v=202610300153"></script>
+<script src="app/config.js?v=202610300213"></script>
+<script src="app/drive.js?v=202610300213"></script>
+<script src="app/chapters.js?v=202610300213"></script>
+<script src="app/data.js?v=202610300213"></script>
+<script src="app/render.js?v=202610300213"></script>
+<script src="app/html2canvas.min.js?v=202610300213"></script>
+<script src="app/pdf.js?v=202610300213"></script>
+<script src="app/app.js?v=202610300213"></script>
 </body>
 </html>

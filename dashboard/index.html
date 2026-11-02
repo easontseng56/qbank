@@ -37,7 +37,8 @@
   .todo li:last-child{border:0}
   .todo .d{color:var(--mute);text-decoration:line-through}
   .st{font-size:12px;border-radius:6px;padding:1px 7px;background:var(--line)}
-  .st.ok{background:#dcfce7;color:var(--ok)}.st.wait{background:#fef3c7;color:var(--acc)}
+  .st.ok{background:#dcfce7;color:var(--ok)}.st.wait,.st.todo{background:#fef3c7;color:var(--acc)}.st.miss,.st.warn{background:#fee2e2;color:var(--warn)}.st.none{color:var(--mute)}
+  .det{font-size:12px;color:var(--mute)}.det b{color:var(--warn)}.det i{font-style:normal;color:var(--acc)}
   a{color:var(--t1)}
   .wrap{overflow-x:auto}
   @media (max-width:600px){h1{font-size:19px}.tile .v{font-size:22px}}
@@ -55,6 +56,11 @@
     <div class="bar" id="bar"></div>
     <div class="legend"><span><i style="background:var(--t0)"></i>Tier 0 競賽</span><span><i style="background:var(--t1)"></i>Tier 1 模考／歷屆</span><span><i style="background:var(--t2)"></i>Tier 2 段考</span><span><i style="background:var(--t3)"></i>Tier 3 光碟</span></div>
     <div class="wrap"><table id="banks"><thead><tr><th>題庫</th><th>Tier</th><th>範圍</th><th class="num">份數</th><th class="num">題數</th><th>最後更新</th><th>備註</th></tr></thead><tbody></tbody></table></div>
+  </section>
+  <section>
+    <h2>同步狀態 <span class="st" id="syncsum"></span></h2>
+    <div class="sub" style="margin:0 0 8px">正本＝工作區 JSON。<b>落後</b>＝正本有、該處沒有（要補）；<b>待建檔</b>＝網站有原卷、題庫還沒轉錄；<b>多餘</b>＝該處有、正本沒有。</div>
+    <div class="wrap"><table id="sync"><thead><tr><th>題庫</th><th class="num">正本</th><th>講義 zip</th><th>難度.json</th><th>離線出題</th><th>網站</th><th>段考目錄</th><th>缺漏明細</th></tr></thead><tbody></tbody></table></div>
   </section>
   <section>
     <h2>待 Eason 處理</h2>
@@ -94,6 +100,14 @@ fetch('data.json?'+Date.now()).then(r=>r.json()).then(d=>{
   document.getElementById('todo').innerHTML=(d.todo||[]).map(t=>`<li class="${t.done?'d':''}">${t.done?'☑':'☐'} ${esc(t.item)} <span class="st">${esc(t.date)}</span></li>`).join('')||'<li>目前沒有</li>';
   document.querySelector('#pending tbody').innerHTML=(d.pending_sources||[]).map(p=>`<tr><td>${esc(p.found)}</td><td>${esc(p.file)}</td><td>${esc(p.source)}</td><td>${esc(p.type)}</td><td>${esc(p.id)}</td><td><span class="st ${/^完成/.test(p.status)?'ok':'wait'}">${esc(p.status)}</span></td></tr>`).join('')||'<tr><td colspan="6">目前沒有</td></tr>';
   document.querySelector('#runs tbody').innerHTML=(d.runs||[]).map(r=>`<tr><td>${esc(r.date)}</td><td class="num">${n(r.new)}</td><td class="num">${n(r.skipped)}</td><td class="num">${n(r.questions)}</td><td class="num">${n(r.tier0)}</td><td class="num">${n(r.tier1)}</td><td class="num">${n(r.tier2)}</td><td class="num">${n(r.issues)}</td><td>${link(r.pr)}</td><td>${esc(r.note)}</td></tr>`).join('');
+  const sy=d.sync||{banks:[]}; const SL={ok:'一致',todo:'待建檔',warn:'多餘',miss:'落後',none:'—'};
+  const cell=t=>t?`<span class="st ${t.status}" title="${esc(t.note||'')}">${t.count==null?'—':n(t.count)+' '+SL[t.status]}</span>`:'<span class="st none">—</span>';
+  const det=b=>b.targets.flatMap(t=>[...(t.missing.length?[`<b>${esc(t.label)} 落後：</b>${esc(t.missing.slice(0,6).join('、'))}${t.missing.length>6?'…共 '+t.missing.length+' 份':''}`]:[]),
+    ...(t.extra.length?[`<i>${esc(t.label)} ${t.extra_kind==='todo'?'待建檔':'多餘'}：</i>${esc(t.extra.slice(0,6).join('、'))}${t.extra.length>6?'…共 '+t.extra.length+' 份':''}`]:[])]).join('<br>');
+  const T=(b,k)=>b.targets.find(t=>t.target===k);
+  document.getElementById('syncsum').className='st '+(sy.ok?'ok':'miss');
+  document.getElementById('syncsum').textContent=sy.checked?`${sy.checked} 檢查：${sy.ok?'全部一致':'落後 '+n((sy.summary||{}).miss)+' 份'}${(sy.summary||{}).todo?'，待建檔 '+n(sy.summary.todo)+' 份':''}`:'尚未檢查';
+  document.querySelector('#sync tbody').innerHTML=(sy.banks||[]).map(b=>`<tr><td>${esc(b.name)}</td><td class="num">${n(b.master)}</td><td>${cell(T(b,'zip'))}</td><td>${cell(T(b,'diff'))}</td><td>${cell(T(b,'offline'))}</td><td>${cell(T(b,'site'))}</td><td>${cell(T(b,'catalog'))}</td><td class="det">${det(b)}</td></tr>`).join('')||'<tr><td colspan="8">尚未檢查</td></tr>';
   document.querySelector('#sites tbody').innerHTML=(d.sites||[]).map(s=>`<tr><td><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a></td><td>${esc(s.repo)}</td><td>${esc(s.count)}</td><td>${esc(s.updated)}</td><td>${link(s.pr)}</td></tr>`).join('');
 }).catch(e=>{document.getElementById('sub').textContent='讀不到 data.json：'+e});
 </script>

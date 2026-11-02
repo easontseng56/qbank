@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>題庫池儀表板</title>
+<style>
+  :root{--bg:#f6f7f9;--card:#fff;--ink:#1f2328;--mute:#6b7280;--line:#e5e7eb;--acc:#d97706;--ok:#15803d;--warn:#b91c1c;
+        --t0:#7c3aed;--t1:#2563eb;--t2:#0d9488;--t3:#9ca3af}
+  @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f1115;--card:#171a21;--ink:#e6e8ec;--mute:#9aa3b2;--line:#2a2f3a;--acc:#f59e0b}}
+  :root[data-theme=dark]{--bg:#0f1115;--card:#171a21;--ink:#e6e8ec;--mute:#9aa3b2;--line:#2a2f3a;--acc:#f59e0b}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,"Noto Sans TC","Microsoft JhengHei",sans-serif}
+  header{padding:20px 16px 8px;max-width:1100px;margin:0 auto}
+  h1{margin:0;font-size:22px}
+  .sub{color:var(--mute);font-size:13px;margin-top:4px}
+  main{max-width:1100px;margin:0 auto;padding:0 16px 40px}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:14px 0}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .tile .k{color:var(--mute);font-size:12px}
+  .tile .v{font-size:26px;font-weight:700;line-height:1.2}
+  .tile .v small{font-size:13px;font-weight:400;color:var(--mute)}
+  section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:14px 0}
+  h2{font-size:16px;margin:0 0 10px}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--mute);font-weight:600;font-size:12px}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  .tier{display:inline-block;min-width:22px;text-align:center;border-radius:6px;color:#fff;font-size:12px;padding:0 6px}
+  .t0{background:var(--t0)}.t1{background:var(--t1)}.t2{background:var(--t2)}.t3{background:var(--t3)}
+  .bar{height:10px;background:var(--line);border-radius:5px;overflow:hidden;display:flex;margin:8px 0 4px}
+  .bar span{display:block;height:100%}
+  .legend{font-size:12px;color:var(--mute);display:flex;gap:14px;flex-wrap:wrap}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:middle}
+  .todo li{list-style:none;padding:4px 0;border-bottom:1px solid var(--line)}
+  .todo li:last-child{border:0}
+  .todo .d{color:var(--mute);text-decoration:line-through}
+  .st{font-size:12px;border-radius:6px;padding:1px 7px;background:var(--line)}
+  .st.ok{background:#dcfce7;color:var(--ok)}.st.wait{background:#fef3c7;color:var(--acc)}
+  a{color:var(--t1)}
+  .wrap{overflow-x:auto}
+  @media (max-width:600px){h1{font-size:19px}.tile .v{font-size:22px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>題庫池儀表板</h1>
+  <div class="sub" id="sub">載入中…</div>
+</header>
+<main>
+  <div class="tiles" id="tiles"></div>
+  <section>
+    <h2>題庫總覽</h2>
+    <div class="bar" id="bar"></div>
+    <div class="legend"><span><i style="background:var(--t0)"></i>Tier 0 競賽</span><span><i style="background:var(--t1)"></i>Tier 1 模考／歷屆</span><span><i style="background:var(--t2)"></i>Tier 2 段考</span><span><i style="background:var(--t3)"></i>Tier 3 光碟</span></div>
+    <div class="wrap"><table id="banks"><thead><tr><th>題庫</th><th>Tier</th><th>範圍</th><th class="num">份數</th><th class="num">題數</th><th>最後更新</th><th>備註</th></tr></thead><tbody></tbody></table></div>
+  </section>
+  <section>
+    <h2>待 Eason 處理</h2>
+    <ul class="todo" id="todo" style="padding:0;margin:0"></ul>
+  </section>
+  <section>
+    <h2>來源待處理</h2>
+    <div class="wrap"><table id="pending"><thead><tr><th>發現</th><th>檔名</th><th>來源</th><th>類型</th><th>卷 id</th><th>狀態</th></tr></thead><tbody></tbody></table></div>
+  </section>
+  <section>
+    <h2>每週執行結果</h2>
+    <div class="wrap"><table id="runs"><thead><tr><th>日期</th><th class="num">新卷</th><th class="num">跳過</th><th class="num">新題</th><th class="num">T0</th><th class="num">T1</th><th class="num">T2</th><th class="num">疑點</th><th>PR</th><th>說明</th></tr></thead><tbody></tbody></table></div>
+  </section>
+  <section>
+    <h2>網站份數</h2>
+    <div class="wrap"><table id="sites"><thead><tr><th>網站</th><th>repo</th><th>份數</th><th>最後更新</th><th>最近 PR</th></tr></thead><tbody></tbody></table></div>
+  </section>
+</main>
+<script>
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const n=v=>Number(v||0).toLocaleString('zh-TW');
+const link=u=>u?`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:\/\/(github\.com\/)?/,''))}</a>`:'';
+fetch('data.json?'+Date.now()).then(r=>r.json()).then(d=>{
+  const banks=d.banks||[];
+  const P=banks.reduce((a,b)=>a+(+b.papers||0),0), Q=banks.reduce((a,b)=>a+(+b.questions||0),0);
+  const byT=[0,1,2,3].map(t=>banks.filter(b=>+b.tier===t).reduce((a,b)=>a+(+b.questions||0),0));
+  const todoOpen=(d.todo||[]).filter(t=>!t.done).length;
+  const last=(d.runs||[])[0]||{};
+  document.getElementById('sub').innerHTML=`資料更新 ${esc(d.updated)}｜${esc(d.schedule||'')}｜<a href="${esc(d.control_sheet)}" target="_blank" rel="noopener">控制板試算表</a>`;
+  document.getElementById('tiles').innerHTML=[
+    ['題庫總題數',n(Q)],['卷數',n(P)],['Tier 0 競賽',n(byT[0])],['Tier 1 模考歷屆',n(byT[1])],['Tier 2 段考',n(byT[2])],['Tier 3 光碟',n(byT[3])],
+    ['待 Eason 處理',todoOpen+' <small>件</small>'],['上次執行新卷',n(last.new)+' <small>份／'+n(last.questions)+' 題</small>']
+  ].map(([k,v])=>`<div class="tile"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
+  document.getElementById('bar').innerHTML=byT.map((q,t)=>`<span class="t${t}" style="width:${Q?100*q/Q:0}%;background:var(--t${t})" title="Tier ${t}：${n(q)} 題"></span>`).join('');
+  document.querySelector('#banks tbody').innerHTML=banks.map(b=>`<tr><td>${esc(b.name)}</td><td><span class="tier t${b.tier}">${b.tier}</span></td><td>${esc(b.range)}</td><td class="num">${n(b.papers)}</td><td class="num">${n(b.questions)}</td><td>${esc(b.updated)}</td><td>${esc(b.note)}</td></tr>`).join('')
+    +`<tr><th>合計</th><th></th><th></th><th class="num">${n(P)}</th><th class="num">${n(Q)}</th><th></th><th></th></tr>`;
+  document.getElementById('todo').innerHTML=(d.todo||[]).map(t=>`<li class="${t.done?'d':''}">${t.done?'☑':'☐'} ${esc(t.item)} <span class="st">${esc(t.date)}</span></li>`).join('')||'<li>目前沒有</li>';
+  document.querySelector('#pending tbody').innerHTML=(d.pending_sources||[]).map(p=>`<tr><td>${esc(p.found)}</td><td>${esc(p.file)}</td><td>${esc(p.source)}</td><td>${esc(p.type)}</td><td>${esc(p.id)}</td><td><span class="st ${/^完成/.test(p.status)?'ok':'wait'}">${esc(p.status)}</span></td></tr>`).join('')||'<tr><td colspan="6">目前沒有</td></tr>';
+  document.querySelector('#runs tbody').innerHTML=(d.runs||[]).map(r=>`<tr><td>${esc(r.date)}</td><td class="num">${n(r.new)}</td><td class="num">${n(r.skipped)}</td><td class="num">${n(r.questions)}</td><td class="num">${n(r.tier0)}</td><td class="num">${n(r.tier1)}</td><td class="num">${n(r.tier2)}</td><td class="num">${n(r.issues)}</td><td>${link(r.pr)}</td><td>${esc(r.note)}</td></tr>`).join('');
+  document.querySelector('#sites tbody').innerHTML=(d.sites||[]).map(s=>`<tr><td><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a></td><td>${esc(s.repo)}</td><td>${esc(s.count)}</td><td>${esc(s.updated)}</td><td>${link(s.pr)}</td></tr>`).join('');
+}).catch(e=>{document.getElementById('sub').textContent='讀不到 data.json：'+e});
+</script>
+</body>
+</html>

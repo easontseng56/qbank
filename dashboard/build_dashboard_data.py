@@ -40,4 +40,6 @@ for r in S.get('待Eason處理', [])[2:]:
     if not cell(r, 1): continue
     out['todo'].append({'date': cell(r,0), 'item': cell(r,1), 'done': cell(r,4).upper() == 'TRUE'})
 out['todo'].sort(key=lambda t: t['done'])
+if '--sync' in sys.argv:
+    out['sync'] = json.load(open(sys.argv[sys.argv.index('--sync') + 1], encoding='utf-8'))
 json.dump(out, sys.stdout, ensure_ascii=False, indent=2)

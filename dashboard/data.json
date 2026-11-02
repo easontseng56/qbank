@@ -1,0 +1,41 @@
+{
+  "updated": "2026-11-02",
+  "schedule": "每週一 08:40（台北）排程「每週題庫池檢查」",
+  "control_sheet": "https://docs.google.com/spreadsheets/d/1V8LvhY-eh66mBTe7kp2eSXXIqs-_OUSxHXf498O_P9c/edit",
+  "banks": [
+    {"name": "化學奧林匹亞初選", "tier": 0, "range": "2012–2026", "papers": 15, "questions": 682, "updated": "2026-10-22", "note": ""},
+    {"name": "學科能力競賽地區複賽", "tier": 0, "range": "2003–2025", "papers": 177, "questions": 4630, "updated": "2026-10-22", "note": "理論卷"},
+    {"name": "清華盃初賽", "tier": 0, "range": "2004–2025", "papers": 22, "questions": 1580, "updated": "2026-10-22", "note": ""},
+    {"name": "大學普化原創", "tier": 0, "range": "第 2～21 章", "papers": 20, "questions": 2000, "updated": "2026-11-01", "note": "自編，全超範圍"},
+    {"name": "指考分科模考", "tier": 1, "range": "99–114 學年", "papers": 99, "questions": 2726, "updated": "2026-10-22", "note": "0+1 152"},
+    {"name": "指考／分科歷屆", "tier": 1, "range": "65–114 學年", "papers": 48, "questions": 1397, "updated": "2026-10-22", "note": "0+1 119"},
+    {"name": "學測歷屆", "tier": 1, "range": "83–115 學年", "papers": 34, "questions": 580, "updated": "2026-10-22", "note": "0+1 15"},
+    {"name": "學測模考", "tier": 1, "range": "99–115 學年", "papers": 211, "questions": 3578, "updated": "2026-11-02", "note": "0+1 36"},
+    {"name": "段考", "tier": 2, "range": "112–115 學年", "papers": 246, "questions": 6712, "updated": "2026-11-02", "note": "1+2 301、0+1+2 43；只出 JSON"},
+    {"name": "龍騰題庫光碟", "tier": 3, "range": "—", "papers": 229, "questions": 15387, "updated": "2026-10-25", "note": "只出 JSON"}
+  ],
+  "pending_sources": [
+    {"found": "2026-11-02", "file": "115高二第一學期第一次段考-化學(光復).pdf", "source": "山熊 段考考古題蒐集", "type": "段考", "id": "115光復高二上第一次", "status": "已建檔（待 RC 上 G 槽、網站 PR）"},
+    {"found": "2026-11-02", "file": "115E3自然-題目.pdf／解答.pdf", "source": "題庫池\\02_原卷（學測模考）", "type": "模考", "id": "115全模E3", "status": "完成"}
+  ],
+  "runs": [
+    {"date": "2026-11-02（驗收試跑）", "new": 2, "skipped": 0, "questions": 32, "tier0": 0, "tier1": 14, "tier2": 18, "issues": 3, "pr": "", "note": "模考 115全模E3 14 題；段考 115光復高二上第一次 18 題；疑點：光復單選7 推定 1 atm、綜合題4 採 792 g、綜合題2 圖殘留學生筆跡"}
+  ],
+  "sites": [
+    {"name": "段考卷網站", "url": "https://easontseng56.github.io/chem-exam/", "repo": "easontseng56/chem-exam", "count": "251 份", "updated": "", "pr": ""},
+    {"name": "模考全科", "url": "https://easontseng56.github.io/chem-exam/mock/", "repo": "easontseng56/chem-exam", "count": "學測 212 回", "updated": "2026-11-02", "pr": ""},
+    {"name": "化奧網站", "url": "https://easontseng56.github.io/chem-olympiad/", "repo": "easontseng56/chem-olympiad", "count": "15 屆", "updated": "2026-10-19", "pr": ""},
+    {"name": "離線題庫", "url": "https://easontseng56.github.io/qbank/", "repo": "easontseng56/qbank", "count": "", "updated": "2026-11-02", "pr": "https://github.com/easontseng56/qbank/pull/1"}
+  ],
+  "todo": [
+    {"date": "2026-11-02", "item": "試跑卷上 G 槽：115高二上一段 光復（允許 Remote Control）", "done": false},
+    {"date": "2026-11-02", "item": "確認光復題目 PDF 已自動公開（Apps Script 每小時觸發）", "done": false},
+    {"date": "2026-11-02", "item": "關掉段考卷專案的舊排程「每週檢查新化學段考卷」", "done": false},
+    {"date": "2026-11-02", "item": "講義專案的題庫路徑改成 題庫池\\06_打包\\講義專案用題庫", "done": false},
+    {"date": "2026-11-02", "item": "刪除 題庫池\\06_打包\\JSON打包_舊版20261014_可刪", "done": false},
+    {"date": "2026-11-02", "item": "到段考卷專案貼移交文字", "done": true},
+    {"date": "2026-11-02", "item": "建 題庫池 並搬舊資料夾", "done": true},
+    {"date": "2026-11-02", "item": "核准 claude共用資料夾 讓我讀寫", "done": true},
+    {"date": "2026-11-02", "item": "qbank 題庫路徑改成 題庫池\\06_打包\\離線出題系統（PR #1）", "done": true}
+  ]
+}

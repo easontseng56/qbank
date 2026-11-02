@@ -31,15 +31,6 @@
    "note": ""
   },
   {
-   "name": "大學普化原創",
-   "tier": 0,
-   "range": "第 2～21 章",
-   "papers": 20,
-   "questions": 2000,
-   "updated": "2026-11-01",
-   "note": "自編，全超範圍"
-  },
-  {
    "name": "指考分科模考",
    "tier": 1,
    "range": "99–114 學年",
@@ -717,42 +708,6 @@
       "status": "ok",
       "note": "",
       "extra_kind": "warn"
-     }
-    ],
-    "status": "ok"
-   },
-   {
-    "name": "大學普化原創",
-    "tier": 0,
-    "master": 20,
-    "targets": [
-     {
-      "target": "zip",
-      "label": "講義專案用題庫 zip",
-      "count": 20,
-      "missing": [],
-      "extra": [],
-      "status": "ok",
-      "note": "",
-      "extra_kind": "warn"
-     },
-     {
-      "target": "diff",
-      "label": "難度.json",
-      "count": null,
-      "missing": [],
-      "extra": [],
-      "status": "none",
-      "note": "尚未收錄此題庫"
-     },
-     {
-      "target": "offline",
-      "label": "離線出題題庫",
-      "count": null,
-      "missing": [],
-      "extra": [],
-      "status": "none",
-      "note": "尚未收錄此題庫"
      }
     ],
     "status": "ok"

@@ -30,7 +30,6 @@ BANKS = [
     dict(name="清華盃初賽",      tier=0, glob="清華盃初賽/_工具/json/*/*.json",        folder="Tier0_清華盃初賽",    site=None),
     dict(name="學科能力競賽地區複賽", tier=0, glob="學科能力競賽地區複賽/_工具/json/*/*.json", folder="Tier0_學科能力競賽地區複賽", site=None),
     dict(name="龍騰題庫光碟",    tier=3, glob="題庫光碟_龍騰/json/*.json",             folder="Tier3_龍騰題庫光碟",  site=None),
-    dict(name="大學普化原創",    tier=0, glob="大學普化原創/json/*.json",               folder="Tier0_大學普化原創",  site=None),
 ]
 SKIP_STEMS = {"圖片尺寸", "說明", "desktop"}
 

@@ -52,7 +52,7 @@
 </header>
 <div class="rooms">
   <div class="room" id="pub" style="--c:#4ade80"><h2>公領域 <span class="tag">公開</span></h2><div class="note">任何人都能看</div><svg viewBox="230 -10 540 450"></svg><div class="tip"></div><div class="list"></div></div>
-  <div class="room" id="pri" style="--c:#f87171"><h2>私領域 <span class="tag">🔒 不公開</span></h2><div class="note">老師內部用，連結需要授權帳號才讀得到</div><svg viewBox="170 -10 660 520"></svg><div class="tip"></div><div class="list"></div></div>
+  <div class="room" id="pri" style="--c:#f87171"><h2>私領域 <span class="tag">🔒 不公開</span></h2><div class="note">老師內部用，連結需要授權帳號才讀得到</div><svg viewBox="110 -10 780 590"></svg><div class="tip"></div><div class="list"></div></div>
 </div>
 <footer>周逸化學專用</footer>
 <script>
@@ -64,15 +64,17 @@ const ROOMS = {
     {name:"新竹區高中化學段考題庫", desc:"竹中化學段考考古題，各校段考卷下載",
      url:"https://easontseng56.github.io/chem-exam/", color:"#2dd4bf", gx:6.2, gy:1, prop:"shelf"},
   ]},
-  pri: { N:15, sign:"私領域", sub:"PRIVATE", accent:"#f87171", sites:[
+  pri: { N:18, sign:"私領域", sub:"PRIVATE", accent:"#f87171", sites:[
     {name:"模考內訓網站", desc:"學測、分科模考原卷（內部使用）",
      url:"https://easontseng56.github.io/private-mock/", color:"#60a5fa", gx:1, gy:1, prop:"board"},
     {name:"離線出題系統", desc:"依章節、Tier、難度選題出卷（需 Google 登入）",
-     url:"https://easontseng56.github.io/qbank/", color:"#fbbf24", gx:9, gy:1, prop:"printer"},
+     url:"https://easontseng56.github.io/qbank/", color:"#fbbf24", gx:6.6, gy:1, prop:"printer"},
+    {name:"題庫勘誤系統", desc:"回報題目、答案、詳解錯誤，追蹤處理進度（Google 登入）",
+     url:"https://easontseng56.github.io/qbank/errata/", color:"#fb923c", gx:12.2, gy:1, prop:"folder"},
     {name:"段考卷目錄試算表", desc:"老師內部用，只限受邀者",
-     url:"https://docs.google.com/spreadsheets/d/1TeFXDjy5hkq85gOTNsOu_J8dZ8P5HBbti2NjygFK86c/edit", color:"#34d399", gx:1, gy:8, prop:"sheet"},
+     url:"https://docs.google.com/spreadsheets/d/1TeFXDjy5hkq85gOTNsOu_J8dZ8P5HBbti2NjygFK86c/edit", color:"#34d399", gx:1, gy:9, prop:"sheet"},
     {name:"題庫池控制台", desc:"上傳考卷到 01_待處理、同步狀態、儀表板（Google 登入）",
-     url:"https://easontseng56.github.io/qbank/console/", color:"#f87171", gx:9, gy:8, prop:"console"},
+     url:"https://easontseng56.github.io/qbank/console/", color:"#f87171", gx:12.2, gy:9, prop:"console"},
   ]},
 };
 /* ============================================ */
@@ -314,10 +316,10 @@ function buildRoom(key){
     sofa(lounge,3.6,7.4,3.4);coffeeTable(lounge,5.2,9.2);
     plant(lounge,N-1.2,.4,true);plant(lounge,.4,N-1.2,true);plant(lounge,9.5,9.6);waterCooler(lounge,N-1,5.5);
   }else{
-    roundTable(lounge,6.2,2.8);
-    const q=el("g",{transform:floorT},lounge);el("ellipse",{cx:8.2,cy:11.6,rx:2.4,ry:1.6,fill:"#f87171",opacity:.2},q);
-    sofa(lounge,6.6,10.8,3.2);
-    plant(lounge,N-1.2,.4,true);plant(lounge,.4,N-1.2,true);plant(lounge,N-1.2,N-1.2,true);plant(lounge,6.6,7.4);waterCooler(lounge,N-1,4.0);
+    roundTable(lounge,7.9,8.4);
+    const q=el("g",{transform:floorT},lounge);el("ellipse",{cx:8.9,cy:14.2,rx:2.4,ry:1.6,fill:"#f87171",opacity:.2},q);
+    sofa(lounge,7.3,13.4,3.2);
+    plant(lounge,N-1.2,.4,true);plant(lounge,.4,N-1.2,true);plant(lounge,N-1.2,N-1.2,true);plant(lounge,6.9,11.6);waterCooler(lounge,N-1,15.4);
   }
   [[N*.3,N*.3],[N*.7,N*.3],[N*.3,N*.7],[N*.7,N*.7]].forEach(([x,y])=>{const c=P(x,y,0);el("ellipse",{cx:c[0],cy:c[1],rx:70,ry:38,fill:"#fff7ed",opacity:.06})});
   svg.appendChild(badges);

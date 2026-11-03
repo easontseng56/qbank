@@ -24,6 +24,14 @@
   .zone:hover .lift,.zone:focus .lift{transform:translateY(-5px)}
   .zone:hover .rug,.zone:focus .rug{filter:brightness(1.3) drop-shadow(0 0 10px var(--glow))}
   .zone:focus{outline:none}
+  .zone .hit{fill:transparent;stroke:none}
+  .zone .ring{fill:none;stroke:var(--glow);stroke-width:.14;opacity:.55;animation:pulse 2.2s ease-in-out infinite}
+  .zone:hover .ring,.zone:focus .ring{opacity:0;animation:none}
+  @keyframes pulse{0%,100%{opacity:.25}50%{opacity:.8}}
+  .badge{opacity:0;transition:opacity .15s,transform .15s;transform:translateY(4px);cursor:pointer}
+  .badge.hot,.badge:hover,.badge:focus{opacity:1;transform:translateY(0)}
+  .badge text{font-weight:800;pointer-events:none}
+  @media (hover:none){.badge{opacity:1;transform:none}.zone .ring{animation:none;opacity:.5}}
   .tip{position:absolute;pointer-events:none;background:#020617f2;border:1px solid #334155;color:#fff;border-radius:8px;padding:6px 10px;font-size:13px;opacity:0;transition:opacity .12s;max-width:260px;z-index:5}
   .list{margin:6px 8px 10px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
   .list a{display:block;background:var(--card);border:1px solid var(--line);border-left:5px solid var(--c);border-radius:10px;padding:8px 12px;color:var(--ink);text-decoration:none}
@@ -40,7 +48,7 @@
 <header>
   <a class="guide" href="../guide/">📖 使用說明<small>第一次來先看這裡</small></a>
   <h1>周逸化學工作室</h1>
-  <div class="sub">左邊是公領域（公開網站），右邊是私領域（內部用，需授權帳號）。點工作區就會在新分頁開啟。</div>
+  <div class="sub">左邊是公領域（公開網站），右邊是私領域（內部用，需授權帳號）。發光框起來的工作區整塊都可以點，會在新分頁開啟。</div>
 </header>
 <div class="rooms">
   <div class="room" id="pub" style="--c:#4ade80"><h2>公領域 <span class="tag">公開</span></h2><div class="note">任何人都能看</div><svg viewBox="230 -10 540 450"></svg><div class="tip"></div><div class="list"></div></div>
@@ -275,16 +283,29 @@ function buildRoom(key){
       box(g,x+3.3,y+2.9,0,1.1,.8,.9,"#64748b",{T:"#94a3b8"});box(g,x+3.4,y+3.0,.9,.9,.6,.25,"#fdba74",{T:"#fed7aa"});box(g,x+3.45,y+3.05,1.15,.8,.5,.06,"#fff");box(g,x+3.5,y+3.1,1.21,.7,.4,.06,"#f8fafc")},
     folder(g,x,y,c){archive(g,x+.2,y+.1,3.6,c);desk(g,x+.6,y+2.2,2.6,1.3);monitor(g,x+1.0,y+2.3,1.12,c);keyboard(g,x+1.3,y+3.05,1.12);chair(g,x+1.5,y+3.7);box(g,x+2.8,y+2.4,1.12,.5,.6,.5,"#fdba74");box(g,x+2.8,y+2.4,1.62,.5,.6,.12,"#fed7aa")},
   };
-  const tip=root.querySelector(".tip"), R=4.8;
+  const tip=root.querySelector(".tip"), R=4.8, badges=document.createElementNS(NS,"g");
   [...cfg.sites].sort((a,b)=>(a.gx+a.gy)-(b.gx+b.gy)).forEach(s=>{
     const a=el("a",{href:s.url,target:"_blank",rel:"noopener",class:"zone",tabindex:0,style:`--glow:${s.color}`});
     el("title",{},a).textContent=s.name;
-    rug(a,s.gx,s.gy,R,R+.7,s.color,s.name);
+    const x=s.gx,y=s.gy,w=R,d=R+.7;
+    // 整塊可點：地毯＋後方到 3 格高的空間
+    el("polygon",{class:"hit",points:pts([P(x,y+d,0),P(x+w,y+d,0),P(x+w,y,0),P(x+w,y,3.2),P(x,y,3.2),P(x,y+d,3.2)])},a);
+    rug(a,x,y,w,d,s.color,s.name);
+    const rq=el("g",{transform:floorT},a);el("rect",{class:"ring",x:x-.15,y:y-.15,width:w+.3,height:d+.3,rx:.2},rq);
     const lift=el("g",{class:"lift"},a);
-    PROPS[s.prop](lift,s.gx,s.gy,s.color);
-    a.addEventListener("mousemove",e=>{const r=root.getBoundingClientRect();tip.innerHTML=`<b>${s.name}</b><br>${s.desc}`;
-      tip.style.left=(e.clientX-r.left+14)+"px";tip.style.top=(e.clientY-r.top+14)+"px";tip.style.opacity=1});
-    a.addEventListener("mouseleave",()=>tip.style.opacity=0);
+    PROPS[s.prop](lift,x,y,s.color);
+    // 名牌：浮在工作區上方，滑過才出現（觸控裝置常駐）
+    const c=P(x+w/2,y+d/2,4.4), bw=s.name.length*14+84;
+    const b=el("a",{href:s.url,target:"_blank",rel:"noopener",class:"badge",tabindex:-1},badges);
+    el("line",{x1:c[0],y1:c[1]+14,x2:c[0],y2:c[1]+38,stroke:s.color,"stroke-width":2,"stroke-dasharray":"3 3"},b);
+    el("rect",{x:c[0]-bw/2,y:c[1]-15,width:bw,height:30,rx:15,fill:"#0b1220",stroke:s.color,"stroke-width":2},b);
+    const t=el("text",{x:c[0]-22,y:c[1]+5,"text-anchor":"middle",fill:"#fff","font-size":14},b);t.textContent=s.name;
+    const t2=el("text",{x:c[0]+bw/2-30,y:c[1]+5,"text-anchor":"middle",fill:s.color,"font-size":13},b);t2.textContent="開啟 ↗";
+    const show=e=>{b.classList.add("hot");const r=root.getBoundingClientRect();tip.innerHTML=`<b>${s.name}</b><br>${s.desc}<br><span style="color:#94a3b8">點一下開啟</span>`;
+      tip.style.left=(e.clientX-r.left+14)+"px";tip.style.top=(e.clientY-r.top+14)+"px";tip.style.opacity=1};
+    const hide=()=>{b.classList.remove("hot");tip.style.opacity=0};
+    a.addEventListener("mousemove",show);a.addEventListener("mouseleave",hide);a.addEventListener("focus",()=>b.classList.add("hot"));a.addEventListener("blur",hide);
+    b.addEventListener("mousemove",show);b.addEventListener("mouseleave",hide);
   });
   // 公共區
   const lounge=el("g",{});
@@ -299,6 +320,7 @@ function buildRoom(key){
     plant(lounge,N-1.2,.4,true);plant(lounge,.4,N-1.2,true);plant(lounge,N-1.2,N-1.2,true);plant(lounge,6.6,7.4);waterCooler(lounge,N-1,4.0);
   }
   [[N*.3,N*.3],[N*.7,N*.3],[N*.3,N*.7],[N*.7,N*.7]].forEach(([x,y])=>{const c=P(x,y,0);el("ellipse",{cx:c[0],cy:c[1],rx:70,ry:38,fill:"#fff7ed",opacity:.06})});
+  svg.appendChild(badges);
   // 清單
   const list=root.querySelector(".list");
   cfg.sites.forEach(s=>{const a=document.createElement("a");a.href=s.url;a.target="_blank";a.rel="noopener";a.style.setProperty("--c",s.color);

@@ -51,4 +51,8 @@ if '--console' in sys.argv:
         {'name': '題庫池新手指南', 'desc': '流程與資料夾說明（Claude Artifact）', 'url': 'https://claude.ai/artifact/DsvRi8W5pnh2NxArnFUEQA'},
         {'name': '控制台（Claude Artifact 版）', 'desc': '可按「通知 Claude 立刻處理」', 'url': 'https://claude.ai/artifact/T4VEC2CvpUCZ3WErRcrBru'},
     ]
+else:
+    # 公開版（dashboard/data.json，GitHub Pages 全網公開）：只留題庫統計與網站份數，內部事項只放控制台資料.json
+    out = {'updated': out['updated'], 'banks': out['banks'],
+           'sites': [{k: s[k] for k in ('name', 'url', 'count', 'updated')} for s in out['sites']]}
 json.dump(out, sys.stdout, ensure_ascii=False, indent=2)

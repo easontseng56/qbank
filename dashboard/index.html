@@ -58,57 +58,25 @@
     <div class="wrap"><table id="banks"><thead><tr><th>題庫</th><th>Tier</th><th>範圍</th><th class="num">份數</th><th class="num">題數</th><th>最後更新</th><th>備註</th></tr></thead><tbody></tbody></table></div>
   </section>
   <section>
-    <h2>同步狀態 <span class="st" id="syncsum"></span></h2>
-    <div class="sub" style="margin:0 0 8px">正本＝工作區 JSON。<b>落後</b>＝正本有、該處沒有（要補）；<b>待建檔</b>＝網站有原卷、題庫還沒轉錄；<b>多餘</b>＝該處有、正本沒有。</div>
-    <div class="wrap"><table id="sync"><thead><tr><th>題庫</th><th class="num">正本</th><th>講義 zip</th><th>難度.json</th><th>離線出題</th><th>網站</th><th>段考目錄</th><th>缺漏明細</th></tr></thead><tbody></tbody></table></div>
-  </section>
-  <section>
-    <h2>待 Eason 處理</h2>
-    <ul class="todo" id="todo" style="padding:0;margin:0"></ul>
-  </section>
-  <section>
-    <h2>來源待處理</h2>
-    <div class="wrap"><table id="pending"><thead><tr><th>發現</th><th>檔名</th><th>來源</th><th>類型</th><th>卷 id</th><th>狀態</th></tr></thead><tbody></tbody></table></div>
-  </section>
-  <section>
-    <h2>每週執行結果</h2>
-    <div class="wrap"><table id="runs"><thead><tr><th>日期</th><th class="num">新卷</th><th class="num">跳過</th><th class="num">新題</th><th class="num">T0</th><th class="num">T1</th><th class="num">T2</th><th class="num">疑點</th><th>PR</th><th>說明</th></tr></thead><tbody></tbody></table></div>
-  </section>
-  <section>
     <h2>網站份數</h2>
-    <div class="wrap"><table id="sites"><thead><tr><th>網站</th><th>repo</th><th>份數</th><th>最後更新</th><th>最近 PR</th></tr></thead><tbody></tbody></table></div>
+    <div class="wrap"><table id="sites"><thead><tr><th>網站</th><th>份數</th><th>最後更新</th></tr></thead><tbody></tbody></table></div>
   </section>
 </main>
 <script>
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const n=v=>Number(v||0).toLocaleString('zh-TW');
-const link=u=>u?`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:\/\/(github\.com\/)?/,''))}</a>`:'';
 fetch('data.json?'+Date.now()).then(r=>r.json()).then(d=>{
   const banks=d.banks||[];
   const P=banks.reduce((a,b)=>a+(+b.papers||0),0), Q=banks.reduce((a,b)=>a+(+b.questions||0),0);
   const byT=[0,1,2,3].map(t=>banks.filter(b=>+b.tier===t).reduce((a,b)=>a+(+b.questions||0),0));
-  const todoOpen=(d.todo||[]).filter(t=>!t.done).length;
-  const last=(d.runs||[])[0]||{};
-  document.getElementById('sub').innerHTML=`資料更新 ${esc(d.updated)}｜${esc(d.schedule||'')}｜<a href="${esc(d.control_sheet)}" target="_blank" rel="noopener">控制板試算表</a>`;
+  document.getElementById('sub').textContent=`資料更新 ${d.updated||''}｜只顯示題庫統計`;
   document.getElementById('tiles').innerHTML=[
-    ['題庫總題數',n(Q)],['卷數',n(P)],['Tier 0 競賽',n(byT[0])],['Tier 1 模考歷屆',n(byT[1])],['Tier 2 段考',n(byT[2])],['Tier 3 光碟',n(byT[3])],
-    ['待 Eason 處理',todoOpen+' <small>件</small>'],['上次執行新卷',n(last.new)+' <small>份／'+n(last.questions)+' 題</small>']
+    ['題庫總題數',n(Q)],['卷數',n(P)],['Tier 0 競賽',n(byT[0])],['Tier 1 模考歷屆',n(byT[1])],['Tier 2 段考',n(byT[2])],['Tier 3 光碟',n(byT[3])]
   ].map(([k,v])=>`<div class="tile"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
   document.getElementById('bar').innerHTML=byT.map((q,t)=>`<span class="t${t}" style="width:${Q?100*q/Q:0}%;background:var(--t${t})" title="Tier ${t}：${n(q)} 題"></span>`).join('');
   document.querySelector('#banks tbody').innerHTML=banks.map(b=>`<tr><td>${esc(b.name)}</td><td><span class="tier t${b.tier}">${b.tier}</span></td><td>${esc(b.range)}</td><td class="num">${n(b.papers)}</td><td class="num">${n(b.questions)}</td><td>${esc(b.updated)}</td><td>${esc(b.note)}</td></tr>`).join('')
     +`<tr><th>合計</th><th></th><th></th><th class="num">${n(P)}</th><th class="num">${n(Q)}</th><th></th><th></th></tr>`;
-  document.getElementById('todo').innerHTML=(d.todo||[]).map(t=>`<li class="${t.done?'d':''}">${t.done?'☑':'☐'} ${esc(t.item)} <span class="st">${esc(t.date)}</span></li>`).join('')||'<li>目前沒有</li>';
-  document.querySelector('#pending tbody').innerHTML=(d.pending_sources||[]).map(p=>`<tr><td>${esc(p.found)}</td><td>${esc(p.file)}</td><td>${esc(p.source)}</td><td>${esc(p.type)}</td><td>${esc(p.id)}</td><td><span class="st ${/^完成/.test(p.status)?'ok':'wait'}">${esc(p.status)}</span></td></tr>`).join('')||'<tr><td colspan="6">目前沒有</td></tr>';
-  document.querySelector('#runs tbody').innerHTML=(d.runs||[]).map(r=>`<tr><td>${esc(r.date)}</td><td class="num">${n(r.new)}</td><td class="num">${n(r.skipped)}</td><td class="num">${n(r.questions)}</td><td class="num">${n(r.tier0)}</td><td class="num">${n(r.tier1)}</td><td class="num">${n(r.tier2)}</td><td class="num">${n(r.issues)}</td><td>${link(r.pr)}</td><td>${esc(r.note)}</td></tr>`).join('');
-  const sy=d.sync||{banks:[]}; const SL={ok:'一致',todo:'待建檔',warn:'多餘',miss:'落後',none:'—'};
-  const cell=t=>t?`<span class="st ${t.status}" title="${esc(t.note||'')}">${t.count==null?'—':n(t.count)+' '+SL[t.status]}</span>`:'<span class="st none">—</span>';
-  const det=b=>b.targets.flatMap(t=>[...(t.missing.length?[`<b>${esc(t.label)} 落後：</b>${esc(t.missing.slice(0,6).join('、'))}${t.missing.length>6?'…共 '+t.missing.length+' 份':''}`]:[]),
-    ...(t.extra.length?[`<i>${esc(t.label)} ${t.extra_kind==='todo'?'待建檔':'多餘'}：</i>${esc(t.extra.slice(0,6).join('、'))}${t.extra.length>6?'…共 '+t.extra.length+' 份':''}`]:[])]).join('<br>');
-  const T=(b,k)=>b.targets.find(t=>t.target===k);
-  document.getElementById('syncsum').className='st '+(sy.ok?'ok':'miss');
-  document.getElementById('syncsum').textContent=sy.checked?`${sy.checked} 檢查：${sy.ok?'全部一致':'落後 '+n((sy.summary||{}).miss)+' 份'}${(sy.summary||{}).todo?'，待建檔 '+n(sy.summary.todo)+' 份':''}`:'尚未檢查';
-  document.querySelector('#sync tbody').innerHTML=(sy.banks||[]).map(b=>`<tr><td>${esc(b.name)}</td><td class="num">${n(b.master)}</td><td>${cell(T(b,'zip'))}</td><td>${cell(T(b,'diff'))}</td><td>${cell(T(b,'offline'))}</td><td>${cell(T(b,'site'))}</td><td>${cell(T(b,'catalog'))}</td><td class="det">${det(b)}</td></tr>`).join('')||'<tr><td colspan="8">尚未檢查</td></tr>';
-  document.querySelector('#sites tbody').innerHTML=(d.sites||[]).map(s=>`<tr><td><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a></td><td>${esc(s.repo)}</td><td>${esc(s.count)}</td><td>${esc(s.updated)}</td><td>${link(s.pr)}</td></tr>`).join('');
+  document.querySelector('#sites tbody').innerHTML=(d.sites||[]).map(s=>`<tr><td><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a></td><td>${esc(s.count)}</td><td>${esc(s.updated)}</td></tr>`).join('');
 }).catch(e=>{document.getElementById('sub').textContent='讀不到 data.json：'+e});
 </script>
 </body>

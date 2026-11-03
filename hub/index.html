@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>周逸化學工作室</title>
+<style>
+  :root{--bg:#0f1524;--ink:#e8ecf4;--mute:#97a3b8;--card:#182035;--line:#2a3550}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,"Noto Sans TC","Microsoft JhengHei",sans-serif}
+  header{max-width:1100px;margin:0 auto;padding:22px 16px 4px}
+  h1{margin:0;font-size:24px;letter-spacing:.04em}
+  .sub{color:var(--mute);font-size:13px}
+  .map{max-width:1100px;margin:0 auto;padding:0 8px;position:relative}
+  svg{width:100%;height:auto;display:block}
+  .zone{cursor:pointer;transition:transform .18s ease}
+  .zone:hover,.zone:focus,.zone.hot{transform:translateY(-6px);outline:none}
+  .zone:hover .rug,.zone:focus .rug,.zone.hot .rug{filter:brightness(1.35) drop-shadow(0 0 8px var(--glow))}
+  .sign{cursor:pointer}.sign text{font-weight:700;pointer-events:none}
+  #tip{position:absolute;pointer-events:none;background:#020617f2;border:1px solid #334155;z-index:5;color:#fff;border-radius:8px;padding:6px 10px;font-size:13px;opacity:0;transition:opacity .12s;max-width:260px}
+  .list{max-width:1100px;margin:6px auto 0;padding:0 16px 36px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+  .list a{display:block;background:var(--card);border:1px solid var(--line);border-left:5px solid var(--c);border-radius:10px;padding:10px 12px;color:var(--ink);text-decoration:none}
+  .list a:hover{border-color:var(--c)}
+  .list b{display:block;font-size:15px}
+  .list span{color:var(--mute);font-size:12px}
+  footer{text-align:center;color:var(--mute);font-size:12px;padding:0 16px 24px}
+</style>
+</head>
+<body>
+<header>
+  <h1>周逸化學工作室</h1>
+  <div class="sub">點一下工作區就會開啟對應網站（新分頁）</div>
+</header>
+<div class="map"><svg id="world" viewBox="160 0 680 510" role="img" aria-label="工作室地圖"></svg><div id="tip"></div></div>
+<div class="list" id="list"></div>
+<footer>周逸化學專用</footer>
+<script>
+/* ===== 網站連結表：網址或名稱有變動只改這裡 ===== */
+const SITES = [
+  {id:"exam",  name:"新竹區高中化學段考題庫", short:"段考題庫", desc:"各校段考卷下載（依學年、學期、年級、學校）",
+   url:"https://easontseng56.github.io/chem-exam/", color:"#14b8a6", gx:1, gy:1, prop:"shelf"},
+  {id:"mock",  name:"模考內訓網站", short:"模考內訓", desc:"學測、分科模考原卷（內部使用）",
+   url:"https://easontseng56.github.io/chem-exam/mock/", color:"#3b82f6", gx:9, gy:1, prop:"board"},
+  {id:"olym",  name:"化學奧林匹亞初選", short:"化奧初選", desc:"化奧初選歷屆原卷目錄",
+   url:"https://easontseng56.github.io/chem-olympiad/", color:"#a855f7", gx:1, gy:9, prop:"flask"},
+  {id:"qbank", name:"離線出題系統", short:"出題系統", desc:"依章節、Tier、難度選題出卷（需 Google 登入）",
+   url:"https://easontseng56.github.io/qbank/", color:"#f59e0b", gx:9, gy:9, prop:"printer"},
+  {id:"dash",  name:"題庫池儀表板", short:"儀表板", desc:"題庫總覽、待處理事項、同步狀態",
+   url:"https://easontseng56.github.io/qbank/dashboard/", color:"#22c55e", gx:5, gy:5, prop:"screen"},
+];
+/* ============================================ */
+
+const S=26, OX=500, OY=118, C=Math.cos(Math.PI/6), N=14;
+const P=(x,y,z=0)=>[OX+(x-y)*C*S, OY+(x+y)*0.5*S - z*S];
+const pts=a=>a.map(p=>p.join(",")).join(" ");
+const NS="http://www.w3.org/2000/svg";
+const svg=document.getElementById("world");
+function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);(parent||svg).appendChild(e);return e}
+function shade(hex,f){const n=parseInt(hex.slice(1),16);let r=n>>16,g=n>>8&255,b=n&255;
+  const m=v=>Math.max(0,Math.min(255,Math.round(f<0?v*(1+f):v+(255-v)*f)));return `rgb(${m(r)},${m(g)},${m(b)})`}
+/* 等角方塊：x,y,z 起點，w,d,h 尺寸 */
+function box(g,x,y,z,w,d,h,col){
+  el("polygon",{points:pts([P(x,y+d,z),P(x+w,y+d,z),P(x+w,y+d,z+h),P(x,y+d,z+h)]),fill:shade(col,-.25)},g);
+  el("polygon",{points:pts([P(x+w,y,z),P(x+w,y+d,z),P(x+w,y+d,z+h),P(x+w,y,z+h)]),fill:shade(col,-.45)},g);
+  el("polygon",{points:pts([P(x,y,z+h),P(x+w,y,z+h),P(x+w,y+d,z+h),P(x,y+d,z+h)]),fill:col},g);
+}
+function plant(g,x,y){box(g,x,y,0,.5,.5,.5,"#e5e7eb");const c=P(x+.25,y+.25,1.3);
+  el("circle",{cx:c[0],cy:c[1],r:11,fill:"#16a34a"},g);el("circle",{cx:c[0]-6,cy:c[1]+5,r:8,fill:"#15803d"},g)}
+
+/* 牆與地板 */
+const W=4.2;
+el("polygon",{points:pts([P(0,0,0),P(N,0,0),P(N,0,W),P(0,0,W)]),fill:"#2b3550"});
+el("polygon",{points:pts([P(0,0,0),P(0,N,0),P(0,N,W),P(0,0,W)]),fill:"#232c45"});
+for(let i=1;i<N;i+=3){ // 窗
+  el("polygon",{points:pts([P(i,0,1.4),P(i+2,0,1.4),P(i+2,0,3.6),P(i,0,3.6)]),fill:"#5b8bd6",opacity:.55});
+}
+el("polygon",{points:pts([P(0,0),P(N,0),P(N,N),P(0,N)]),fill:"#b7773f"});
+for(let i=1;i<N;i++) el("line",{x1:P(i,0)[0],y1:P(i,0)[1],x2:P(i,N)[0],y2:P(i,N)[1],stroke:"#a5672f","stroke-width":1});
+el("polygon",{points:pts([P(0,N),P(N,N),P(N,N,-.5),P(0,N,-.5)]),fill:"#7a4a22"});
+el("polygon",{points:pts([P(N,0),P(N,N),P(N,N,-.5),P(N,0,-.5)]),fill:"#5e3818"});
+// 牆上看板
+el("polygon",{points:pts([P(.01,5,1.3),P(.01,9,1.3),P(.01,9,3.4),P(.01,5,3.4)]),fill:"#0b1220",stroke:"#334155"});
+const t0=P(0,7,2.4);const tt=el("text",{x:0,y:0,fill:"#fbbf24","font-size":17,"font-weight":700,"text-anchor":"middle",transform:`translate(${t0[0]},${t0[1]}) skewY(-30)`});tt.textContent="周逸化學";
+
+/* 道具 */
+const PROPS={
+  shelf(g,x,y,c){box(g,x+.3,y+.2,0,2.6,.6,2.4,"#6b4423");for(let k=0;k<3;k++)box(g,x+.4,y+.15,.4+k*.7,2.4,.1,.35,[c,"#ef4444","#eab308"][k]);
+    box(g,x+1,y+1.8,0,2,1,.8,"#e2e8f0");box(g,x+1.6,y+1.9,.8,.8,.1,.6,"#111827")},
+  board(g,x,y,c){box(g,x+.4,y+.2,0,2.8,.15,2.6,"#f8fafc");box(g,x+.4,y+.18,2.3,2.8,.2,.25,c);
+    box(g,x+.8,y+1.6,0,2.4,1,.8,"#e2e8f0");box(g,x+1.1,y+1.7,.8,.7,.1,.6,"#111827");box(g,x+2.2,y+1.7,.8,.7,.1,.6,"#111827")},
+  flask(g,x,y,c){box(g,x+.8,y+1.2,0,2.4,1.2,.8,"#e2e8f0");const b=P(x+2,y+1.8,.8);
+    el("path",{d:`M${b[0]-5},${b[1]-38} h10 v14 l14,22 a4,4 0 0 1 -4,6 h-30 a4,4 0 0 1 -4,-6 l14,-22z`,fill:"#f1f5f9",stroke:"#cbd5e1"},g);
+    el("path",{d:`M${b[0]-14},${b[1]-12} h28 l5,8 a4,4 0 0 1 -4,6 h-30 a4,4 0 0 1 -4,-6z`,fill:c},g);
+    box(g,x+.3,y+.3,0,.9,.9,.5,"#475569")},
+  printer(g,x,y,c){box(g,x+.4,y+.3,0,1.4,1.2,1,"#cbd5e1");box(g,x+.5,y+.4,1,1.2,.6,.12,"#f8fafc");
+    box(g,x+1.6,y+1.8,0,2,1,.8,"#e2e8f0");box(g,x+2,y+1.9,.8,1,.1,.7,"#111827");box(g,x+2.6,y+.4,.8,.8,.8,.4,c)},
+  screen(g,x,y,c){box(g,x+.8,y+.8,0,2.4,2.4,.15,"#14532d");
+    box(g,x+1.4,y+1.4,.15,1.2,1.2,.6,"#e2e8f0");const s=P(x+2,y+2,2.1);
+    el("rect",{x:s[0]-40,y:s[1]-26,width:80,height:46,rx:4,fill:"#0b1220",stroke:c,"stroke-width":2},g);
+    [12,22,16,30].forEach((h,k)=>el("rect",{x:s[0]-28+k*16,y:s[1]+14-h,width:10,height:h,fill:c},g));
+    el("line",{x1:s[0],y1:s[1]+20,x2:s[0],y2:P(x+2,y+2,.75)[1],stroke:"#94a3b8","stroke-width":3},g)},
+};
+
+/* 由後往前畫，確保遮擋正確 */
+const signs=document.createElementNS(NS,"g");
+const tip=document.getElementById("tip"), map=document.querySelector(".map");
+[...SITES].sort((a,b)=>(a.gx+a.gy)-(b.gx+b.gy)).forEach(s=>{
+  const a=el("a",{href:s.url,target:"_blank",rel:"noopener",class:"zone",tabindex:0,style:`--glow:${s.color}`});
+  el("title",{},a).textContent=s.name;
+  const x=s.gx,y=s.gy,R=4;
+  el("polygon",{class:"rug",points:pts([P(x,y),P(x+R,y),P(x+R,y+R),P(x,y+R)]),fill:shade(s.color,-.35),stroke:s.color,"stroke-width":3},a);
+  PROPS[s.prop](a,x,y,s.color);
+  const c=P(x+R/2,y+R/2,3.9), g=el("a",{href:s.url,target:"_blank",rel:"noopener",class:"sign"},signs);
+  g.addEventListener("mouseenter",()=>a.classList.add("hot"));g.addEventListener("mouseleave",()=>a.classList.remove("hot"));
+  const w=s.name.length*15+28;
+  el("line",{x1:c[0],y1:c[1]+14,x2:c[0],y2:c[1]+34,stroke:"#94a3b8","stroke-width":2},g);
+  el("rect",{x:c[0]-w/2,y:c[1]-14,width:w,height:28,rx:14,fill:s.color},g);
+  const t=el("text",{x:c[0],y:c[1]+5,"text-anchor":"middle",fill:"#fff","font-size":15},g);t.textContent=s.name;
+  [a,g].forEach(n=>{n.addEventListener("mousemove",e=>{const r=map.getBoundingClientRect();tip.innerHTML=`<b>${s.name}</b><br>${s.desc}`;
+    tip.style.left=(e.clientX-r.left+14)+"px";tip.style.top=(e.clientY-r.top+14)+"px";tip.style.opacity=1});
+  n.addEventListener("mouseleave",()=>tip.style.opacity=0)});
+});
+plant(svg,12.8,.4);plant(svg,.4,12.8);plant(svg,6.2,.4);plant(svg,13.2,6.3);
+svg.appendChild(signs);
+
+/* 手機與無障礙用的清單 */
+const list=document.getElementById("list");
+SITES.forEach(s=>{const a=document.createElement("a");a.href=s.url;a.target="_blank";a.rel="noopener";a.style.setProperty("--c",s.color);
+  a.innerHTML=`<b>${s.name}</b><span>${s.desc}</span>`;list.appendChild(a)});
+</script>
+</body>
+</html>

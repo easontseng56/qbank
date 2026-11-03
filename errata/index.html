@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>題庫勘誤系統</title>
+<!-- 題庫勘誤系統：本頁不含任何內部資料。登入 Google 後，從使用者雲端 題庫池\07_紀錄\勘誤\勘誤清單.json 讀寫；
+     沒有 題庫池 權限的帳號什麼都讀不到。 -->
+<style>
+  :root{--bg:#f6f7f9;--card:#fff;--ink:#1f2328;--mute:#6b7280;--line:#e5e7eb;--acc:#1f6f8b;--acc-soft:#e3f0f4;--acc-ink:#fff;
+        --tag:#c2410c;--ok:#15803d;--ok-soft:#dcfce7;--wait:#b45309;--wait-soft:#fef3c7;--bad:#b91c1c;--bad-soft:#fee2e2;--run:#1d4ed8;--run-soft:#dbeafe;--no:#4b5563;--no-soft:#e5e7eb}
+  @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f1115;--card:#171a21;--ink:#e6e8ec;--mute:#9aa3b2;--line:#2a2f3a;--acc:#6cb6d1;--acc-soft:#1b2d36;--acc-ink:#0f1a20;
+        --tag:#fb923c;--ok:#7ccf98;--ok-soft:#1b2e22;--wait:#e6b268;--wait-soft:#3a2c14;--bad:#ef8b84;--bad-soft:#3a1f1d;--run:#93b4f5;--run-soft:#1c2740;--no:#b0b7c3;--no-soft:#262b35}}
+  :root[data-theme=dark]{--bg:#0f1115;--card:#171a21;--ink:#e6e8ec;--mute:#9aa3b2;--line:#2a2f3a;--acc:#6cb6d1;--acc-soft:#1b2d36;--acc-ink:#0f1a20;
+        --tag:#fb923c;--ok:#7ccf98;--ok-soft:#1b2e22;--wait:#e6b268;--wait-soft:#3a2c14;--bad:#ef8b84;--bad-soft:#3a1f1d;--run:#93b4f5;--run-soft:#1c2740;--no:#b0b7c3;--no-soft:#262b35}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,"Noto Sans TC","Microsoft JhengHei",sans-serif}
+  .wrap{max-width:1000px;margin:0 auto;padding:20px 16px 48px}
+  header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+  h1{margin:0;font-size:22px}
+  .sub{color:var(--mute);font-size:13px;margin-top:4px}
+  .who{font-size:13px;color:var(--mute);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:9px;padding:8px 14px;font:inherit;font-weight:500;cursor:pointer;text-decoration:none}
+  .btn.primary{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+  .btn.sm{padding:4px 10px;font-size:13px}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn:focus-visible,nav a:focus-visible,summary:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+  nav{display:flex;gap:4px;margin-top:16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  nav a{padding:9px 14px;color:var(--mute);text-decoration:none;font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px}
+  nav a.on{color:var(--acc);border-bottom-color:var(--acc)}
+  .gate{margin-top:28px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:28px 20px;text-align:center}
+  .gate p{color:var(--mute);margin:8px 0 16px}
+  section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:14px 0;min-width:0}
+  h2{font-size:16px;margin:0 0 10px}
+  .form{display:grid;grid-template-columns:120px 1fr;gap:12px 14px;align-items:start}
+  .form>label{padding-top:8px;font-weight:500;font-size:14px}
+  .form>label i{color:var(--bad);font-style:normal}
+  .form .hint{color:var(--mute);font-size:12.5px;margin-top:4px}
+  select,input[type=text],input[type=search],textarea{font:inherit;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);min-width:0;width:100%}
+  textarea{min-height:92px;resize:vertical}
+  .inline{display:flex;gap:8px;flex-wrap:wrap}.inline select{width:auto}
+  .seg{display:flex;flex-wrap:wrap;gap:6px}
+  .seg label{border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-size:13.5px;cursor:pointer;user-select:none}
+  .seg input{position:absolute;opacity:0;pointer-events:none}
+  .seg input:checked+span{color:var(--acc);font-weight:600}
+  .seg label:has(input:checked){border-color:var(--acc);background:var(--acc-soft)}
+  .seg label:has(input:focus-visible){outline:2px solid var(--acc);outline-offset:2px}
+  .notice{margin-top:12px;padding:10px 14px;border-radius:9px;background:var(--wait-soft);color:var(--wait);font-size:14px}
+  .notice.ok{background:var(--ok-soft);color:var(--ok)}.notice.bad{background:var(--bad-soft);color:var(--bad)}
+  .dup{margin-top:8px;font-size:13px;border-left:3px solid var(--wait);padding:4px 10px;background:var(--wait-soft);border-radius:0 8px 8px 0}
+  .dup a{color:var(--wait);font-weight:600}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:14px 0}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;cursor:pointer;text-align:left;font:inherit;color:inherit}
+  .tile.on{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}
+  .tile .k{color:var(--mute);font-size:12px}.tile .v{font-size:24px;font-weight:700;line-height:1.2}
+  .filters{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px}
+  .bar{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0 4px;color:var(--mute);font-size:13px}
+  .items{display:grid;gap:10px}
+  details.it{border:1px solid var(--line);border-radius:10px;background:var(--card);min-width:0}
+  details.it[open]{border-color:var(--acc)}
+  details.it>summary{list-style:none;cursor:pointer;padding:10px 14px;display:grid;grid-template-columns:1fr auto;gap:2px 10px}
+  details.it>summary::-webkit-details-marker{display:none}
+  .tg{color:var(--tag);font-weight:700;overflow-wrap:anywhere}
+  .tg small{color:var(--mute);font-weight:400;margin-left:6px}
+  .chips{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+  .chip{font-size:12px;border-radius:6px;padding:1px 8px;background:var(--line);white-space:nowrap}
+  .s-待處理{background:var(--wait-soft);color:var(--wait)}.s-處理中{background:var(--run-soft);color:var(--run)}
+  .s-已修正{background:var(--ok-soft);color:var(--ok)}.s-不修正{background:var(--no-soft);color:var(--no)}
+  .pv{grid-column:1/-1;color:var(--ink);font-size:14px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  details[open] .pv{display:none}
+  .body{padding:0 14px 14px;border-top:1px solid var(--line)}
+  .body dl{display:grid;grid-template-columns:90px 1fr;gap:6px 12px;margin:12px 0}
+  .body dt{color:var(--mute);font-size:13px}.body dd{margin:0;overflow-wrap:anywhere;white-space:pre-wrap}
+  .body .att a{display:inline-block;margin-right:10px;color:var(--acc)}
+  .edit{display:grid;grid-template-columns:150px 1fr auto;gap:8px;align-items:start;background:var(--bg);border-radius:9px;padding:10px}
+  .edit textarea{min-height:40px}
+  .hist{margin:10px 0 0;padding:0;list-style:none;font-size:12.5px;color:var(--mute)}
+  .hist li{padding:2px 0}
+  .empty{color:var(--mute);padding:14px;border:1px dashed var(--line);border-radius:9px}
+  .steps{margin:0;padding-left:20px}.steps li{margin:6px 0}
+  code{background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:0 5px;font-size:13px}
+  footer{margin-top:24px;color:var(--mute);font-size:13px}
+  @media (max-width:640px){
+    h1{font-size:19px}.tiles{grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}.tile{padding:6px 8px}.tile .v{font-size:18px}.tile .k{font-size:11px}.form{grid-template-columns:1fr;gap:4px}.form>label{padding-top:10px}
+    .filters{grid-template-columns:1fr 1fr}.filters input{grid-column:1/-1}
+    .edit{grid-template-columns:1fr}.body dl{grid-template-columns:1fr;gap:0}.body dd{margin-bottom:8px}
+    details.it>summary{grid-template-columns:1fr}.chips{justify-content:flex-start}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>題庫勘誤系統</h1>
+      <div class="sub">回報題目、答案、詳解或分類的錯誤，追蹤處理進度。需用有 題庫池 權限的 Google 帳號登入。</div>
+    </div>
+    <div class="who" id="who"></div>
+  </header>
+
+  <div class="gate" id="gate">
+    <strong>請先登入 Google</strong>
+    <p>勘誤資料存在雲端硬碟 題庫池\07_紀錄\勘誤 裡，本頁不存任何內部資料。只有對 題庫池 有權限的帳號才讀得到。</p>
+    <button class="btn primary" id="loginBtn">用 Google 登入</button>
+    <div class="notice bad" id="gateMsg" hidden></div>
+  </div>
+
+  <div id="app" hidden>
+    <nav id="tabs">
+      <a href="#report" data-v="report" class="on">回報勘誤</a>
+      <a href="#list" data-v="list">勘誤清單 <span id="openCount"></span></a>
+      <a href="#how" data-v="how">處理流程</a>
+    </nav>
+
+    <!-- 回報 -->
+    <div class="view" id="v-report">
+      <section>
+        <h2>回報一個錯誤</h2>
+        <form class="form" id="form" autocomplete="off">
+          <label for="f-tag">題目標籤 <i>*</i></label>
+          <div>
+            <input type="text" id="f-tag" placeholder="例：114-竹中-非選三-1(1)　或　112-全模N2-多選25" required>
+            <div class="hint">貼上卷面橘色標籤【…】即可，括號可有可無。整份卷的問題（缺頁等）填卷名，例：112竹商高一上第一次。</div>
+            <div id="dup"></div>
+          </div>
+          <label>題庫</label>
+          <div class="seg" id="f-bank"></div>
+          <label>錯誤類型</label>
+          <div class="seg" id="f-kind"></div>
+          <label for="f-problem">問題 <i>*</i></label>
+          <div><textarea id="f-problem" required placeholder="哪裡錯？例：(D) 的 N₂O₄ 分子量印成 96，應為 92。"></textarea></div>
+          <label for="f-sug">建議更正</label>
+          <div><textarea id="f-sug" placeholder="應該怎麼改？答案是否受影響？（選填）"></textarea></div>
+          <label for="f-file">附圖</label>
+          <div><input type="file" id="f-file" accept="image/*,application/pdf" multiple><div class="hint">選填，截圖或照片，存到 題庫池\07_紀錄\勘誤\附件。</div></div>
+          <label for="f-name">回報者</label>
+          <div><input type="text" id="f-name" placeholder="名字（選填，不填就記登入帳號）"></div>
+          <span></span>
+          <div><button class="btn primary" id="submit" type="submit">送出勘誤</button></div>
+        </form>
+        <div class="notice" id="notice" hidden></div>
+      </section>
+    </div>
+
+    <!-- 清單 -->
+    <div class="view" id="v-list" hidden>
+      <div class="tiles" id="tiles"></div>
+      <section>
+        <div class="filters">
+          <input type="search" id="q" placeholder="搜尋標籤、卷名、內容…">
+          <select id="fb"><option value="">全部題庫</option></select>
+          <select id="fk"><option value="">全部類型</option></select>
+          <select id="fs"><option value="">全部狀態</option></select>
+        </div>
+        <div class="bar"><span id="cnt"></span><span><button class="btn sm" id="reload">重新整理</button> <button class="btn sm" id="csv">匯出 CSV</button></span></div>
+        <div class="items" id="items"><div class="empty">載入中…</div></div>
+        <div style="text-align:center;margin-top:12px"><button class="btn" id="more" hidden>顯示更多</button></div>
+      </section>
+    </div>
+
+    <!-- 流程 -->
+    <div class="view" id="v-how" hidden>
+      <section>
+        <h2>勘誤怎麼處理</h2>
+        <ol class="steps">
+          <li><b>回報</b>：任何有 題庫池 權限的人在「回報勘誤」填標籤與問題，狀態為「待處理」。</li>
+          <li><b>每週一排程</b>（08:40「每週題庫池檢查」）讀 <code>題庫池\07_紀錄\勘誤\勘誤清單.json</code>，把待處理的逐條核對：確認是錯的就改題庫 JSON（正本）、重產該卷 Word／PDF、需要時更新網站，狀態改「已修正」並寫處理說明；查證後原卷沒錯就改「不修正」並說明理由。</li>
+          <li><b>需要老師判斷</b>的（例如要看學校公布答案）會改成「處理中」，並列進控制板「待Eason處理」。</li>
+          <li>急件請到 Claude 討論串說一聲，不必等週一。</li>
+        </ol>
+        <p class="sub">狀態：待處理 → 處理中 → 已修正／不修正。每次改狀態都會留下時間與帳號紀錄。</p>
+      </section>
+      <section>
+        <h2>初始資料</h2>
+        <p class="sub" style="margin:0">清單已匯入建題庫時整理的三份勘誤：段考勘誤清單、學測模考 Word 勘誤清單、學測模考原卷勘誤清單（99～109），回報者記為「Claude（題庫建檔時發現）」。</p>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script src="../app/config.js"></script>
+<script>
+'use strict';
+(() => {
+  // 雲端位置（資料夾 ID 本身不含內容；沒有權限的帳號用它也讀不到任何東西）
+  const POOL = '1XTMgbxorvN3RlfKxak-9T0yR2fD53ztS';     // claude共用資料夾\題庫池
+  const LOG = '1UfdFC4p6tGiCwU3juP8ZSpmq6Kz-Zgtc';      // 題庫池\07_紀錄
+  const DIR = '勘誤', FILE = '勘誤清單.json', ATT = '附件';
+  const API = 'https://www.googleapis.com';
+  const SCOPE = 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email';
+  const FOLDER = 'application/vnd.google-apps.folder';
+  const CID = (window.CONFIG || {}).clientId;
+  const BANKS = ['段考', '學測模考', '分科模考', '學測歷屆', '指考分科歷屆', '競賽', '龍騰光碟', '其他'];
+  const KINDS = ['題目', '答案', '詳解', '圖表', '分類', '缺頁殘缺', '其他'];
+  const STATES = ['待處理', '處理中', '已修正', '不修正'];
+  const PAGE = 50;
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const now = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; };
+  const say = (msg, cls) => { const el = $('notice'); el.textContent = msg; el.className = 'notice ' + (cls || ''); el.hidden = !msg; };
+  const normTag = s => String(s || '').trim().replace(/^【|】$/g, '').replace(/\s+/g, '').replace(/[－—–]/g, '-');
+
+  // ---------- Google 登入（與控制台共用登入狀態）----------
+  let token = null, exp = 0, user = '', tokenClient = null;
+  try { const t = JSON.parse(localStorage.getItem('ctoken') || 'null'); if (t && t.exp > Date.now() + 60000) { token = t.token; exp = t.exp; user = t.user || ''; } } catch { }
+  const hint = () => user || (() => { try { return localStorage.getItem('chint') || ''; } catch { return ''; } })();
+  function loadGis() {
+    if (window.google && google.accounts) return Promise.resolve();
+    return new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.onload = res; s.onerror = () => rej(new Error('無法載入 Google 登入元件，請確認網路')); document.head.appendChild(s); });
+  }
+  async function login() {
+    if (!CID) throw new Error('沒有設定 Google 用戶端 ID（app/config.js）');
+    await loadGis();
+    if (!tokenClient) tokenClient = google.accounts.oauth2.initTokenClient({ client_id: CID, scope: SCOPE, callback: () => { } });
+    await new Promise((res, rej) => {
+      tokenClient.callback = r => { if (r.error) return rej(new Error(r.error_description || r.error)); token = r.access_token; exp = Date.now() + (Number(r.expires_in) - 60) * 1000; res(); };
+      tokenClient.error_callback = e => rej(new Error(e.message || e.type || '登入取消'));
+      const h = hint(); tokenClient.requestAccessToken(Object.assign({ prompt: '' }, h ? { hint: h } : {}));
+    });
+    try { const r = await fetch(API + '/oauth2/v3/userinfo', { headers: { Authorization: 'Bearer ' + token } }); if (r.ok) user = ((await r.json()).email || '').toLowerCase(); } catch { }
+    try { localStorage.setItem('ctoken', JSON.stringify({ token, exp, user })); localStorage.setItem('chint', user); } catch { }
+  }
+  function logout() { token = null; exp = 0; try { localStorage.removeItem('ctoken'); } catch { } location.reload(); }
+  async function req(url, opt = {}, retry = 0) {
+    if (!token || Date.now() > exp) await login();
+    opt.headers = Object.assign({}, opt.headers || {}, { Authorization: 'Bearer ' + token });
+    const r = await fetch(url, opt);
+    if (r.status === 401 && retry < 1) { token = null; await login(); return req(url, opt, retry + 1); }
+    if ((r.status === 429 || r.status >= 500) && retry < 4) { await new Promise(s => setTimeout(s, 600 * 2 ** retry)); return req(url, opt, retry + 1); }
+    if (!r.ok) { const e = new Error(`Drive ${r.status}：${(await r.text()).slice(0, 160)}`); e.status = r.status; throw e; }
+    return r;
+  }
+  async function child(parent, name, mime) {
+    const q = `'${parent}' in parents and trashed=false and name='${name.replace(/'/g, "\\'")}'` + (mime ? ` and mimeType='${mime}'` : '');
+    const d = await (await req(`${API}/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,modifiedTime)&supportsAllDrives=true&includeItemsFromAllDrives=true`)).json();
+    return (d.files || [])[0] || null;
+  }
+  async function mkdir(parent, name) {
+    const f = await child(parent, name, FOLDER); if (f) return f.id;
+    const r = await req(`${API}/drive/v3/files?supportsAllDrives=true&fields=id`, { method: 'POST', headers: { 'Content-Type': 'application/json; charset=UTF-8' }, body: JSON.stringify({ name, mimeType: FOLDER, parents: [parent] }) });
+    return (await r.json()).id;
+  }
+  async function multipart(meta, blob, fileId) {
+    const b = 'xx' + Math.random().toString(36).slice(2);
+    const body = new Blob([`--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${b}\r\nContent-Type: ${blob.type || 'application/octet-stream'}\r\n\r\n`, blob, `\r\n--${b}--`]);
+    const url = `${API}/upload/drive/v3/files${fileId ? '/' + fileId : ''}?uploadType=multipart&supportsAllDrives=true&fields=id,name,webViewLink,modifiedTime`;
+    return (await req(url, { method: fileId ? 'PATCH' : 'POST', headers: { 'Content-Type': 'multipart/related; boundary=' + b }, body })).json();
+  }
+
+  // ---------- 資料（題庫池\07_紀錄\勘誤\勘誤清單.json）----------
+  let dirId = null, fileId = null, data = { version: 1, items: [] };
+  async function locate() {
+    if (!dirId) dirId = await mkdir(LOG, DIR);
+    if (!fileId) { const f = await child(dirId, FILE); fileId = f ? f.id : null; }
+  }
+  async function fetchData() {
+    await locate();
+    if (!fileId) return { version: 1, items: [] };
+    const d = await (await req(`${API}/drive/v3/files/${fileId}?alt=media&supportsAllDrives=true&t=${Date.now()}`, { cache: 'no-store' })).json();
+    d.items = d.items || []; return d;
+  }
+  // 改資料一律「先重讀最新版 → 套用變更 → 寫回」，降低兩人同時編輯互相覆蓋的機會
+  async function mutate(fn) {
+    const d = await fetchData();
+    const result = fn(d);
+    d.updated = new Date().toISOString();
+    const blob = new Blob([JSON.stringify(d, null, 1)], { type: 'application/json' });
+    if (fileId) await multipart({}, blob, fileId);
+    else fileId = (await multipart({ name: FILE, parents: [dirId], mimeType: 'application/json' }, blob)).id;
+    data = d; return result;
+  }
+  const nextId = d => 'E' + String(d.items.reduce((m, x) => Math.max(m, parseInt(String(x.id).slice(1)) || 0), 0) + 1).padStart(4, '0');
+
+  // ---------- 啟動 ----------
+  async function start() {
+    $('gateMsg').hidden = true;
+    try { await req(`${API}/drive/v3/files/${POOL}?fields=id&supportsAllDrives=true`); }
+    catch (e) {
+      const no = e.status === 404 || e.status === 403;
+      $('gateMsg').textContent = no ? `這個帳號（${user || '未知'}）沒有 題庫池 的權限。請換成有權限的帳號登入。` : '登入失敗：' + e.message;
+      $('gateMsg').hidden = false;
+      $('who').innerHTML = user ? `${esc(user)} <button class="btn sm" id="out">換帳號</button>` : '';
+      const o = $('out'); if (o) o.onclick = logout; return;
+    }
+    $('gate').hidden = true; $('app').hidden = false;
+    $('who').innerHTML = `${esc(user)} <button class="btn sm" id="out">登出</button>`; $('out').onclick = logout;
+    load();
+  }
+  async function load() {
+    $('items').innerHTML = '<div class="empty">載入中…</div>';
+    try { data = await fetchData(); renderList(); checkDup(); if (location.hash.startsWith('#E')) jump(location.hash.slice(1)); }
+    catch (e) { $('items').innerHTML = `<div class="empty">讀不到勘誤清單：${esc(e.message)}</div>`; }
+  }
+  $('loginBtn').onclick = async () => { try { await login(); await start(); } catch (e) { $('gateMsg').textContent = '登入失敗：' + e.message; $('gateMsg').hidden = false; } };
+  if (token) start();
+
+  // ---------- 分頁 ----------
+  const VIEWS = ['report', 'list', 'how'];
+  function showView() {
+    const h = location.hash.slice(1), v = VIEWS.includes(h) ? h : h.startsWith('E') ? 'list' : 'report';
+    VIEWS.forEach(k => { $('v-' + k).hidden = k !== v; });
+    document.querySelectorAll('#tabs a').forEach(a => a.classList.toggle('on', a.dataset.v === v));
+    if (h.startsWith('E') && data.items.length) jump(h);
+  }
+  window.addEventListener('hashchange', showView); showView();
+
+  // ---------- 回報表單 ----------
+  const seg = (el, name, opts, def) => { el.innerHTML = opts.map(o => `<label><input type="radio" name="${name}" value="${o}"${o === def ? ' checked' : ''}><span>${o}</span></label>`).join(''); };
+  seg($('f-bank'), 'bank', BANKS, '段考'); seg($('f-kind'), 'kind', KINDS, '題目');
+  const pick = n => (document.querySelector(`input[name=${n}]:checked`) || {}).value || '';
+  let bankTouched = false;
+  $('f-bank').addEventListener('change', () => { bankTouched = true; });
+  function guessBank(t) {
+    if (/^\d{4}-/.test(t)) return '競賽';
+    if (/^\d{2,3}-(學測|學科能力測驗)/.test(t)) return '學測歷屆';
+    if (/^\d{2,3}-(指考|分科)/.test(t)) return '指考分科歷屆';
+    if (/全模|北模|中模|南模|文昌|複習|詮達|SHS/.test(t)) return '學測模考';
+    if (/龍騰|光碟/.test(t)) return '龍騰光碟';
+    if (/^\d{3}-?[一-鿿]/.test(t)) return '段考';
+    return '';
+  }
+  function checkDup() {
+    const t = normTag($('f-tag').value);
+    if (!bankTouched) { const g = guessBank(t); if (g) { const r = document.querySelector(`input[name=bank][value="${g}"]`); if (r) r.checked = true; } }
+    if (t.length < 5) { $('dup').innerHTML = ''; return; }
+    const hits = data.items.filter(x => x.tag && normTag(x.tag) === t);
+    $('dup').innerHTML = hits.length ? `<div class="dup">這題已有 ${hits.length} 筆回報：${hits.map(x => `<a href="#${esc(x.id)}">${esc(x.id)}（${esc(x.status)}）</a>`).join('、')}。若是同一個錯誤就不用再報，可到清單補充說明。</div>` : '';
+  }
+  $('f-tag').addEventListener('input', checkDup);
+
+  async function uploadAtt(files, id) {
+    if (!files.length) return [];
+    const attDir = await mkdir(dirId, ATT), out = [];
+    for (const f of files) {
+      const r = await multipart({ name: `${id}_${f.name}`, parents: [attDir], description: `勘誤 ${id}；上傳者：${user}` }, f);
+      out.push({ name: f.name, id: r.id, url: r.webViewLink });
+    }
+    return out;
+  }
+  $('form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const raw = $('f-tag').value.trim(), problem = $('f-problem').value.trim();
+    if (!raw || !problem) { say('請填題目標籤和問題。', 'bad'); return; }
+    const btn = $('submit'); btn.disabled = true; say('送出中…', '');
+    try {
+      await locate();
+      const isTag = /^【?\d{2,4}-/.test(raw);
+      const item = {
+        tag: isTag ? normTag(raw) : '', paper: isTag ? '' : raw,
+        bank: pick('bank'), kind: pick('kind'), problem, suggestion: $('f-sug').value.trim(),
+        source: '網頁回報', reporter: ($('f-name').value.trim() ? $('f-name').value.trim() + '・' : '') + user,
+        created: now(), status: '待處理', resolution: '', attachments: [], history: []
+      };
+      const files = [...$('f-file').files];
+      const id = await mutate(d => { item.id = nextId(d); item.history = [{ t: item.created, by: user, do: '回報' }]; d.items.push(item); return item.id; });
+      if (files.length) {
+        say(`已送出 ${id}，上傳附圖中…`, '');
+        const att = await uploadAtt(files, id);
+        await mutate(d => { const x = d.items.find(y => y.id === id); if (x) x.attachments = (x.attachments || []).concat(att); });
+      }
+      say(`已送出 ${id}。每週一排程會核對處理，可到「勘誤清單」看進度。`, 'ok');
+      ['f-tag', 'f-problem', 'f-sug', 'f-file'].forEach(k => { $(k).value = ''; }); bankTouched = false;
+      $('dup').innerHTML = ''; renderList();
+    } catch (err) { say('送出失敗：' + err.message, 'bad'); }
+    finally { btn.disabled = false; }
+  });
+
+  // ---------- 清單 ----------
+  const opt = (el, arr) => arr.forEach(v => el.insertAdjacentHTML('beforeend', `<option>${esc(v)}</option>`));
+  opt($('fb'), BANKS); opt($('fk'), KINDS); opt($('fs'), STATES);
+  let shown = PAGE;
+  ['q', 'fb', 'fk', 'fs'].forEach(k => $(k).addEventListener('input', () => { shown = PAGE; renderList(); }));
+  $('reload').onclick = load;
+  $('more').onclick = () => { shown += PAGE; renderList(); };
+  function filtered() {
+    const q = $('q').value.trim().toLowerCase(), b = $('fb').value, k = $('fk').value, s = $('fs').value;
+    return data.items.filter(x => (!b || x.bank === b) && (!k || x.kind === k) && (!s || x.status === s) &&
+      (!q || [x.id, x.tag, x.paper, x.problem, x.suggestion, x.reporter, x.resolution].join(' ').toLowerCase().includes(q)))
+      .sort((a, b) => STATES.indexOf(a.status) - STATES.indexOf(b.status) || String(b.created).localeCompare(String(a.created)) || String(b.id).localeCompare(String(a.id)));
+  }
+  function renderTiles() {
+    const c = s => data.items.filter(x => x.status === s).length, cur = $('fs').value;
+    $('tiles').innerHTML = [['', '全部', data.items.length], ...STATES.map(s => [s, s, c(s)])]
+      .map(([v, k, n]) => `<button class="tile${cur === v ? ' on' : ''}" data-s="${v}"><div class="k">${k}</div><div class="v">${n.toLocaleString('zh-TW')}</div></button>`).join('');
+    $('tiles').querySelectorAll('.tile').forEach(t => t.onclick = () => { $('fs').value = t.dataset.s; shown = PAGE; renderList(); });
+    const open = c('待處理') + c('處理中'); $('openCount').textContent = open ? `(${open})` : '';
+  }
+  function card(x) {
+    const title = x.tag ? `【${esc(x.tag)}】` : esc(x.paper || '（整份卷）');
+    const att = (x.attachments || []).map(a => `<a href="${esc(a.url)}" target="_blank" rel="noopener">📎 ${esc(a.name)}</a>`).join('');
+    return `<details class="it" id="${esc(x.id)}"><summary>
+      <div class="tg">${title}<small>${esc(x.id)}${x.tag && x.paper ? '・' + esc(x.paper) : ''}</small></div>
+      <div class="chips"><span class="chip">${esc(x.bank)}</span><span class="chip">${esc(x.kind)}</span><span class="chip s-${esc(x.status)}">${esc(x.status)}</span></div>
+      <div class="pv">${esc(x.problem)}</div></summary>
+      <div class="body"><dl>
+        <dt>問題</dt><dd>${esc(x.problem)}</dd>
+        ${x.suggestion ? `<dt>建議更正</dt><dd>${esc(x.suggestion)}</dd>` : ''}
+        ${x.resolution ? `<dt>處理說明</dt><dd>${esc(x.resolution)}</dd>` : ''}
+        ${att ? `<dt>附圖</dt><dd class="att">${att}</dd>` : ''}
+        <dt>回報</dt><dd>${esc(x.reporter)}・${esc(x.created)}${x.source && x.source !== '網頁回報' ? '・來源 ' + esc(x.source) : ''}</dd>
+      </dl>
+      <div class="edit">
+        <select data-id="${esc(x.id)}" class="e-st">${STATES.map(s => `<option${s === x.status ? ' selected' : ''}>${s}</option>`).join('')}</select>
+        <textarea class="e-note" placeholder="處理說明（改了哪裡、為什麼不改）">${esc(x.resolution)}</textarea>
+        <button class="btn sm primary e-save" data-id="${esc(x.id)}">儲存</button>
+      </div>
+      <ul class="hist">${(x.history || []).slice().reverse().map(h => `<li>${esc(h.t)}　${esc(h.by)}　${esc(h.do)}</li>`).join('')}</ul>
+      </div></details>`;
+  }
+  function renderList() {
+    renderTiles();
+    const list = filtered();
+    $('cnt').textContent = `${list.length.toLocaleString('zh-TW')} 筆`;
+    $('items').innerHTML = list.slice(0, shown).map(card).join('') || '<div class="empty">沒有符合的勘誤。</div>';
+    $('more').hidden = list.length <= shown;
+    $('items').querySelectorAll('.e-save').forEach(b => b.onclick = () => save(b));
+  }
+  async function save(b) {
+    const box = b.closest('.edit'), id = b.dataset.id, st = box.querySelector('.e-st').value, note = box.querySelector('.e-note').value.trim();
+    b.disabled = true; b.textContent = '儲存中…';
+    try {
+      await mutate(d => {
+        const x = d.items.find(y => y.id === id); if (!x) throw new Error('找不到 ' + id + '（可能已被刪除）');
+        const what = [x.status !== st ? `狀態 ${x.status} → ${st}` : '', (x.resolution || '') !== note ? '更新處理說明' : ''].filter(Boolean).join('；');
+        if (!what) return;
+        x.status = st; x.resolution = note; (x.history = x.history || []).push({ t: now(), by: user, do: what });
+      });
+      renderList(); const el = $(id); if (el) el.open = true;
+    } catch (e) { b.disabled = false; b.textContent = '儲存'; alert('儲存失敗：' + e.message); }
+  }
+  function jump(id) {
+    $('q').value = id; $('fs').value = ''; $('fb').value = ''; $('fk').value = ''; renderList();
+    const el = $(id); if (el) { el.open = true; el.scrollIntoView({ block: 'center' }); }
+  }
+  $('csv').onclick = () => {
+    const cols = ['id', 'tag', 'paper', 'bank', 'kind', 'status', 'problem', 'suggestion', 'resolution', 'reporter', 'created', 'source'];
+    const head = ['編號', '標籤', '卷名', '題庫', '類型', '狀態', '問題', '建議更正', '處理說明', '回報者', '回報時間', '來源'];
+    const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const csv = '﻿' + [head.map(q).join(','), ...filtered().map(x => cols.map(c => q(x[c])).join(','))].join('\r\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    a.download = `勘誤清單_${now().slice(0, 10)}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  };
+})();
+</script>
+</body>
+</html>

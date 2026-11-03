@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>題庫池控制台</title>
+<!-- 題庫池控制台網頁版：本頁不含任何內部資料。登入 Google 後，從使用者雲端的 題庫池 讀「控制台資料.json」並上傳考卷到 01_待處理；
+     沒有 題庫池 權限的帳號什麼都讀不到。 -->
+<style>
+  :root{--bg:#f6f7f9;--card:#fff;--ink:#1f2328;--mute:#6b7280;--line:#e5e7eb;--acc:#1f6f8b;--acc-soft:#e3f0f4;--acc-ink:#fff;
+        --ok:#15803d;--ok-soft:#dcfce7;--wait:#b45309;--wait-soft:#fef3c7;--bad:#b91c1c;--bad-soft:#fee2e2;
+        --t0:#7c3aed;--t1:#2563eb;--t2:#0d9488;--t3:#9ca3af}
+  @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f1115;--card:#171a21;--ink:#e6e8ec;--mute:#9aa3b2;--line:#2a2f3a;--acc:#6cb6d1;--acc-soft:#1b2d36;--acc-ink:#0f1a20;
+        --ok:#7ccf98;--ok-soft:#1b2e22;--wait:#e6b268;--wait-soft:#3a2c14;--bad:#ef8b84;--bad-soft:#3a1f1d}}
+  :root[data-theme=dark]{--bg:#0f1115;--card:#171a21;--ink:#e6e8ec;--mute:#9aa3b2;--line:#2a2f3a;--acc:#6cb6d1;--acc-soft:#1b2d36;--acc-ink:#0f1a20;
+        --ok:#7ccf98;--ok-soft:#1b2e22;--wait:#e6b268;--wait-soft:#3a2c14;--bad:#ef8b84;--bad-soft:#3a1f1d}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,"Noto Sans TC","Microsoft JhengHei",sans-serif}
+  .wrap{max-width:1100px;margin:0 auto;padding:20px 16px 48px}
+  header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+  h1{margin:0;font-size:22px}
+  .sub{color:var(--mute);font-size:13px;margin-top:4px}
+  .who{font-size:13px;color:var(--mute);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:9px;padding:8px 14px;font:inherit;font-weight:500;cursor:pointer;text-decoration:none}
+  .btn.primary{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+  .btn.sm{padding:4px 10px;font-size:13px}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn:focus-visible,nav a:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+  nav{display:flex;gap:4px;margin-top:16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  nav a{padding:9px 14px;color:var(--mute);text-decoration:none;font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px}
+  nav a.on{color:var(--acc);border-bottom-color:var(--acc)}
+  .gate{margin-top:28px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:28px 20px;text-align:center}
+  .gate p{color:var(--mute);margin:8px 0 16px}
+  section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:14px 0;min-width:0}
+  h2{font-size:16px;margin:0 0 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .drop{border:2px dashed var(--line);border-radius:12px;padding:30px 16px;text-align:center;transition:border-color .15s,background .15s}
+  .drop.over{border-color:var(--acc);background:var(--acc-soft)}
+  .drop strong{display:block;font-size:17px;margin-bottom:4px}
+  .drop .hint{color:var(--mute);font-size:13px;margin:0 0 14px}
+  input[type=file]{display:none}
+  .opts{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;align-items:center;justify-content:center}
+  .opts label{font-size:13px;color:var(--mute)}
+  select,input[type=text]{font:inherit;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);min-width:0}
+  input[type=text]{flex:1 1 240px;max-width:420px}
+  .notice{margin-top:12px;padding:10px 14px;border-radius:9px;background:var(--wait-soft);color:var(--wait);font-size:14px}
+  .notice.ok{background:var(--ok-soft);color:var(--ok)}.notice.bad{background:var(--bad-soft);color:var(--bad)}
+  .rows{display:grid;gap:8px}
+  .row{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center;border:1px solid var(--line);border-radius:9px;padding:8px 12px;min-width:0}
+  .row .name{font-weight:500;overflow-wrap:anywhere}
+  .row .meta{grid-column:1/-1;color:var(--mute);font-size:12.5px;overflow-wrap:anywhere}
+  .row .meta a{color:var(--acc)}
+  .prog{grid-column:1/-1;height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+  .prog span{display:block;height:100%;background:var(--acc);width:0}
+  .empty{color:var(--mute);padding:14px;border:1px dashed var(--line);border-radius:9px}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:14px 0}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+  .tile .k{color:var(--mute);font-size:12px}.tile .v{font-size:26px;font-weight:700;line-height:1.2}.tile .v small{font-size:13px;font-weight:400;color:var(--mute)}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--mute);font-weight:600;font-size:12px}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  .tbl{overflow-x:auto}
+  .tier{display:inline-block;min-width:22px;text-align:center;border-radius:6px;color:#fff;font-size:12px;padding:0 6px}
+  .t0{background:var(--t0)}.t1{background:var(--t1)}.t2{background:var(--t2)}.t3{background:var(--t3)}
+  .bar{height:10px;background:var(--line);border-radius:5px;overflow:hidden;display:flex;margin:8px 0 4px}.bar span{display:block;height:100%}
+  .st,.chip{font-size:12px;border-radius:6px;padding:1px 8px;background:var(--line);white-space:nowrap}
+  .st.ok,.chip.done{background:var(--ok-soft);color:var(--ok)}
+  .st.wait,.st.todo,.chip.wait{background:var(--wait-soft);color:var(--wait)}
+  .st.miss,.st.warn,.chip.bad{background:var(--bad-soft);color:var(--bad)}
+  .chip.run{background:var(--acc-soft);color:var(--acc)}
+  .st.none{color:var(--mute)}
+  .det{font-size:12px;color:var(--mute)}.det b{color:var(--bad)}.det i{font-style:normal;color:var(--wait)}
+  .todo{list-style:none;padding:0;margin:0}.todo li{padding:5px 0;border-bottom:1px solid var(--line)}.todo li:last-child{border:0}.todo li.d{color:var(--mute);text-decoration:line-through}
+  .links{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
+  .links a{display:block;border:1px solid var(--line);border-radius:9px;padding:8px 12px;color:var(--ink);text-decoration:none}
+  .links a b{display:block}.links a span{color:var(--mute);font-size:12.5px}
+  a{color:var(--t1)}
+  footer{margin-top:24px;color:var(--mute);font-size:13px}
+  @media (max-width:600px){h1{font-size:19px}.tile .v{font-size:22px}}
+  @media (prefers-reduced-motion:reduce){.drop{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>題庫池控制台</h1>
+      <div class="sub" id="sub">上傳考卷、看同步狀態與儀表板。需用有 題庫池 權限的 Google 帳號登入。</div>
+    </div>
+    <div class="who" id="who"></div>
+  </header>
+
+  <div class="gate" id="gate">
+    <strong>請先登入 Google</strong>
+    <p>資料都在雲端硬碟的 題庫池 資料夾裡，本頁不存任何內部資料。只有對 題庫池 有權限的帳號才讀得到。</p>
+    <button class="btn primary" id="loginBtn">用 Google 登入</button>
+    <div class="notice bad" id="gateMsg" hidden></div>
+  </div>
+
+  <div id="app" hidden>
+    <nav id="tabs">
+      <a href="#upload" data-v="upload" class="on">上傳考卷</a>
+      <a href="#sync" data-v="sync">同步狀態</a>
+      <a href="#dash" data-v="dash">儀表板</a>
+    </nav>
+
+    <!-- 上傳 -->
+    <div class="view" id="v-upload">
+      <section>
+        <div class="drop" id="drop">
+          <strong>拖曳考卷到這裡</strong>
+          <p class="hint">PDF、Word、圖片、zip 都可以；題目卷與解答卷一起丟。檔案直接存進 題庫池\01_待處理，沒有大小限制。</p>
+          <label class="btn primary" for="picker">選擇檔案</label>
+          <input type="file" id="picker" multiple>
+          <div class="opts">
+            <label for="kind">類型</label>
+            <select id="kind"><option value="">自動判斷</option><option>段考</option><option>模考</option><option>競賽</option><option>歷屆</option><option>光碟</option></select>
+            <input type="text" id="note" placeholder="備註（學校、學年、卷別，選填）">
+          </div>
+        </div>
+        <div class="notice" id="notice" hidden></div>
+      </section>
+      <section>
+        <h2>收件匣（01_待處理） <span class="st" id="inboxCount"></span> <button class="btn sm" id="refresh">重新整理</button></h2>
+        <div class="rows" id="inbox"><div class="empty">載入中…</div></div>
+      </section>
+      <section>
+        <h2>最近處理完（_已處理）</h2>
+        <div class="rows" id="done"><div class="empty">載入中…</div></div>
+      </section>
+      <footer>每週一 08:40 排程會自動處理收件匣裡的卷；急件請到 Claude 討論串說一聲。</footer>
+    </div>
+
+    <!-- 同步狀態 -->
+    <div class="view" id="v-sync" hidden>
+      <section>
+        <h2>同步狀態 <span class="st" id="syncsum">載入中…</span></h2>
+        <div class="sub" style="margin:0 0 8px">正本＝工作區 JSON。<b>落後</b>＝正本有、該處沒有（要補）；<b>待建檔</b>＝網站有原卷、題庫還沒轉錄；<b>多餘</b>＝該處有、正本沒有。每週一排程重新檢查。</div>
+        <div class="tbl"><table id="sync"><thead><tr><th>題庫</th><th class="num">正本</th><th>講義 zip</th><th>難度.json</th><th>離線出題</th><th>網站</th><th>段考目錄</th><th>缺漏明細</th></tr></thead><tbody></tbody></table></div>
+      </section>
+    </div>
+
+    <!-- 儀表板 -->
+    <div class="view" id="v-dash" hidden>
+      <div class="sub" id="dsub" style="margin-top:12px">載入中…</div>
+      <div class="tiles" id="tiles"></div>
+      <section>
+        <h2>題庫總覽</h2>
+        <div class="bar" id="bar"></div>
+        <div class="tbl"><table id="banks"><thead><tr><th>題庫</th><th>Tier</th><th>範圍</th><th class="num">份數</th><th class="num">題數</th><th>最後更新</th><th>備註</th></tr></thead><tbody></tbody></table></div>
+      </section>
+      <section><h2>待 Eason 處理</h2><ul class="todo" id="todo"></ul></section>
+      <section><h2>來源待處理</h2><div class="tbl"><table id="pending"><thead><tr><th>發現</th><th>檔名</th><th>來源</th><th>類型</th><th>卷 id</th><th>狀態</th></tr></thead><tbody></tbody></table></div></section>
+      <section><h2>每週執行結果</h2><div class="tbl"><table id="runs"><thead><tr><th>日期</th><th class="num">新卷</th><th class="num">跳過</th><th class="num">新題</th><th class="num">疑點</th><th>PR</th><th>說明</th></tr></thead><tbody></tbody></table></div></section>
+      <section><h2>網站份數</h2><div class="tbl"><table id="sites"><thead><tr><th>網站</th><th>份數</th><th>最後更新</th><th>最近 PR</th></tr></thead><tbody></tbody></table></div></section>
+      <section><h2>常用連結</h2><div class="links" id="links"></div></section>
+    </div>
+  </div>
+</div>
+
+<script src="../app/config.js"></script>
+<script>
+'use strict';
+(() => {
+  // 雲端位置（資料夾 ID 本身不含內容；沒有權限的帳號用它也讀不到任何東西）
+  const POOL = '1XTMgbxorvN3RlfKxak-9T0yR2fD53ztS';     // claude共用資料夾\題庫池
+  const INBOX = '1apN5g7sSBm11-T_H8fhOrglnqdTEoos-';    // 題庫池\01_待處理
+  const DATA_PATH = ['05_工具', '儀表板', '控制台資料.json'];
+  const API = 'https://www.googleapis.com';
+  const SCOPE = 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email';
+  const FOLDER = 'application/vnd.google-apps.folder';
+  const CID = (window.CONFIG || {}).clientId;
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const n = v => Number(v || 0).toLocaleString('zh-TW');
+  const fmtSize = b => !b ? '' : b > 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB';
+  const fmtTime = s => { if (!s) return ''; try { return new Date(s).toLocaleString('zh-TW', { hour12: false }); } catch { return s; } };
+  const link = u => u ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(String(u).replace(/^https?:\/\/(github\.com\/)?/, ''))}</a>` : '';
+  const say = (msg, cls) => { const el = $('notice'); el.textContent = msg; el.className = 'notice ' + (cls || ''); el.hidden = !msg; };
+
+  // ---------- Google 登入 ----------
+  let token = null, exp = 0, user = '', tokenClient = null;
+  try { const t = JSON.parse(localStorage.getItem('ctoken') || 'null'); if (t && t.exp > Date.now() + 60000) { token = t.token; exp = t.exp; user = t.user || ''; } } catch { }
+  const hint = () => user || (() => { try { return localStorage.getItem('chint') || ''; } catch { return ''; } })();
+
+  function loadGis() {
+    if (window.google && google.accounts) return Promise.resolve();
+    return new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.onload = res; s.onerror = () => rej(new Error('無法載入 Google 登入元件，請確認網路')); document.head.appendChild(s); });
+  }
+  async function login() {
+    if (!CID) throw new Error('沒有設定 Google 用戶端 ID（app/config.js）');
+    await loadGis();
+    if (!tokenClient) tokenClient = google.accounts.oauth2.initTokenClient({ client_id: CID, scope: SCOPE, callback: () => { } });
+    await new Promise((res, rej) => {
+      tokenClient.callback = r => {
+        if (r.error) return rej(new Error(r.error_description || r.error));
+        token = r.access_token; exp = Date.now() + (Number(r.expires_in) - 60) * 1000; res();
+      };
+      tokenClient.error_callback = e => rej(new Error(e.message || e.type || '登入取消'));
+      const h = hint();
+      tokenClient.requestAccessToken(Object.assign({ prompt: '' }, h ? { hint: h } : {}));
+    });
+    try { const r = await fetch(API + '/oauth2/v3/userinfo', { headers: { Authorization: 'Bearer ' + token } }); if (r.ok) user = ((await r.json()).email || '').toLowerCase(); } catch { }
+    try { localStorage.setItem('ctoken', JSON.stringify({ token, exp, user })); localStorage.setItem('chint', user); } catch { }
+  }
+  function logout() { token = null; exp = 0; try { localStorage.removeItem('ctoken'); } catch { } location.reload(); }
+
+  async function req(url, opt = {}, retry = 0) {
+    if (!token || Date.now() > exp) await login();
+    opt.headers = Object.assign({ Authorization: 'Bearer ' + token }, opt.headers || {});
+    const r = await fetch(url, opt);
+    if (r.status === 401 && retry < 1) { token = null; await login(); return req(url, opt, retry + 1); }
+    if ((r.status === 429 || r.status >= 500) && retry < 4) { await new Promise(s => setTimeout(s, 600 * 2 ** retry)); return req(url, opt, retry + 1); }
+    if (!r.ok) { const e = new Error(`Drive ${r.status}：${(await r.text()).slice(0, 160)}`); e.status = r.status; throw e; }
+    return r;
+  }
+  async function children(folderId, extra = '') {
+    const out = []; let pt = '';
+    do {
+      const q = `'${folderId}' in parents and trashed=false${extra}`;
+      const u = `${API}/drive/v3/files?q=${encodeURIComponent(q)}&fields=${encodeURIComponent('nextPageToken,files(id,name,mimeType,modifiedTime,createdTime,size,description,webViewLink)')}&orderBy=${encodeURIComponent('createdTime desc')}&pageSize=200&supportsAllDrives=true&includeItemsFromAllDrives=true${pt ? '&pageToken=' + pt : ''}`;
+      const d = await (await req(u)).json();
+      out.push(...(d.files || [])); pt = d.nextPageToken || '';
+    } while (pt);
+    return out;
+  }
+  async function findPath(rootId, names) {
+    let id = rootId, f = null;
+    for (const name of names) {
+      const q = ` and name='${name.replace(/'/g, "\\'")}'`;
+      [f] = await children(id, q);
+      if (!f) return null;
+      id = f.id;
+    }
+    return f;
+  }
+
+  // ---------- 啟動 ----------
+  async function start() {
+    $('gateMsg').hidden = true;
+    try {
+      await req(`${API}/drive/v3/files/${POOL}?fields=id,name&supportsAllDrives=true`);
+    } catch (e) {
+      const no = e.status === 404 || e.status === 403;
+      $('gateMsg').textContent = no ? `這個帳號（${user || '未知'}）沒有 題庫池 的權限。請換成 yi0506 或 zhouyihuaxue 登入。` : '登入失敗：' + e.message;
+      $('gateMsg').hidden = false;
+      $('who').innerHTML = user ? `${esc(user)} <button class="btn sm" id="out">換帳號</button>` : '';
+      const o = $('out'); if (o) o.onclick = logout;
+      return;
+    }
+    $('gate').hidden = true; $('app').hidden = false;
+    $('who').innerHTML = `${esc(user)} <button class="btn sm" id="out">登出</button>`;
+    $('out').onclick = logout;
+    loadInbox(); loadData();
+  }
+  $('loginBtn').onclick = async () => { try { await login(); await start(); } catch (e) { $('gateMsg').textContent = '登入失敗：' + e.message; $('gateMsg').hidden = false; } };
+  if (token) start();
+
+  // ---------- 分頁 ----------
+  const VIEWS = ['upload', 'sync', 'dash'];
+  function showView() {
+    const v = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'upload';
+    VIEWS.forEach(k => { $('v-' + k).hidden = k !== v; });
+    document.querySelectorAll('#tabs a').forEach(a => a.classList.toggle('on', a.dataset.v === v));
+  }
+  window.addEventListener('hashchange', showView); showView();
+
+  // ---------- 收件匣 ----------
+  const fileRow = (f, chip, cls) => `<div class="row"><div class="name">${esc(f.name)}</div><span class="chip ${cls}">${chip}</span>
+    <div class="meta">${f.description ? esc(f.description) + '・' : ''}${fmtSize(+f.size)}${f.size ? '・' : ''}${fmtTime(f.createdTime || f.modifiedTime)}${f.webViewLink ? ` ・ <a href="${esc(f.webViewLink)}" target="_blank" rel="noopener">開啟</a>` : ''}</div></div>`;
+  async function loadInbox() {
+    try {
+      const all = await children(INBOX);
+      const files = all.filter(f => f.mimeType !== FOLDER);
+      const subs = all.filter(f => f.mimeType === FOLDER && f.name !== '_已處理');
+      // 舊的分類子資料夾（段考／模考…）裡若有檔也算待處理
+      for (const s of subs) for (const f of (await children(s.id)).filter(x => x.mimeType !== FOLDER)) files.push(Object.assign(f, { description: (f.description ? f.description + '・' : '') + s.name }));
+      $('inboxCount').textContent = files.length + ' 份';
+      $('inbox').innerHTML = files.length ? files.map(f => fileRow(f, '待處理', 'wait')).join('') : '<div class="empty">收件匣是空的。</div>';
+      const doneDir = all.find(f => f.mimeType === FOLDER && f.name === '_已處理');
+      if (!doneDir) { $('done').innerHTML = '<div class="empty">還沒有處理紀錄。</div>'; return; }
+      const days = (await children(doneDir.id)).filter(f => f.mimeType === FOLDER).sort((a, b) => b.name.localeCompare(a.name)).slice(0, 3);
+      let html = '';
+      for (const d of days) {
+        const fs = (await children(d.id)).filter(f => f.mimeType !== FOLDER);
+        html += fs.map(f => fileRow(Object.assign(f, { description: d.name + (f.description ? '・' + f.description : '') }), '完成', 'done')).join('');
+      }
+      $('done').innerHTML = html || '<div class="empty">還沒有處理紀錄。</div>';
+    } catch (e) { $('inbox').innerHTML = `<div class="empty">讀不到收件匣：${esc(e.message)}</div>`; }
+  }
+  $('refresh').onclick = loadInbox;
+
+  // ---------- 上傳（Drive 可續傳上傳，無大小限制）----------
+  const drop = $('drop'), picker = $('picker');
+  function uploadOne(file, kind, note) {
+    const box = document.createElement('div'); box.className = 'row';
+    box.innerHTML = `<div class="name">${esc(file.name)}</div><span class="chip run">上傳中</span><div class="prog"><span></span></div>`;
+    $('inbox').prepend(box);
+    const bar = box.querySelector('.prog span'), chip = box.querySelector('.chip');
+    const desc = ['類型：' + (kind || '自動判斷'), note ? '備註：' + note : '', '上傳者：' + user, '來源：網頁版控制台'].filter(Boolean).join('；');
+    return (async () => {
+      const init = await req(`${API}/upload/drive/v3/files?uploadType=resumable&supportsAllDrives=true&fields=id,name,webViewLink`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json; charset=UTF-8', 'X-Upload-Content-Type': file.type || 'application/octet-stream', 'X-Upload-Content-Length': String(file.size) },
+        body: JSON.stringify({ name: file.name, parents: [INBOX], description: desc })
+      });
+      const loc = init.headers.get('Location');
+      if (!loc) throw new Error('雲端硬碟沒有回傳上傳位址');
+      await new Promise((res, rej) => {
+        const x = new XMLHttpRequest();
+        x.open('PUT', loc);
+        x.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+        x.upload.onprogress = e => { if (e.lengthComputable) bar.style.width = (100 * e.loaded / e.total).toFixed(1) + '%'; };
+        x.onload = () => x.status < 300 ? res() : rej(new Error('上傳失敗 ' + x.status + '：' + String(x.responseText).slice(0, 120)));
+        x.onerror = () => rej(new Error('網路中斷'));
+        x.send(file);
+      });
+      bar.style.width = '100%'; chip.textContent = '已上傳'; chip.className = 'chip done';
+    })().catch(e => { chip.textContent = '失敗'; chip.className = 'chip bad'; throw e; });
+  }
+  async function handleFiles(files) {
+    const kind = $('kind').value, note = $('note').value.trim();
+    let ok = 0; const bad = [];
+    say(`上傳中：共 ${files.length} 份…`, '');
+    for (const f of files) { try { await uploadOne(f, kind, note); ok++; } catch (e) { bad.push(f.name + '（' + e.message + '）'); } }
+    if (bad.length) say(`成功 ${ok} 份；失敗 ${bad.length} 份：${bad.join('、')}`, 'bad');
+    else say(`已上傳 ${ok} 份到 題庫池\\01_待處理。週一排程會處理；急件請到討論串說一聲。`, 'ok');
+    loadInbox();
+  }
+  ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+  drop.addEventListener('drop', e => { if (e.dataTransfer && e.dataTransfer.files.length) handleFiles([...e.dataTransfer.files]); });
+  picker.addEventListener('change', () => { if (picker.files.length) handleFiles([...picker.files]); picker.value = ''; });
+
+  // ---------- 儀表板與同步（題庫池\05_工具\儀表板\控制台資料.json）----------
+  async function loadData() {
+    try {
+      const f = await findPath(POOL, DATA_PATH);
+      if (!f) throw new Error('找不到 題庫池\\' + DATA_PATH.join('\\') + '（排程還沒寫入）');
+      const d = await (await req(`${API}/drive/v3/files/${f.id}?alt=media&supportsAllDrives=true`)).json();
+      render(d);
+    } catch (e) { $('dsub').textContent = '讀不到儀表板資料：' + e.message; $('syncsum').textContent = '讀不到'; }
+  }
+  function render(d) {
+    const banks = d.banks || [];
+    const P = banks.reduce((a, b) => a + (+b.papers || 0), 0), Q = banks.reduce((a, b) => a + (+b.questions || 0), 0);
+    const byT = [0, 1, 2, 3].map(t => banks.filter(b => +b.tier === t).reduce((a, b) => a + (+b.questions || 0), 0));
+    const todoOpen = (d.todo || []).filter(t => !t.done).length, last = (d.runs || [])[0] || {};
+    $('dsub').innerHTML = `資料更新 ${esc(d.updated)}｜${esc(d.schedule || '')}${d.control_sheet ? `｜<a href="${esc(d.control_sheet)}" target="_blank" rel="noopener">控制板試算表</a>` : ''}`;
+    $('tiles').innerHTML = [['題庫總題數', n(Q)], ['卷數', n(P)], ['Tier 0 競賽', n(byT[0])], ['Tier 1 模考歷屆', n(byT[1])], ['Tier 2 段考', n(byT[2])], ['Tier 3 光碟', n(byT[3])],
+      ['待 Eason 處理', todoOpen + ' <small>件</small>'], ['上次執行新卷', n(last.new) + ' <small>份／' + n(last.questions) + ' 題</small>']]
+      .map(([k, v]) => `<div class="tile"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
+    $('bar').innerHTML = byT.map((q, t) => `<span style="width:${Q ? 100 * q / Q : 0}%;background:var(--t${t})" title="Tier ${t}：${n(q)} 題"></span>`).join('');
+    document.querySelector('#banks tbody').innerHTML = banks.map(b => `<tr><td>${esc(b.name)}</td><td><span class="tier t${esc(b.tier)}">${esc(b.tier)}</span></td><td>${esc(b.range)}</td><td class="num">${n(b.papers)}</td><td class="num">${n(b.questions)}</td><td>${esc(b.updated)}</td><td>${esc(b.note)}</td></tr>`).join('')
+      + `<tr><th>合計</th><th></th><th></th><th class="num">${n(P)}</th><th class="num">${n(Q)}</th><th></th><th></th></tr>`;
+    $('todo').innerHTML = (d.todo || []).map(t => `<li class="${t.done ? 'd' : ''}">${t.done ? '☑' : '☐'} ${esc(t.item)} <span class="st">${esc(t.date)}</span></li>`).join('') || '<li>目前沒有</li>';
+    document.querySelector('#pending tbody').innerHTML = (d.pending_sources || []).map(p => `<tr><td>${esc(p.found)}</td><td>${esc(p.file)}</td><td>${esc(p.source)}</td><td>${esc(p.type)}</td><td>${esc(p.id)}</td><td><span class="st ${/^完成/.test(p.status) ? 'ok' : 'wait'}">${esc(p.status)}</span></td></tr>`).join('') || '<tr><td colspan="6">目前沒有</td></tr>';
+    document.querySelector('#runs tbody').innerHTML = (d.runs || []).map(r => `<tr><td>${esc(r.date)}</td><td class="num">${n(r.new)}</td><td class="num">${n(r.skipped)}</td><td class="num">${n(r.questions)}</td><td class="num">${n(r.issues)}</td><td>${link(r.pr)}</td><td>${esc(r.note)}</td></tr>`).join('');
+    document.querySelector('#sites tbody').innerHTML = (d.sites || []).map(s => `<tr><td><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a></td><td>${esc(s.count)}</td><td>${esc(s.updated)}</td><td>${link(s.pr)}</td></tr>`).join('');
+    $('links').innerHTML = (d.links || []).map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener"><b>${esc(l.name)}</b><span>${esc(l.desc || '')}</span></a>`).join('') || '<div class="empty">資料檔沒有連結清單。</div>';
+    // 同步
+    const sy = d.sync || { banks: [] }, SL = { ok: '一致', todo: '待建檔', warn: '多餘', miss: '落後', none: '—' };
+    const cell = t => t ? `<span class="st ${esc(t.status)}" title="${esc(t.note || '')}">${t.count == null ? '—' : n(t.count) + ' ' + (SL[t.status] || '')}</span>` : '<span class="st none">—</span>';
+    const T = (b, k) => (b.targets || []).find(t => t.target === k);
+    const det = b => (b.targets || []).flatMap(t => [...((t.missing || []).length ? [`<b>${esc(t.label)} 落後：</b>${esc(t.missing.slice(0, 6).join('、'))}${t.missing.length > 6 ? '…共 ' + t.missing.length + ' 份' : ''}`] : []),
+      ...((t.extra || []).length ? [`<i>${esc(t.label)} ${t.extra_kind === 'todo' ? '待建檔' : '多餘'}：</i>${esc(t.extra.slice(0, 6).join('、'))}${t.extra.length > 6 ? '…共 ' + t.extra.length + ' 份' : ''}`] : [])]).join('<br>');
+    const ss = $('syncsum'); ss.className = 'st ' + (sy.ok ? 'ok' : 'miss');
+    ss.textContent = sy.checked ? `${sy.checked} 檢查：${sy.ok ? '全部一致' : '落後 ' + n((sy.summary || {}).miss) + ' 份'}${(sy.summary || {}).todo ? '，待建檔 ' + n(sy.summary.todo) + ' 份' : ''}` : '尚未檢查';
+    document.querySelector('#sync tbody').innerHTML = (sy.banks || []).map(b => `<tr><td>${esc(b.name)}</td><td class="num">${n(b.master)}</td><td>${cell(T(b, 'zip'))}</td><td>${cell(T(b, 'diff'))}</td><td>${cell(T(b, 'offline'))}</td><td>${cell(T(b, 'site'))}</td><td>${cell(T(b, 'catalog'))}</td><td class="det">${det(b)}</td></tr>`).join('') || '<tr><td colspan="8">尚未檢查</td></tr>';
+  }
+})();
+</script>
+</body>
+</html>

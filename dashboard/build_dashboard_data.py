@@ -42,4 +42,17 @@ for r in S.get('待Eason處理', [])[2:]:
 out['todo'].sort(key=lambda t: t['done'])
 if '--sync' in sys.argv:
     out['sync'] = json.load(open(sys.argv[sys.argv.index('--sync') + 1], encoding='utf-8'))
+# --console：產「控制台資料.json」（放 題庫池\05_工具\儀表板\，網頁版控制台登入後讀取），多附常用連結
+if '--console' in sys.argv:
+    out['links'] = [
+        {'name': '題庫池控制板（試算表）', 'desc': '來源待處理、本週結果、待 Eason 處理', 'url': out['control_sheet']},
+        {'name': '題庫池（雲端資料夾）', 'desc': '00_說明～07_紀錄', 'url': 'https://drive.google.com/drive/folders/1XTMgbxorvN3RlfKxak-9T0yR2fD53ztS'},
+        {'name': '01_待處理（收件匣）', 'desc': '新考卷直接丟這裡', 'url': 'https://drive.google.com/drive/folders/1apN5g7sSBm11-T_H8fhOrglnqdTEoos-'},
+        {'name': '題庫池新手指南', 'desc': '流程與資料夾說明（Claude Artifact）', 'url': 'https://claude.ai/artifact/DsvRi8W5pnh2NxArnFUEQA'},
+        {'name': '控制台（Claude Artifact 版）', 'desc': '可按「通知 Claude 立刻處理」', 'url': 'https://claude.ai/artifact/T4VEC2CvpUCZ3WErRcrBru'},
+    ]
+else:
+    # 公開版（dashboard/data.json，GitHub Pages 全網公開）：只留題庫統計與網站份數，內部事項只放控制台資料.json
+    out = {'updated': out['updated'], 'banks': out['banks'],
+           'sites': [{k: s[k] for k in ('name', 'url', 'count', 'updated')} for s in out['sites']]}
 json.dump(out, sys.stdout, ensure_ascii=False, indent=2)

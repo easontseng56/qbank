@@ -61,6 +61,9 @@ const ROOMS = {
      url:"https://docs.google.com/spreadsheets/d/1TeFXDjy5hkq85gOTNsOu_J8dZ8P5HBbti2NjygFK86c/edit", color:"#34d399", gx:1, gy:8, prop:"sheet"},
     {name:"段考題庫資料夾", desc:"【公開】段考題庫，資料夾不公開、單檔公開",
      url:"https://drive.google.com/drive/folders/1GF7zHoeQMlfv85ZQtDMDBGKhqTvYueW1", color:"#fb923c", gx:9, gy:8, prop:"folder"},
+  ], links:[  /* 只列在下方清單、不畫在地圖上 */
+    {name:"題庫池控制台", desc:"上傳考卷到 01_待處理、同步狀態、儀表板（Google 登入）",
+     url:"https://easontseng56.github.io/qbank/console/", color:"#f87171"},
   ]},
 };
 /* ============================================ */
@@ -283,6 +286,8 @@ function buildRoom(key){
   // 清單
   const list=root.querySelector(".list");
   cfg.sites.forEach(s=>{const a=document.createElement("a");a.href=s.url;a.target="_blank";a.rel="noopener";a.style.setProperty("--c",s.color);
+    a.innerHTML=`<b>${s.name}</b><span>${s.desc}</span>`;list.appendChild(a)});
+  (cfg.links||[]).forEach(s=>{const a=document.createElement("a");a.href=s.url;a.target="_blank";a.rel="noopener";a.style.setProperty("--c",s.color);
     a.innerHTML=`<b>${s.name}</b><span>${s.desc}</span>`;list.appendChild(a)});
 }
 buildRoom("pub");buildRoom("pri");

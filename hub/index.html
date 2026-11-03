@@ -59,11 +59,8 @@ const ROOMS = {
      url:"https://easontseng56.github.io/qbank/", color:"#fbbf24", gx:9, gy:1, prop:"printer"},
     {name:"段考卷目錄試算表", desc:"老師內部用，只限受邀者",
      url:"https://docs.google.com/spreadsheets/d/1TeFXDjy5hkq85gOTNsOu_J8dZ8P5HBbti2NjygFK86c/edit", color:"#34d399", gx:1, gy:8, prop:"sheet"},
-    {name:"段考題庫資料夾", desc:"【公開】段考題庫，資料夾不公開、單檔公開",
-     url:"https://drive.google.com/drive/folders/1GF7zHoeQMlfv85ZQtDMDBGKhqTvYueW1", color:"#fb923c", gx:9, gy:8, prop:"folder"},
-  ], links:[  /* 只列在下方清單、不畫在地圖上 */
     {name:"題庫池控制台", desc:"上傳考卷到 01_待處理、同步狀態、儀表板（Google 登入）",
-     url:"https://easontseng56.github.io/qbank/console/", color:"#f87171"},
+     url:"https://easontseng56.github.io/qbank/console/", color:"#f87171", gx:9, gy:8, prop:"console"},
   ]},
 };
 /* ============================================ */
@@ -167,6 +164,18 @@ function flaskSet(g,x,y,z,col){
   draw(x,y,.75,col);draw(x+.6,y+.2,.9,"#22d3ee");draw(x+1.2,y,.7,"#f472b6");
   box(g,x+1.6,y-.1,z,.5,.5,.55,"#334155",{T:"#475569"});box(g,x+1.65,y-.05,z+.55,.4,.4,.05,"#f59e0b");
 }
+function bigScreen(g,x,y,col){
+  shadow(g,x,y,3.2,.3);
+  box(g,x+1.4,y+.1,0,.4,.2,.4,"#475569");box(g,x+1.55,y+.15,.4,.1,.1,1.1,"#64748b");
+  box(g,x,y,1.5,3.2,.1,1.9,"#111827");
+  const f=faceL(g,x,y+.1,1.5);
+  el("rect",{x:.08,y:.08,width:3.04,height:1.74,fill:"#0b1220"},f);
+  el("rect",{x:.08,y:.08,width:3.04,height:1.74,fill:col,opacity:.12},f);
+  [[.3,.9],[.6,1.3],[.9,.7],[1.2,1.5],[1.5,1.1]].forEach(([bx,h])=>el("rect",{x:bx,y:1.7-h,width:.2,height:h,fill:col,opacity:.9},f));
+  el("polyline",{points:"1.9,1.4 2.2,1.0 2.5,1.15 2.8,.5 3.0,.7",fill:"none",stroke:"#38bdf8","stroke-width":.06},f);
+  el("rect",{x:1.9,y:.2,width:1.1,height:.12,fill:"#e2e8f0",opacity:.8},f);
+  el("rect",{x:1.9,y:.4,width:.7,height:.08,fill:"#94a3b8"},f);
+}
 function sofa(g,x,y,len=3.2){
   shadow(g,x,y,len,1.2);
   const c="#3b82f6",d="#2563eb";
@@ -257,6 +266,9 @@ function buildRoom(key){
     flask(g,x,y,c){desk(g,x+.3,y+.4,3.4,1.5,"#1f2937","#111827");flaskSet(g,x+.9,y+1.2,1.12,c);desk(g,x+.3,y+2.4,3,1.2);monitor(g,x+.7,y+2.5,1.12,c);keyboard(g,x+1.0,y+3.2,1.12);chair(g,x+1.3,y+3.8);box(g,x+2.3,y+2.6,1.12,.5,.35,.3,"#f8fafc")},
     printer(g,x,y,c){printer(g,x+2.6,y+.3,c);desk(g,x+.3,y+.5,2.2,1.4);monitor(g,x+.6,y+.6,1.12,c);keyboard(g,x+.9,y+1.4,1.12);chair(g,x+1.1,y+2.2);desk(g,x+.3,y+2.9,3.2,1.2);monitor(g,x+.7,y+3.0,1.12,c,.8);monitor(g,x+1.8,y+3.0,1.12,c,.8);keyboard(g,x+1.2,y+3.7,1.12);chair(g,x+1.5,y+4.3)},
     sheet(g,x,y,c){cabinet(g,x+3.4,y+.2,c);cabinet(g,x+3.4,y+1.1,c);desk(g,x+.3,y+.6,3,1.4);monitor(g,x+.5,y+.7,1.12,c,1.5,"grid");keyboard(g,x+.9,y+1.5,1.12);chair(g,x+1.2,y+2.2);box(g,x+2.3,y+.8,1.12,.5,.6,.08,"#f8fafc");box(g,x+2.35,y+.85,1.2,.4,.5,.06,"#fef3c7")},
+    console(g,x,y,c){desk(g,x+.3,y+.4,3.4,1.4);monitor(g,x+.6,y+.5,1.12,c,1.6,"grid");monitor(g,x+2.5,y+.5,1.12,c,.9);keyboard(g,x+1.2,y+1.3,1.12);chair(g,x+1.5,y+2.1);
+      desk(g,x+.3,y+2.9,2.6,1.2);monitor(g,x+.7,y+3.0,1.12,c,1.0);keyboard(g,x+1.0,y+3.7,1.12);chair(g,x+1.2,y+4.3);
+      box(g,x+3.3,y+2.9,0,1.1,.8,.9,"#64748b",{T:"#94a3b8"});box(g,x+3.4,y+3.0,.9,.9,.6,.25,"#fdba74",{T:"#fed7aa"});box(g,x+3.45,y+3.05,1.15,.8,.5,.06,"#fff");box(g,x+3.5,y+3.1,1.21,.7,.4,.06,"#f8fafc")},
     folder(g,x,y,c){archive(g,x+.2,y+.1,3.6,c);desk(g,x+.6,y+2.2,2.6,1.3);monitor(g,x+1.0,y+2.3,1.12,c);keyboard(g,x+1.3,y+3.05,1.12);chair(g,x+1.5,y+3.7);box(g,x+2.8,y+2.4,1.12,.5,.6,.5,"#fdba74");box(g,x+2.8,y+2.4,1.62,.5,.6,.12,"#fed7aa")},
   };
   const tip=root.querySelector(".tip"), R=4.8;

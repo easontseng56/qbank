@@ -1,112 +1,118 @@
 {
- "updated": "2026-11-02",
- "banks": [
-  {
-   "name": "化學奧林匹亞初選",
-   "tier": 0,
-   "range": "2012–2026",
-   "papers": 15,
-   "questions": 682,
-   "updated": "2026-10-22",
-   "note": ""
-  },
-  {
-   "name": "學科能力競賽地區複賽",
-   "tier": 0,
-   "range": "2003–2025",
-   "papers": 177,
-   "questions": 4630,
-   "updated": "2026-10-22",
-   "note": "理論卷"
-  },
-  {
-   "name": "清華盃初賽",
-   "tier": 0,
-   "range": "2004–2025",
-   "papers": 22,
-   "questions": 1580,
-   "updated": "2026-10-22",
-   "note": ""
-  },
-  {
-   "name": "指考分科模考",
-   "tier": 1,
-   "range": "99–114 學年",
-   "papers": 99,
-   "questions": 2726,
-   "updated": "2026-10-22",
-   "note": "0+1 152"
-  },
-  {
-   "name": "指考／分科歷屆",
-   "tier": 1,
-   "range": "65–114 學年",
-   "papers": 48,
-   "questions": 1397,
-   "updated": "2026-10-22",
-   "note": "0+1 119"
-  },
-  {
-   "name": "學測歷屆",
-   "tier": 1,
-   "range": "83–115 學年",
-   "papers": 34,
-   "questions": 580,
-   "updated": "2026-10-22",
-   "note": "0+1 15"
-  },
-  {
-   "name": "學測模考",
-   "tier": 1,
-   "range": "99–115 學年",
-   "papers": 211,
-   "questions": 3578,
-   "updated": "2026-11-02",
-   "note": "0+1 36"
-  },
-  {
-   "name": "段考",
-   "tier": 2,
-   "range": "112–115 學年",
-   "papers": 246,
-   "questions": 6712,
-   "updated": "2026-11-02",
-   "note": "1+2 301、0+1+2 43；只出 JSON"
-  },
-  {
-   "name": "龍騰題庫光碟",
-   "tier": 3,
-   "range": "—",
-   "papers": 229,
-   "questions": 15387,
-   "updated": "2026-10-25",
-   "note": "只出 JSON"
-  }
- ],
- "sites": [
-  {
-   "name": "段考卷網站",
-   "url": "https://easontseng56.github.io/chem-exam/",
-   "count": "251 份",
-   "updated": ""
-  },
-  {
-   "name": "模考全科",
-   "url": "https://easontseng56.github.io/chem-exam/mock/",
-   "count": "學測 212 回",
-   "updated": "2026-11-02"
-  },
-  {
-   "name": "化奧網站",
-   "url": "https://easontseng56.github.io/chem-olympiad/",
-   "count": "15 屆",
-   "updated": "2026-10-19"
-  },
-  {
-   "name": "離線題庫",
-   "url": "https://easontseng56.github.io/qbank/",
-   "count": "",
-   "updated": "2026-11-02"
-  }
- ]
+  "updated": "2026-11-03",
+  "banks": [
+    {
+      "name": "化學奧林匹亞初選",
+      "tier": 0,
+      "range": "2012–2026",
+      "papers": 15,
+      "questions": 682,
+      "updated": "2026-10-22",
+      "note": ""
+    },
+    {
+      "name": "學科能力競賽地區複賽",
+      "tier": 0,
+      "range": "2003–2025",
+      "papers": 177,
+      "questions": 4630,
+      "updated": "2026-10-22",
+      "note": "理論卷"
+    },
+    {
+      "name": "清華盃初賽",
+      "tier": 0,
+      "range": "2004–2025",
+      "papers": 22,
+      "questions": 1580,
+      "updated": "2026-10-22",
+      "note": ""
+    },
+    {
+      "name": "指考分科模考",
+      "tier": 1,
+      "range": "99–114 學年",
+      "papers": 108,
+      "questions": 2996,
+      "updated": "2026-11-03",
+      "note": "0+1 152；11/03 補 9 份 110 後分科模考"
+    },
+    {
+      "name": "指考／分科歷屆",
+      "tier": 1,
+      "range": "65–114 學年",
+      "papers": 48,
+      "questions": 1397,
+      "updated": "2026-10-22",
+      "note": "0+1 119"
+    },
+    {
+      "name": "學測歷屆",
+      "tier": 1,
+      "range": "83–115 學年",
+      "papers": 34,
+      "questions": 580,
+      "updated": "2026-10-22",
+      "note": "0+1 15"
+    },
+    {
+      "name": "學測模考",
+      "tier": 1,
+      "range": "99–115 學年",
+      "papers": 213,
+      "questions": 3605,
+      "updated": "2026-11-03",
+      "note": "0+1 36；11/03 補 110全模N1、115中模"
+    },
+    {
+      "name": "段考",
+      "tier": 2,
+      "range": "112–115 學年",
+      "papers": 260,
+      "questions": 7081,
+      "updated": "2026-11-03",
+      "note": "1+2 314、0+1+2 45；含 9 份數資／延平不上站；只出 JSON"
+    },
+    {
+      "name": "龍騰題庫光碟",
+      "tier": 3,
+      "range": "—",
+      "papers": 229,
+      "questions": 15387,
+      "updated": "2026-10-25",
+      "note": "只出 JSON"
+    }
+  ],
+  "sites": [
+    {
+      "name": "段考卷網站",
+      "url": "https://easontseng56.github.io/chem-exam/",
+      "count": "251",
+      "updated": "2026-11-03"
+    },
+    {
+      "name": "模考內訓（private-mock）",
+      "url": "https://easontseng56.github.io/private-mock/",
+      "count": "學測 212 回、分科 108 回",
+      "updated": "2026-11-03"
+    },
+    {
+      "name": "化奧網站",
+      "url": "https://easontseng56.github.io/chem-olympiad/",
+      "count": "15",
+      "updated": "2026-10-19"
+    },
+    {
+      "name": "離線題庫",
+      "url": "https://easontseng56.github.io/qbank/",
+      "count": "1106 份",
+      "updated": "2026-11-03"
+    },
+    {
+      "name": "題庫池儀表板",
+      "url": "https://easontseng56.github.io/qbank/dashboard/",
+      "count": "—",
+      "updated": "2026-11-03"
+    }
+  ]
 }

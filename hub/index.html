@@ -9,93 +9,77 @@
   :root{--bg:#0d1322;--ink:#e8ecf4;--mute:#97a3b8;--card:#182035;--line:#2a3550}
   *{box-sizing:border-box}
   body{margin:0;background:radial-gradient(1200px 700px at 50% 30%,#172036 0%,var(--bg) 70%);color:var(--ink);font:15px/1.6 -apple-system,"Noto Sans TC","Microsoft JhengHei",sans-serif;min-height:100vh}
-  header{max-width:1100px;margin:0 auto;padding:22px 16px 0}
+  header{max-width:1240px;margin:0 auto;padding:22px 16px 0}
   h1{margin:0;font-size:24px;letter-spacing:.06em}
   .sub{color:var(--mute);font-size:13px}
-  .map{max-width:1100px;margin:0 auto;padding:0 8px;position:relative}
+  .rooms{max-width:1240px;margin:0 auto;padding:8px 8px 0;display:grid;grid-template-columns:540fr 660fr;gap:12px;align-items:start}
+  @media (max-width:860px){.rooms{grid-template-columns:1fr}}
+  .room{position:relative}
+  .room h2{margin:8px 8px 0;font-size:17px;display:flex;align-items:center;gap:8px}
+  .room h2 .tag{font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px;color:#0b1220;background:var(--c)}
+  .room .note{margin:0 8px;color:var(--mute);font-size:12px}
   svg{width:100%;height:auto;display:block}
   .zone{cursor:pointer}
   .zone .lift{transition:transform .18s ease}
-  .zone:hover .lift,.zone:focus .lift,.zone.hot .lift{transform:translateY(-5px)}
-  .zone:hover .rug,.zone:focus .rug,.zone.hot .rug{filter:brightness(1.3) drop-shadow(0 0 10px var(--glow))}
+  .zone:hover .lift,.zone:focus .lift{transform:translateY(-5px)}
+  .zone:hover .rug,.zone:focus .rug{filter:brightness(1.3) drop-shadow(0 0 10px var(--glow))}
   .zone:focus{outline:none}
-  #tip{position:absolute;pointer-events:none;background:#020617f2;border:1px solid #334155;color:#fff;border-radius:8px;padding:6px 10px;font-size:13px;opacity:0;transition:opacity .12s;max-width:260px;z-index:5}
-  .list{max-width:1100px;margin:6px auto 0;padding:0 16px 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
-  .list a,.list button{display:block;text-align:left;font:inherit;background:var(--card);border:1px solid var(--line);border-left:5px solid var(--c);border-radius:10px;padding:10px 12px;color:var(--ink);text-decoration:none;cursor:pointer;width:100%}
-  .list a:hover,.list button:hover{border-color:var(--c)}
-  .list b{display:block;font-size:15px}
+  .tip{position:absolute;pointer-events:none;background:#020617f2;border:1px solid #334155;color:#fff;border-radius:8px;padding:6px 10px;font-size:13px;opacity:0;transition:opacity .12s;max-width:260px;z-index:5}
+  .list{margin:6px 8px 10px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
+  .list a{display:block;background:var(--card);border:1px solid var(--line);border-left:5px solid var(--c);border-radius:10px;padding:8px 12px;color:var(--ink);text-decoration:none}
+  .list a:hover{border-color:var(--c)}
+  .list b{display:block;font-size:14px}
   .list span{color:var(--mute);font-size:12px}
-  footer{text-align:center;color:var(--mute);font-size:12px;padding:0 16px 24px}
-  dialog{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:18px 20px;max-width:520px;width:calc(100% - 32px)}
-  dialog::backdrop{background:#000a}
-  dialog h2{margin:0 0 4px;font-size:18px}
-  dialog p{margin:0 0 10px;color:var(--mute);font-size:13px}
-  dialog ul{list-style:none;margin:0;padding:0}
-  dialog li a{display:block;padding:8px 10px;border-radius:8px;color:var(--ink);text-decoration:none;border:1px solid transparent}
-  dialog li a:hover{border-color:#64748b;background:#1f2a44}
-  dialog li a b{display:block;font-size:14px}
-  dialog li a span{color:var(--mute);font-size:12px}
-  dialog .x{float:right;background:none;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:2px 10px;cursor:pointer;font:inherit}
+  footer{text-align:center;color:var(--mute);font-size:12px;padding:8px 16px 24px}
 </style>
 </head>
 <body>
 <header>
   <h1>周逸化學工作室</h1>
-  <div class="sub">點工作區開啟對應網站（新分頁）。左前方的門是團隊專區。</div>
+  <div class="sub">左邊是公領域（公開網站），右邊是私領域（內部用，需授權帳號）。點工作區就會在新分頁開啟。</div>
 </header>
-<div class="map"><svg id="world" viewBox="150 20 700 520" role="img" aria-label="工作室地圖"></svg><div id="tip"></div></div>
-<div class="list" id="list"></div>
+<div class="rooms">
+  <div class="room" id="pub" style="--c:#4ade80"><h2>公領域 <span class="tag">公開</span></h2><div class="note">任何人都能看</div><svg viewBox="230 -10 540 450"></svg><div class="tip"></div><div class="list"></div></div>
+  <div class="room" id="pri" style="--c:#f87171"><h2>私領域 <span class="tag">🔒 不公開</span></h2><div class="note">老師內部用，連結需要授權帳號才讀得到</div><svg viewBox="170 -10 660 520"></svg><div class="tip"></div><div class="list"></div></div>
+</div>
 <footer>周逸化學專用</footer>
-<dialog id="team">
-  <button class="x" onclick="team.close()">關閉</button>
-  <h2>團隊專區</h2>
-  <p>以下連結都需要已授權的 Google 帳號（zhouyihuaxue、yi0506）或 Claude 帳號才打得開，外人看到也無法讀取。</p>
-  <ul id="teamList"></ul>
-</dialog>
 <script>
-/* ===== 網站連結表：網址或名稱有變動只改這裡 ===== */
-const SITES = [
-  {id:"exam",  name:"新竹區高中化學段考題庫", desc:"各校段考卷下載（依學年、學期、年級、學校）",
-   url:"https://easontseng56.github.io/chem-exam/", color:"#2dd4bf", gx:1, gy:1, prop:"shelf"},
-  {id:"dash",  name:"題庫池儀表板", desc:"題庫總覽、待處理事項、同步狀態",
-   url:"https://easontseng56.github.io/qbank/dashboard/", color:"#4ade80", gx:6.5, gy:1, prop:"screen"},
-  {id:"mock",  name:"模考內訓網站", desc:"學測、分科模考原卷（內部使用）",
-   url:"https://easontseng56.github.io/private-mock/", color:"#60a5fa", gx:12, gy:1, prop:"board"},
-  {id:"olym",  name:"化學奧林匹亞初選", desc:"化奧初選歷屆原卷目錄",
-   url:"https://easontseng56.github.io/chem-olympiad/", color:"#c084fc", gx:1, gy:7, prop:"flask"},
-  {id:"qbank", name:"離線出題系統", desc:"依章節、Tier、難度選題出卷（需 Google 登入）",
-   url:"https://easontseng56.github.io/qbank/", color:"#fbbf24", gx:12, gy:7, prop:"printer"},
-];
-/* 團隊專區（需授權帳號） */
-const TEAM = [
-  {name:"題庫池控制台", desc:"上傳考卷、同步狀態、儀表板（Claude Artifact）", url:"https://claude.ai/artifact/T4VEC2CvpUCZ3WErRcrBru"},
-  {name:"題庫池新手指南", desc:"流程與資料夾說明（Claude Artifact）", url:"https://claude.ai/artifact/DsvRi8W5pnh2NxArnFUEQA"},
-  {name:"題庫池控制板（試算表）", desc:"來源待處理、本週結果、待 Eason 處理", url:"https://docs.google.com/spreadsheets/d/1V8LvhY-eh66mBTe7kp2eSXXIqs-_OUSxHXf498O_P9c/edit"},
-  {name:"題庫池（雲端資料夾）", desc:"00_說明～07_紀錄", url:"https://drive.google.com/drive/folders/1XTMgbxorvN3RlfKxak-9T0yR2fD53ztS"},
-  {name:"01_待處理（收件匣）", desc:"新考卷直接丟這裡，每週一自動處理", url:"https://drive.google.com/drive/folders/1apN5g7sSBm11-T_H8fhOrglnqdTEoos-"},
-  {name:"04_成品", desc:"模考與歷屆、段考、競賽成品", url:"https://drive.google.com/drive/folders/10ZV2fjBr-DOXJlaEuCpTCaPuxhUshpbl"},
-  {name:"段考卷總目錄（試算表）", desc:"含不公開卷，只限受邀者", url:"https://docs.google.com/spreadsheets/d/1TeFXDjy5hkq85gOTNsOu_J8dZ8P5HBbti2NjygFK86c/edit"},
-];
+/* ===== 連結表：網址或名稱有變動只改這裡 ===== */
+const ROOMS = {
+  pub: { N:12, sign:"公領域", sub:"PUBLIC", accent:"#4ade80", sites:[
+    {name:"化學奧林匹亞初選", desc:"化奧初選歷屆原卷目錄",
+     url:"https://easontseng56.github.io/chem-olympiad/", color:"#c084fc", gx:1, gy:1, prop:"flask"},
+    {name:"新竹區高中化學段考題庫", desc:"竹中化學段考考古題，各校段考卷下載",
+     url:"https://easontseng56.github.io/chem-exam/", color:"#2dd4bf", gx:6.2, gy:1, prop:"shelf"},
+  ]},
+  pri: { N:15, sign:"私領域", sub:"PRIVATE", accent:"#f87171", sites:[
+    {name:"模考內訓網站", desc:"學測、分科模考原卷（內部使用）",
+     url:"https://easontseng56.github.io/private-mock/", color:"#60a5fa", gx:1, gy:1, prop:"board"},
+    {name:"離線出題系統", desc:"依章節、Tier、難度選題出卷（需 Google 登入）",
+     url:"https://easontseng56.github.io/qbank/", color:"#fbbf24", gx:9, gy:1, prop:"printer"},
+    {name:"段考卷目錄試算表", desc:"老師內部用，只限受邀者",
+     url:"https://docs.google.com/spreadsheets/d/1TeFXDjy5hkq85gOTNsOu_J8dZ8P5HBbti2NjygFK86c/edit", color:"#34d399", gx:1, gy:8, prop:"sheet"},
+    {name:"段考題庫資料夾", desc:"【公開】段考題庫，資料夾不公開、單檔公開",
+     url:"https://drive.google.com/drive/folders/1GF7zHoeQMlfv85ZQtDMDBGKhqTvYueW1", color:"#fb923c", gx:9, gy:8, prop:"folder"},
+  ]},
+};
 /* ============================================ */
 
-const S=24, OX=500, OY=120, C=Math.cos(Math.PI/6), N=17, WH=5;
+const NS="http://www.w3.org/2000/svg", C=Math.cos(Math.PI/6), S=24, WH=5, OX=500, OY=120;
+let N=12, svg=null;
 const P=(x,y,z=0)=>[OX+(x-y)*C*S, OY+(x+y)*0.5*S - z*S];
 const pts=a=>a.map(p=>p.join(",")).join(" ");
-const NS="http://www.w3.org/2000/svg";
-const svg=document.getElementById("world");
 function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);(parent||svg).appendChild(e);return e}
 function shade(hex,f){const n=parseInt(hex.slice(1),16);let r=n>>16,g=n>>8&255,b=n&255;
   const m=v=>Math.max(0,Math.min(255,Math.round(f<0?v*(1+f):v+(255-v)*f)));return `rgb(${m(r)},${m(g)},${m(b)})`}
-/* 平面群組：地板／背牆／左牆上的 2D 繪圖 */
-const floorT=`matrix(${C*S},${.5*S},${-C*S},${.5*S},${OX},${OY})`;           // (x,y) 地板座標
-const backT=(z0=0)=>`matrix(${C*S},${.5*S},0,${-S},${OX},${OY-z0*S})`;         // (x,z)
-const leftT=`matrix(${-C*S},${.5*S},0,${-S},${OX},${OY})`;                      // (y,z)
+const floorT=`matrix(${C*S},${.5*S},${-C*S},${.5*S},${OX},${OY})`;
+const backT=`matrix(${C*S},${.5*S},0,${-S},${OX},${OY})`;
+const leftT=`matrix(${-C*S},${.5*S},0,${-S},${OX},${OY})`;
 function box(g,x,y,z,w,d,h,col,o={}){
   el("polygon",{points:pts([P(x,y+d,z),P(x+w,y+d,z),P(x+w,y+d,z+h),P(x,y+d,z+h)]),fill:o.L||shade(col,-.22)},g);
   el("polygon",{points:pts([P(x+w,y,z),P(x+w,y+d,z),P(x+w,y+d,z+h),P(x+w,y,z+h)]),fill:o.R||shade(col,-.45)},g);
   el("polygon",{points:pts([P(x,y,z+h),P(x+w,y,z+h),P(x+w,y+d,z+h),P(x,y+d,z+h)]),fill:o.T||col},g);
 }
-/* 在方塊左前面（y+d 面）貼平面圖：回傳 group，座標 (u 沿 x, v 向上)，單位格 */
 function faceL(g,x,y,z){return el("g",{transform:`matrix(${C*S},${.5*S},0,${-S},${P(x,y,z)[0]},${P(x,y,z)[1]})`},g)}
 function shadow(g,x,y,w,d){const q=el("g",{transform:floorT,opacity:.25},g);el("ellipse",{cx:x+w/2,cy:y+d/2,rx:w/2+.25,ry:d/2+.25,fill:"#000"},q)}
 
@@ -106,14 +90,15 @@ function desk(g,x,y,w,d,top="#e5e7eb",legs="#94a3b8"){
   box(g,x+.1,y+d-.25,0,.15,.15,1.0,legs);box(g,x+w-.25,y+d-.25,0,.15,.15,1.0,legs);
   box(g,x,y,1.0,w,d,.12,top);
 }
-function monitor(g,x,y,z,col,w=.9){
+function monitor(g,x,y,z,col,w=.9,kind="lines"){
   box(g,x+w/2-.15,y+.3,z,.3,.25,.1,"#475569");
   box(g,x+w/2-.03,y+.4,z+.1,.06,.06,.25,"#64748b");
   box(g,x,y+.42,z+.35,w,.06,.6,"#1e293b");
   const f=faceL(g,x,y+.48,z+.35);
   el("rect",{x:.05,y:.05,width:w-.1,height:.5,fill:"#0b1220"},f);
   el("rect",{x:.05,y:.05,width:w-.1,height:.5,fill:col,opacity:.25},f);
-  for(let k=0;k<3;k++)el("rect",{x:.12,y:.14+k*.12,width:(w-.3)*(0.5+((k*7+x*3)%5)/10),height:.05,fill:col,opacity:.8},f);
+  if(kind==="grid"){for(let r=0;r<4;r++)for(let c=0;c<4;c++)el("rect",{x:.1+c*(w-.2)/4,y:.1+r*.1,width:(w-.2)/4-.02,height:.08,fill:(r==0||c==0)?col:"#e2e8f0",opacity:(r==0||c==0)?.9:.35},f)}
+  else for(let k=0;k<3;k++)el("rect",{x:.12,y:.14+k*.12,width:(w-.3)*(0.5+((k*7+Math.round(x*3))%5)/10),height:.05,fill:col,opacity:.8},f);
 }
 function keyboard(g,x,y,z){box(g,x,y,z,.7,.25,.04,"#cbd5e1");box(g,x+.85,y+.05,z,.18,.25,.04,"#cbd5e1")}
 function chair(g,x,y,col="#334155"){
@@ -125,7 +110,7 @@ function chair(g,x,y,col="#334155"){
 function plant(g,x,y,big=false){
   const r=big?.6:.45;shadow(g,x,y,r,r);
   box(g,x,y,0,r,r,r*.9,"#e2e8f0",{T:"#5b3a1e"});
-  const c=P(x+r/2,y+r/2,r*.9+ (big?1.1:.8));
+  const c=P(x+r/2,y+r/2,r*.9+(big?1.1:.8));
   [[0,0,big?16:12,"#15803d"],[-9,6,big?11:8,"#16a34a"],[9,5,big?11:8,"#22c55e"],[0,-9,big?9:7,"#4ade80"]].forEach(([dx,dy,rr,cc])=>el("circle",{cx:c[0]+dx,cy:c[1]+dy,r:rr,fill:cc},g));
 }
 function rug(g,x,y,w,d,col,label){
@@ -141,6 +126,18 @@ function bookshelf(g,x,y,w,col){
   const cols=[col,"#ef4444","#eab308","#3b82f6","#f97316","#22c55e","#a855f7"];
   for(let k=0;k<3;k++){box(g,x+.08,y+.05,.25+k*.85,w-.16,.5,.06,"#c9a07a");
     let bx=x+.15;let i=0;while(bx<x+w-.3){const bw=.15+((k*3+i)%3)*.05;box(g,bx,y+.1,.31+k*.85,bw,.4,.45+((i+k)%3)*.1,cols[(i+k*2)%cols.length]);bx+=bw+.04;i++}}
+}
+function archive(g,x,y,w,col){ // 檔案櫃＋檔案盒
+  shadow(g,x,y,w,.7);
+  box(g,x,y,0,w,.7,2.6,"#64748b",{T:"#94a3b8"});
+  const cols=[col,"#f59e0b","#fde68a","#fdba74"];
+  for(let k=0;k<3;k++){box(g,x+.06,y+.05,.15+k*.8,w-.12,.6,.05,"#cbd5e1");
+    let bx=x+.12;let i=0;while(bx<x+w-.45){box(g,bx,y+.1,.2+k*.8,.38,.5,.6,cols[(i+k)%cols.length]);
+      const f=faceL(g,bx,y+.6,.2+k*.8);el("rect",{x:.06,y:.15,width:.26,height:.08,fill:"#fff",opacity:.85},f);bx+=.44;i++}}
+}
+function cabinet(g,x,y,col){ // 矮檔案櫃
+  shadow(g,x,y,1,.8);box(g,x,y,0,1,.8,1.3,"#94a3b8",{T:"#cbd5e1"});
+  for(let k=0;k<3;k++){const f=faceL(g,x,y+.8,.1+k*.4);el("rect",{x:.1,y:.05,width:.8,height:.28,fill:"#64748b"},f);el("rect",{x:.4,y:.15,width:.2,height:.05,fill:col},f)}
 }
 function whiteboard(g,x,y,w,col){
   shadow(g,x,y,w,.3);
@@ -167,30 +164,18 @@ function flaskSet(g,x,y,z,col){
   draw(x,y,.75,col);draw(x+.6,y+.2,.9,"#22d3ee");draw(x+1.2,y,.7,"#f472b6");
   box(g,x+1.6,y-.1,z,.5,.5,.55,"#334155",{T:"#475569"});box(g,x+1.65,y-.05,z+.55,.4,.4,.05,"#f59e0b");
 }
-function bigScreen(g,x,y,col){
-  shadow(g,x,y,3.2,.3);
-  box(g,x+1.4,y+.1,0,.4,.2,.4,"#475569");box(g,x+1.55,y+.15,.4,.1,.1,1.1,"#64748b");
-  box(g,x,y,1.5,3.2,.1,1.9,"#111827");
-  const f=faceL(g,x,y+.1,1.5);
-  el("rect",{x:.08,y:.08,width:3.04,height:1.74,fill:"#0b1220"},f);
-  el("rect",{x:.08,y:.08,width:3.04,height:1.74,fill:col,opacity:.12},f);
-  [[.3,.9],[.6,1.3],[.9,.7],[1.2,1.5],[1.5,1.1]].forEach(([bx,h])=>el("rect",{x:bx,y:1.7-h,width:.2,height:h,fill:col,opacity:.9},f));
-  el("polyline",{points:"1.9,1.4 2.2,1.0 2.5,1.15 2.8,.5 3.0,.7",fill:"none",stroke:"#38bdf8","stroke-width":.06},f);
-  el("rect",{x:1.9,y:.2,width:1.1,height:.12,fill:"#e2e8f0",opacity:.8},f);
-  el("rect",{x:1.9,y:.4,width:.7,height:.08,fill:"#94a3b8"},f);
-}
-function sofa(g,x,y){
-  shadow(g,x,y,4,1.2);shadow(g,x,y,1.2,4);
+function sofa(g,x,y,len=3.2){
+  shadow(g,x,y,len,1.2);
   const c="#3b82f6",d="#2563eb";
-  box(g,x,y,0,4,1.2,.55,c,{T:"#60a5fa"});box(g,x,y,.55,4,.35,.7,d);
-  box(g,x,y+1.2,0,1.2,2.8,.55,c,{T:"#60a5fa"});box(g,x,y+1.2,.55,.35,2.8,.7,d);
-  box(g,x+3.65,y,.55,.35,1.2,.35,d);box(g,x,y+3.65,.55,1.2,.35,.35,d);
-  [[1.5,.35],[2.6,.35],[.35,1.8],[.35,2.9]].forEach(([a,b])=>box(g,x+a,y+b,.55,.8,.8,.2,"#93c5fd"));
+  box(g,x,y,0,len,1.2,.55,c,{T:"#60a5fa"});box(g,x,y,.55,len,.35,.7,d);
+  box(g,x,y,.55,.3,1.2,.35,d);box(g,x+len-.3,y,.55,.3,1.2,.35,d);
+  for(let a=.5;a<len-.9;a+=1.1)box(g,x+a,y+.35,.55,.8,.8,.2,"#93c5fd");
 }
-function coffeeTable(g,x,y){shadow(g,x,y,1.6,1);box(g,x+.1,y+.1,0,.1,.1,.5,"#64748b");box(g,x+1.4,y+.1,0,.1,.1,.5,"#64748b");box(g,x+.1,y+.8,0,.1,.1,.5,"#64748b");box(g,x+1.4,y+.8,0,.1,.1,.5,"#64748b");
+function coffeeTable(g,x,y){shadow(g,x,y,1.6,1);[[.1,.1],[1.4,.1],[.1,.8],[1.4,.8]].forEach(([a,b])=>box(g,x+a,y+b,0,.1,.1,.5,"#64748b"));
   box(g,x,y,.5,1.6,1,.08,"#a16207",{T:"#ca8a04"});box(g,x+.5,y+.3,.58,.3,.3,.25,"#f8fafc");box(g,x+1,y+.4,.58,.25,.25,.2,"#f8fafc")}
 function roundTable(g,x,y){
   shadow(g,x,y,2,2);
+  box(g,x+.85,y+.85,0,.3,.3,.9,"#64748b");
   const cx=x+1,cy=y+1,rx=1.2247*S,ry=.707*S;
   const lo=P(cx,cy,.8),hi=P(cx,cy,.92);
   el("rect",{x:lo[0]-rx,y:hi[1],width:2*rx,height:lo[1]-hi[1],fill:"#92400e"},g);
@@ -200,116 +185,107 @@ function roundTable(g,x,y){
   [[x+1,y-.2],[x+2.2,y+1],[x+1,y+2.2],[x-.2,y+1]].forEach(([a,b])=>chair(g,a-.35,b-.35,"#475569"));
 }
 function waterCooler(g,x,y){shadow(g,x,y,.6,.6);box(g,x,y,0,.6,.6,1.3,"#e2e8f0");box(g,x+.1,y+.1,1.3,.4,.4,.7,"#bae6fd",{T:"#7dd3fc"});box(g,x+.15,y+.55,1.0,.3,.1,.1,"#38bdf8")}
-function door(g,y0,col){
+function door(g,y0,col,label,locked){
   const q=el("g",{transform:leftT},g);
   el("rect",{x:y0,y:0,width:1.6,height:3.2,fill:"#1e293b",stroke:"#64748b","stroke-width":.06},q);
   el("rect",{x:y0+.12,y:.12,width:1.36,height:2.96,fill:"#334155"},q);
-  el("rect",{x:y0+.25,y:.35,width:1.1,height:1.1,fill:"#475569"},q);
+  el("rect",{x:y0+.25,y:.35,width:1.1,height:1.1,fill:locked?"#475569":"#7dd3fc",opacity:locked?1:.6},q);
   el("rect",{x:y0+.25,y:1.65,width:1.1,height:1.2,fill:"#475569"},q);
   el("circle",{cx:y0+1.3,cy:1.75,r:.08,fill:"#fbbf24"},q);
   el("rect",{x:y0-.2,y:3.35,width:2,height:.5,rx:.08,fill:col},q);
   const qt=el("g",{transform:"scale(-1,-1)"},q);
-  const t=el("text",{x:-(y0+.8),y:-3.5,"text-anchor":"middle","font-size":.34,"font-weight":700,fill:"#0b1220"},qt);t.textContent="團隊專區";
-  const k=el("text",{x:-(y0+.8),y:-4.05,"text-anchor":"middle","font-size":.36,fill:"#fbbf24"},qt);k.textContent="🔒";
+  const t=el("text",{x:-(y0+.8),y:-3.5,"text-anchor":"middle","font-size":.34,"font-weight":700,fill:"#0b1220"},qt);t.textContent=label;
+  const k=el("text",{x:-(y0+.8),y:-4.05,"text-anchor":"middle","font-size":.36,fill:"#fbbf24"},qt);k.textContent=locked?"🔒":"🔓";
 }
 
 /* ---------- 房間 ---------- */
-const defs=el("defs",{});
-const fl=el("linearGradient",{id:"floor",x1:"0",y1:"0",x2:"1",y2:"1"},defs);
-el("stop",{offset:"0","stop-color":"#c98a52"},fl);el("stop",{offset:"1","stop-color":"#9a6233"},fl);
-const sky=el("linearGradient",{id:"sky",x1:"0",y1:"0",x2:"0",y2:"1"},defs);
-el("stop",{offset:"0","stop-color":"#1e3a8a"},sky);el("stop",{offset:"1","stop-color":"#7dd3fc"},sky);
-const room=el("g",{});
-// 背牆、左牆
-el("polygon",{points:pts([P(0,0,0),P(N,0,0),P(N,0,WH),P(0,0,WH)]),fill:"#2b3550"},room);
-el("polygon",{points:pts([P(0,0,0),P(0,N,0),P(0,N,WH),P(0,0,WH)]),fill:"#222b44"},room);
-el("polygon",{points:pts([P(0,0,0),P(N,0,0),P(N,0,.5),P(0,0,.5)]),fill:"#1b2238"},room);
-el("polygon",{points:pts([P(0,0,0),P(0,N,0),P(0,N,.5),P(0,0,.5)]),fill:"#161c30"},room);
-// 背牆窗（右半）＋天際線（座標：x 沿牆、y 向上）
-const bw=el("g",{transform:backT()},room);
-const bt=el("g",{transform:"scale(1,-1)"},bw); // 文字用
-for(let i=9;i<N-.5;i+=2.6){
-  el("rect",{x:i,y:1.1,width:2.1,height:3.3,fill:"url(#sky)",stroke:"#0f172a","stroke-width":.08},bw);
-  for(let b=0;b<5;b++){const h=.6+((b*5+Math.round(i)*3)%7)/5;el("rect",{x:i+.1+b*.4,y:1.1,width:.32,height:h,fill:"#0f172a",opacity:.75},bw);
-    for(let w=0;w<3;w++)el("rect",{x:i+.16+b*.4,y:1.25+w*.3,width:.08,height:.1,fill:"#fde68a",opacity:(b+w)%2?.9:.3},bw)}
-  el("line",{x1:i+1.05,y1:1.1,x2:i+1.05,y2:4.4,stroke:"#0f172a","stroke-width":.06},bw);
-  el("circle",{cx:i+1.6,cy:3.8,r:.22,fill:"#fef3c7"},bw);
+function buildRoom(key){
+  const cfg=ROOMS[key], root=document.getElementById(key);
+  svg=root.querySelector("svg"); N=cfg.N;
+  const defs=el("defs",{});
+  const fl=el("linearGradient",{id:key+"floor",x1:"0",y1:"0",x2:"1",y2:"1"},defs);
+  el("stop",{offset:"0","stop-color":key==="pub"?"#c98a52":"#8d6a9a"},fl);el("stop",{offset:"1","stop-color":key==="pub"?"#9a6233":"#5a4466"},fl);
+  const sky=el("linearGradient",{id:key+"sky",x1:"0",y1:"0",x2:"0",y2:"1"},defs);
+  if(key==="pub"){el("stop",{offset:"0","stop-color":"#38bdf8"},sky);el("stop",{offset:"1","stop-color":"#e0f2fe"},sky)}
+  else{el("stop",{offset:"0","stop-color":"#1e3a8a"},sky);el("stop",{offset:"1","stop-color":"#7dd3fc"},sky)}
+  const wallB=key==="pub"?"#2b3550":"#2a2440", wallL=key==="pub"?"#222b44":"#201b33";
+  const room=el("g",{});
+  el("polygon",{points:pts([P(0,0,0),P(N,0,0),P(N,0,WH),P(0,0,WH)]),fill:wallB},room);
+  el("polygon",{points:pts([P(0,0,0),P(0,N,0),P(0,N,WH),P(0,0,WH)]),fill:wallL},room);
+  el("polygon",{points:pts([P(0,0,0),P(N,0,0),P(N,0,.5),P(0,0,.5)]),fill:"#1b2238"},room);
+  el("polygon",{points:pts([P(0,0,0),P(0,N,0),P(0,N,.5),P(0,0,.5)]),fill:"#161c30"},room);
+  // 背牆：招牌（左半）、窗（右半）
+  const bw=el("g",{transform:backT},room), bt=el("g",{transform:"scale(1,-1)"});
+  el("rect",{x:.8,y:2.2,width:4.4,height:2.1,rx:.1,fill:"#0b1220",stroke:cfg.accent,"stroke-width":.08},bw);
+  const lg=el("text",{x:3,y:-3.35,"text-anchor":"middle","font-size":.85,"font-weight":800,fill:cfg.accent},bt);lg.textContent=cfg.sign;
+  const lg2=el("text",{x:3,y:-2.6,"text-anchor":"middle","font-size":.34,"letter-spacing":.08,fill:"#94a3b8"},bt);lg2.textContent=cfg.sub;
+  el("circle",{cx:6.3,cy:3.4,r:.5,fill:"#f8fafc",stroke:"#334155","stroke-width":.06},bw);
+  el("line",{x1:6.3,y1:3.4,x2:6.3,y2:3.78,stroke:"#0f172a","stroke-width":.06},bw);el("line",{x1:6.3,y1:3.4,x2:6.55,y2:3.25,stroke:"#0f172a","stroke-width":.06},bw);
+  for(let i=7.2;i<N-.6;i+=2.4){
+    el("rect",{x:i,y:1.1,width:2,height:3.3,fill:`url(#${key}sky)`,stroke:"#0f172a","stroke-width":.08},bw);
+    for(let b=0;b<5;b++){const h=.6+((b*5+Math.round(i)*3)%7)/5;el("rect",{x:i+.1+b*.38,y:1.1,width:.3,height:h,fill:key==="pub"?"#64748b":"#0f172a",opacity:.75},bw);
+      for(let w=0;w<3;w++)el("rect",{x:i+.16+b*.38,y:1.25+w*.3,width:.08,height:.1,fill:"#fde68a",opacity:(b+w)%2?.9:.3},bw)}
+    el("line",{x1:i+1,y1:1.1,x2:i+1,y2:4.4,stroke:"#0f172a","stroke-width":.06},bw);
+    el("circle",{cx:i+1.5,cy:3.8,r:.22,fill:key==="pub"?"#fef08a":"#fef3c7"},bw);
+    if(key==="pub")el("ellipse",{cx:i+.7,cy:3.4,rx:.45,ry:.18,fill:"#fff",opacity:.8},bw);
+  }
+  bw.appendChild(bt);
+  // 左牆：海報
+  const lw=el("g",{transform:leftT},room), lt=el("g",{transform:"scale(-1,-1)"});
+  const posters=key==="pub"?[[2.5,"#c084fc","化奧"],[4.1,"#2dd4bf","段考"]]:[[2.5,"#2dd4bf","Tier 0"],[4.1,"#60a5fa","Tier 1"],[5.7,"#fbbf24","Tier 2"]];
+  posters.forEach(([y,c,txt])=>{
+    el("rect",{x:y,y:2.3,width:1.3,height:1.7,fill:"#0f172a",stroke:c,"stroke-width":.06},lw);
+    el("rect",{x:y+.15,y:3.0,width:1,height:.9,fill:c,opacity:.35},lw);
+    const t=el("text",{x:-(y+.65),y:-2.55,"text-anchor":"middle","font-size":.3,fill:c},lt);t.textContent=txt;
+  });
+  lw.appendChild(lt);
+  // 地板
+  el("polygon",{points:pts([P(0,0),P(N,0),P(N,N),P(0,N)]),fill:`url(#${key}floor)`},room);
+  const lineC=key==="pub"?"#7c4a22":"#3f2d4d";
+  for(let i=1;i<N;i++)el("line",{x1:P(i,0)[0],y1:P(i,0)[1],x2:P(i,N)[0],y2:P(i,N)[1],stroke:lineC,opacity:.5,"stroke-width":.8},room);
+  for(let j=0;j<N;j+=.5){for(let i=((j*2)%2)?0:.5;i<N;i+=1)el("line",{x1:P(i,j)[0],y1:P(i,j)[1],x2:P(i+.5,j)[0],y2:P(i+.5,j)[1],stroke:lineC,opacity:.25,"stroke-width":.6},room)}
+  el("polygon",{points:pts([P(0,N),P(N,N),P(N,N,-.6),P(0,N,-.6)]),fill:key==="pub"?"#6b3f1c":"#3b2a47"},room);
+  el("polygon",{points:pts([P(N,0),P(N,N),P(N,N,-.6),P(N,0,-.6)]),fill:key==="pub"?"#4e2d13":"#2a1d33"},room);
+  door(room,N-3.5,cfg.accent,key==="pub"?"歡迎參觀":"內部人員",key!=="pub");
+
+  const PROPS={
+    shelf(g,x,y,c){bookshelf(g,x+.2,y+.1,3.4,c);desk(g,x+.6,y+2.2,3,1.4);monitor(g,x+1.0,y+2.3,1.12,c);monitor(g,x+2.1,y+2.3,1.12,c,.8);keyboard(g,x+1.4,y+3.1,1.12);chair(g,x+1.7,y+3.8)},
+    board(g,x,y,c){whiteboard(g,x+.3,y+.1,3.2,c);desk(g,x+.5,y+2.2,3,1.4);monitor(g,x+.9,y+2.3,1.12,c,1.1);monitor(g,x+2.2,y+2.3,1.12,c,.8);keyboard(g,x+1.3,y+3.1,1.12);chair(g,x+1.6,y+3.8);plant(g,x+3.6,y+.3)},
+    flask(g,x,y,c){desk(g,x+.3,y+.4,3.4,1.5,"#1f2937","#111827");flaskSet(g,x+.9,y+1.2,1.12,c);desk(g,x+.3,y+2.4,3,1.2);monitor(g,x+.7,y+2.5,1.12,c);keyboard(g,x+1.0,y+3.2,1.12);chair(g,x+1.3,y+3.8);box(g,x+2.3,y+2.6,1.12,.5,.35,.3,"#f8fafc")},
+    printer(g,x,y,c){printer(g,x+2.6,y+.3,c);desk(g,x+.3,y+.5,2.2,1.4);monitor(g,x+.6,y+.6,1.12,c);keyboard(g,x+.9,y+1.4,1.12);chair(g,x+1.1,y+2.2);desk(g,x+.3,y+2.9,3.2,1.2);monitor(g,x+.7,y+3.0,1.12,c,.8);monitor(g,x+1.8,y+3.0,1.12,c,.8);keyboard(g,x+1.2,y+3.7,1.12);chair(g,x+1.5,y+4.3)},
+    sheet(g,x,y,c){cabinet(g,x+3.4,y+.2,c);cabinet(g,x+3.4,y+1.1,c);desk(g,x+.3,y+.6,3,1.4);monitor(g,x+.5,y+.7,1.12,c,1.5,"grid");keyboard(g,x+.9,y+1.5,1.12);chair(g,x+1.2,y+2.2);box(g,x+2.3,y+.8,1.12,.5,.6,.08,"#f8fafc");box(g,x+2.35,y+.85,1.2,.4,.5,.06,"#fef3c7")},
+    folder(g,x,y,c){archive(g,x+.2,y+.1,3.6,c);desk(g,x+.6,y+2.2,2.6,1.3);monitor(g,x+1.0,y+2.3,1.12,c);keyboard(g,x+1.3,y+3.05,1.12);chair(g,x+1.5,y+3.7);box(g,x+2.8,y+2.4,1.12,.5,.6,.5,"#fdba74");box(g,x+2.8,y+2.4,1.62,.5,.6,.12,"#fed7aa")},
+  };
+  const tip=root.querySelector(".tip"), R=4.8;
+  [...cfg.sites].sort((a,b)=>(a.gx+a.gy)-(b.gx+b.gy)).forEach(s=>{
+    const a=el("a",{href:s.url,target:"_blank",rel:"noopener",class:"zone",tabindex:0,style:`--glow:${s.color}`});
+    el("title",{},a).textContent=s.name;
+    rug(a,s.gx,s.gy,R,R+.7,s.color,s.name);
+    const lift=el("g",{class:"lift"},a);
+    PROPS[s.prop](lift,s.gx,s.gy,s.color);
+    a.addEventListener("mousemove",e=>{const r=root.getBoundingClientRect();tip.innerHTML=`<b>${s.name}</b><br>${s.desc}`;
+      tip.style.left=(e.clientX-r.left+14)+"px";tip.style.top=(e.clientY-r.top+14)+"px";tip.style.opacity=1});
+    a.addEventListener("mouseleave",()=>tip.style.opacity=0);
+  });
+  // 公共區
+  const lounge=el("g",{});
+  if(key==="pub"){
+    const q=el("g",{transform:floorT},lounge);el("ellipse",{cx:6,cy:9.2,rx:3,ry:2,fill:"#22c55e",opacity:.28},q);
+    sofa(lounge,3.6,7.4,3.4);coffeeTable(lounge,5.2,9.2);
+    plant(lounge,N-1.2,.4,true);plant(lounge,.4,N-1.2,true);plant(lounge,9.5,9.6);waterCooler(lounge,N-1,5.5);
+  }else{
+    roundTable(lounge,6.2,2.8);
+    const q=el("g",{transform:floorT},lounge);el("ellipse",{cx:8.2,cy:11.6,rx:2.4,ry:1.6,fill:"#f87171",opacity:.2},q);
+    sofa(lounge,6.6,10.8,3.2);
+    plant(lounge,N-1.2,.4,true);plant(lounge,.4,N-1.2,true);plant(lounge,N-1.2,N-1.2,true);plant(lounge,6.6,7.4);waterCooler(lounge,N-1,4.0);
+  }
+  [[N*.3,N*.3],[N*.7,N*.3],[N*.3,N*.7],[N*.7,N*.7]].forEach(([x,y])=>{const c=P(x,y,0);el("ellipse",{cx:c[0],cy:c[1],rx:70,ry:38,fill:"#fff7ed",opacity:.06})});
+  // 清單
+  const list=root.querySelector(".list");
+  cfg.sites.forEach(s=>{const a=document.createElement("a");a.href=s.url;a.target="_blank";a.rel="noopener";a.style.setProperty("--c",s.color);
+    a.innerHTML=`<b>${s.name}</b><span>${s.desc}</span>`;list.appendChild(a)});
 }
-// 背牆看板（左半）：Logo 招牌與時鐘
-el("rect",{x:1,y:2.0,width:4.6,height:2.2,rx:.1,fill:"#0b1220",stroke:"#334155","stroke-width":.06},bw);
-el("rect",{x:1.15,y:2.15,width:4.3,height:1.9,fill:"#111827"},bw);
-const lg=el("text",{x:3.3,y:-3.1,"text-anchor":"middle","font-size":.7,"font-weight":800,fill:"#fbbf24"},bt);lg.textContent="周逸化學";
-const lg2=el("text",{x:3.3,y:-2.45,"text-anchor":"middle","font-size":.32,fill:"#94a3b8"},bt);lg2.textContent="高中化學題庫工作室";
-el("circle",{cx:7.3,cy:3.4,r:.55,fill:"#f8fafc",stroke:"#334155","stroke-width":.06},bw);
-el("line",{x1:7.3,y1:3.4,x2:7.3,y2:3.8,stroke:"#0f172a","stroke-width":.06},bw);el("line",{x1:7.3,y1:3.4,x2:7.55,y2:3.25,stroke:"#0f172a","stroke-width":.06},bw);
-// 左牆：海報、圖表（座標：x 沿牆（世界 y）、y 向上；文字要翻回來）
-const lw=el("g",{transform:leftT},room);
-const lt=el("g",{transform:"scale(-1,-1)"},lw);
-[[3,"#2dd4bf","Tier 0"],[4.6,"#60a5fa","Tier 1"],[6.2,"#fbbf24","Tier 2"]].forEach(([y,c,txt])=>{
-  el("rect",{x:y,y:2.3,width:1.3,height:1.7,fill:"#0f172a",stroke:c,"stroke-width":.06},lw);
-  el("rect",{x:y+.15,y:3.0,width:1,height:.9,fill:c,opacity:.35},lw);
-  const t=el("text",{x:-(y+.65),y:-2.55,"text-anchor":"middle","font-size":.3,fill:c},lt);t.textContent=txt;
-});
-el("rect",{x:8.5,y:2.2,width:3.2,height:2,fill:"#0f172a",stroke:"#334155","stroke-width":.06},lw);
-el("rect",{x:8.65,y:2.35,width:2.9,height:1.7,fill:"#1e293b"},lw);
-el("polyline",{points:"8.8,2.6 9.3,3.2 9.8,2.9 10.3,3.6 10.8,3.3 11.3,3.9",fill:"none",stroke:"#4ade80","stroke-width":.06},lw);
-bw.appendChild(bt);lw.appendChild(lt);
-// 地板
-el("polygon",{points:pts([P(0,0),P(N,0),P(N,N),P(0,N)]),fill:"url(#floor)"},room);
-for(let i=1;i<N;i++){el("line",{x1:P(i,0)[0],y1:P(i,0)[1],x2:P(i,N)[0],y2:P(i,N)[1],stroke:"#7c4a22",opacity:.5,"stroke-width":.8},room);}
-for(let j=0;j<N;j+=.5){for(let i=((j*2)%2)?0:.5;i<N;i+=1){el("line",{x1:P(i,j)[0],y1:P(i,j)[1],x2:P(i+.5,j)[0],y2:P(i+.5,j)[1],stroke:"#7c4a22",opacity:.25,"stroke-width":.6},room)}}
-el("polygon",{points:pts([P(0,N),P(N,N),P(N,N,-.6),P(0,N,-.6)]),fill:"#6b3f1c"},room);
-el("polygon",{points:pts([P(N,0),P(N,N),P(N,N,-.6),P(N,0,-.6)]),fill:"#4e2d13"},room);
-// 門（左牆前段）
-door(room,11.5,"#f87171");
-
-/* ---------- 工作區 ---------- */
-const PROPS={
-  shelf(g,x,y,c){bookshelf(g,x+.2,y+.1,3.4,c);desk(g,x+.6,y+2.2,3,1.4);monitor(g,x+1.0,y+2.3,1.12,c);monitor(g,x+2.1,y+2.3,1.12,c,.8);keyboard(g,x+1.4,y+3.1,1.12);chair(g,x+1.7,y+3.8)},
-  screen(g,x,y,c){bigScreen(g,x+.4,y+.1,c);desk(g,x+.5,y+2.0,3,1.4);monitor(g,x+.8,y+2.1,1.12,c);monitor(g,x+2.1,y+2.1,1.12,c);keyboard(g,x+1.3,y+2.95,1.12);chair(g,x+1.6,y+3.7)},
-  board(g,x,y,c){whiteboard(g,x+.3,y+.1,3.2,c);desk(g,x+.5,y+2.2,3,1.4);monitor(g,x+.9,y+2.3,1.12,c,1.1);monitor(g,x+2.2,y+2.3,1.12,c,.8);keyboard(g,x+1.3,y+3.1,1.12);chair(g,x+1.6,y+3.8);plant(g,x+3.6,y+.3)},
-  flask(g,x,y,c){desk(g,x+.3,y+.4,3.4,1.5,"#1f2937","#111827");flaskSet(g,x+.9,y+1.2,1.12,c);desk(g,x+.3,y+2.4,3,1.2);monitor(g,x+.7,y+2.5,1.12,c);keyboard(g,x+1.0,y+3.2,1.12);chair(g,x+1.3,y+3.8);box(g,x+2.3,y+2.6,1.12,.5,.35,.3,"#f8fafc")},
-  printer(g,x,y,c){printer(g,x+2.6,y+.3,c);desk(g,x+.3,y+.5,2.2,1.4);monitor(g,x+.6,y+.6,1.12,c);keyboard(g,x+.9,y+1.4,1.12);chair(g,x+1.1,y+2.2);desk(g,x+.3,y+2.9,3.2,1.2);monitor(g,x+.7,y+3.0,1.12,c,.8);monitor(g,x+1.8,y+3.0,1.12,c,.8);keyboard(g,x+1.2,y+3.7,1.12);chair(g,x+1.5,y+4.3)},
-};
-const tip=document.getElementById("tip"), map=document.querySelector(".map");
-const R=4.8;
-const items=SITES.map(s=>({s,z:s.gx+s.gy}));
-items.sort((a,b)=>a.z-b.z).forEach(({s})=>{
-  const a=el("a",{href:s.url,target:"_blank",rel:"noopener",class:"zone",tabindex:0,style:`--glow:${s.color}`});
-  el("title",{},a).textContent=s.name;
-  rug(a,s.gx,s.gy,R,R+.7,s.color,s.name);
-  const lift=el("g",{class:"lift"},a);
-  PROPS[s.prop](lift,s.gx,s.gy,s.color);
-  a.addEventListener("mousemove",e=>{const r=map.getBoundingClientRect();tip.innerHTML=`<b>${s.name}</b><br>${s.desc}`;
-    tip.style.left=(e.clientX-r.left+14)+"px";tip.style.top=(e.clientY-r.top+14)+"px";tip.style.opacity=1});
-  a.addEventListener("mouseleave",()=>tip.style.opacity=0);
-});
-/* 公共區 */
-const lounge=el("g",{});
-const q=el("g",{transform:floorT},lounge);el("ellipse",{cx:9.2,cy:13.0,rx:3.2,ry:2.6,fill:"#22c55e",opacity:.28},q);
-sofa(lounge,7.0,11.0);coffeeTable(lounge,8.7,12.4);
-roundTable(lounge,7.0,7.3);
-plant(lounge,15.8,.4,true);plant(lounge,.4,15.8,true);plant(lounge,15.8,15.6,true);plant(lounge,5.6,.4);plant(lounge,11.6,14.4);
-waterCooler(lounge,15.9,5.2);
-/* 團隊專區：門可點 */
-const teamBtn=el("a",{href:"#team",class:"zone",tabindex:0,style:"--glow:#f87171"});
-el("title",{},teamBtn).textContent="團隊專區（需授權）";
-const tq=el("g",{transform:leftT,class:"rug"},teamBtn);el("rect",{x:11.2,y:-4.6,width:2.2,height:4.6,fill:"#f87171",opacity:0.001},tq);
-const tf=el("g",{transform:floorT},teamBtn);el("rect",{x:.05,y:11.3,width:1.6,height:2,rx:.1,fill:"#f87171",opacity:.35},tf);
-teamBtn.addEventListener("click",e=>{e.preventDefault();team.showModal()});
-teamBtn.addEventListener("mousemove",e=>{const r=map.getBoundingClientRect();tip.innerHTML=`<b>團隊專區</b><br>控制台、控制板、雲端資料夾（需授權帳號）`;
-  tip.style.left=(e.clientX-r.left+14)+"px";tip.style.top=(e.clientY-r.top+14)+"px";tip.style.opacity=1});
-teamBtn.addEventListener("mouseleave",()=>tip.style.opacity=0);
-/* 吊燈光暈 */
-[[4,4],[12,4],[4,12],[12,12]].forEach(([x,y])=>{const c=P(x,y,0);el("ellipse",{cx:c[0],cy:c[1],rx:70,ry:38,fill:"#fff7ed",opacity:.06})});
-
-/* 手機與無障礙用的清單 */
-const list=document.getElementById("list");
-SITES.forEach(s=>{const a=document.createElement("a");a.href=s.url;a.target="_blank";a.rel="noopener";a.style.setProperty("--c",s.color);
-  a.innerHTML=`<b>${s.name}</b><span>${s.desc}</span>`;list.appendChild(a)});
-const tb=document.createElement("button");tb.style.setProperty("--c","#f87171");tb.innerHTML=`<b>🔒 團隊專區</b><span>控制台、控制板、雲端資料夾（需授權帳號）</span>`;tb.onclick=()=>team.showModal();list.appendChild(tb);
-const tl=document.getElementById("teamList");
-TEAM.forEach(t=>{const li=document.createElement("li");li.innerHTML=`<a href="${t.url}" target="_blank" rel="noopener"><b>${t.name}</b><span>${t.desc}</span></a>`;tl.appendChild(li)});
+buildRoom("pub");buildRoom("pri");
 </script>
 </body>
 </html>

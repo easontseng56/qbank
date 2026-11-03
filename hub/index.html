@@ -30,13 +30,17 @@
   .list a:hover{border-color:var(--c)}
   .list b{display:block;font-size:14px}
   .list span{color:var(--mute);font-size:12px}
+  .guide{float:right;margin:2px 0 8px 12px;display:flex;flex-direction:column;align-items:center;background:#fbbf24;color:#0b1220;font-weight:800;font-size:16px;text-decoration:none;border-radius:12px;padding:8px 16px;box-shadow:0 0 18px #fbbf2455}
+  .guide small{font-weight:600;font-size:11px}
+  .guide:hover{filter:brightness(1.1)}
   footer{text-align:center;color:var(--mute);font-size:12px;padding:8px 16px 24px}
 </style>
 </head>
 <body>
 <header>
+  <a class="guide" href="../guide/">📖 使用說明<small>第一次來先看這裡</small></a>
   <h1>周逸化學工作室</h1>
-  <div class="sub">左邊是公領域（公開網站），右邊是私領域（內部用，需授權帳號）。點工作區就會在新分頁開啟。 <a href="../guide/" style="color:#fbbf24">📖 第一次來？看使用說明</a></div>
+  <div class="sub">左邊是公領域（公開網站），右邊是私領域（內部用，需授權帳號）。點工作區就會在新分頁開啟。</div>
 </header>
 <div class="rooms">
   <div class="room" id="pub" style="--c:#4ade80"><h2>公領域 <span class="tag">公開</span></h2><div class="note">任何人都能看</div><svg viewBox="230 -10 540 450"></svg><div class="tip"></div><div class="list"></div></div>

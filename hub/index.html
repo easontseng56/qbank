@@ -75,6 +75,8 @@ const ROOMS = {
      url:"https://docs.google.com/spreadsheets/d/1TeFXDjy5hkq85gOTNsOu_J8dZ8P5HBbti2NjygFK86c/edit", color:"#34d399", gx:1, gy:9, prop:"sheet"},
     {name:"題庫池控制台", desc:"上傳考卷到 01_待處理、同步狀態、儀表板（Google 登入）",
      url:"https://easontseng56.github.io/qbank/console/", color:"#f87171", gx:12.2, gy:9, prop:"console"},
+    {name:"公佈欄", desc:"工作室公告：題庫分類章節細項、Tier 與難度分級",
+     url:"https://easontseng56.github.io/qbank/hub/board/", color:"#e879f9", gx:6.6, gy:9, prop:"notice"},
   ]},
 };
 /* ============================================ */
@@ -162,6 +164,17 @@ function whiteboard(g,x,y,w,col){
   el("rect",{x:0,y:1.85,width:w,height:.15,fill:col},f);
   el("polyline",{points:"0.2,1.4 0.6,0.9 1.0,1.2 1.5,0.5 2.0,0.8 2.5,0.4",fill:"none",stroke:col,"stroke-width":.06},f);
   [[.2,.3,"#ef4444"],[.2,.5,"#1e293b"],[.2,.7,"#1e293b"]].forEach(([a,b,c])=>el("rect",{x:a,y:b,width:.9-b*.4,height:.07,fill:c},f));
+}
+function corkboard(g,x,y,w,col){ // 公佈欄：軟木板＋便條紙＋圖釘
+  shadow(g,x,y,w,.3);
+  box(g,x+.15,y+.1,0,.1,.1,1.1,"#78350f");box(g,x+w-.25,y+.1,0,.1,.1,1.1,"#78350f");
+  box(g,x,y,1.1,w,.14,2.3,"#92400e",{L:"#78350f"});
+  const f=faceL(g,x,y+.14,1.1);
+  el("rect",{x:.1,y:.1,width:w-.2,height:2.1,fill:"#c08a52"},f);
+  [[.25,.25,.9,.75,"#fef08a"],[1.3,.2,.85,.65,"#fbcfe8"],[2.3,.3,.75,.8,"#bfdbfe"],[.4,1.15,1.0,.8,"#ffffff"],[1.6,1.05,.9,.9,col],[2.65,1.3,.45,.6,"#bbf7d0"]].forEach(([a,b,ww,hh,c],i)=>{
+    el("rect",{x:a,y:b,width:ww,height:hh,fill:c,opacity:.95},f);
+    for(let k=0;k<3;k++)el("rect",{x:a+.1,y:b+.25+k*.15,width:ww*(.75-k*.15),height:.05,fill:"#475569",opacity:.6},f);
+    el("circle",{cx:a+ww/2,cy:b+.08,r:.07,fill:["#ef4444","#2563eb","#16a34a"][i%3]},f)});
 }
 function printer(g,x,y,col){
   shadow(g,x,y,1.3,1.1);
@@ -283,6 +296,7 @@ function buildRoom(key){
     console(g,x,y,c){desk(g,x+.3,y+.4,3.4,1.4);monitor(g,x+.6,y+.5,1.12,c,1.6,"grid");monitor(g,x+2.5,y+.5,1.12,c,.9);keyboard(g,x+1.2,y+1.3,1.12);chair(g,x+1.5,y+2.1);
       desk(g,x+.3,y+2.9,2.6,1.2);monitor(g,x+.7,y+3.0,1.12,c,1.0);keyboard(g,x+1.0,y+3.7,1.12);chair(g,x+1.2,y+4.3);
       box(g,x+3.3,y+2.9,0,1.1,.8,.9,"#64748b",{T:"#94a3b8"});box(g,x+3.4,y+3.0,.9,.9,.6,.25,"#fdba74",{T:"#fed7aa"});box(g,x+3.45,y+3.05,1.15,.8,.5,.06,"#fff");box(g,x+3.5,y+3.1,1.21,.7,.4,.06,"#f8fafc")},
+    notice(g,x,y,c){corkboard(g,x+.4,y+.1,3.4,c);plant(g,x+3.9,y+.3);sofa(g,x+.6,y+2.6,3.2);coffeeTable(g,x+1.3,y+4.1)},
     folder(g,x,y,c){archive(g,x+.2,y+.1,3.6,c);desk(g,x+.6,y+2.2,2.6,1.3);monitor(g,x+1.0,y+2.3,1.12,c);keyboard(g,x+1.3,y+3.05,1.12);chair(g,x+1.5,y+3.7);box(g,x+2.8,y+2.4,1.12,.5,.6,.5,"#fdba74");box(g,x+2.8,y+2.4,1.62,.5,.6,.12,"#fed7aa")},
   };
   const tip=root.querySelector(".tip"), R=4.8, badges=document.createElementNS(NS,"g");
@@ -316,10 +330,7 @@ function buildRoom(key){
     sofa(lounge,3.6,7.4,3.4);coffeeTable(lounge,5.2,9.2);
     plant(lounge,N-1.2,.4,true);plant(lounge,.4,N-1.2,true);plant(lounge,9.5,9.6);waterCooler(lounge,N-1,5.5);
   }else{
-    roundTable(lounge,7.9,8.4);
-    const q=el("g",{transform:floorT},lounge);el("ellipse",{cx:8.9,cy:14.2,rx:2.4,ry:1.6,fill:"#f87171",opacity:.2},q);
-    sofa(lounge,7.3,13.4,3.2);
-    plant(lounge,N-1.2,.4,true);plant(lounge,.4,N-1.2,true);plant(lounge,N-1.2,N-1.2,true);plant(lounge,6.9,11.6);waterCooler(lounge,N-1,15.4);
+    plant(lounge,N-1.2,.4,true);plant(lounge,.4,N-1.2,true);plant(lounge,N-1.2,N-1.2,true);plant(lounge,5.5,16.6);waterCooler(lounge,N-1,15.4);
   }
   [[N*.3,N*.3],[N*.7,N*.3],[N*.3,N*.7],[N*.7,N*.7]].forEach(([x,y])=>{const c=P(x,y,0);el("ellipse",{cx:c[0],cy:c[1],rx:70,ry:38,fill:"#fff7ed",opacity:.06})});
   svg.appendChild(badges);

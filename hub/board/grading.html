@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>題庫分級與難度</title>
+<link rel="stylesheet" href="board.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="crumb"><a href="../">周逸化學工作室</a> ／ 私領域 ／ <a href="./">公佈欄</a> ／ 題庫分級與難度分級</div>
+  <h1>題庫分級（Tier）與難度分級</h1>
+  <div class="meta">2026年11月3日 · <span class="at">@Eason</span></div>
+  <div class="lead">每一題都有兩個分級：<b>Tier 看來源</b>（這題出自哪一層級的考試），<b>難度 1～5 看題目本身</b>（要幾步、跨幾章、算多繁）。兩者互相獨立：競賽題也可能只有 2 級，段考題也可能到 4 級。章節分類請見另一篇〈<a href="chapters.html" style="color:#fbbf24">題庫分類 章節細項</a>〉。</div>
+  <div class="tools">
+    <a href="#tier" style="--c:#c084fc">Tier 分級</a><a href="#diff" style="--c:#4ade80">難度 1～5</a><a href="#score" style="--c:#60a5fa">難度怎麼算</a><a href="#tag" style="--c:#fb923c">分類寫法與標籤</a><a href="#rule" style="--c:#fbbf24">章節仲裁規則</a>
+  </div>
+
+  <section class="book" id="tier" style="--c:#c084fc">
+    <h2><span class="bk">一</span>Tier 分級：看來源</h2>
+    <div class="tbl"><table>
+      <tr><th>Tier</th><th>層級</th><th>收錄來源</th></tr>
+      <tr><td class="n">Tier 0</td><td>競賽級</td><td>化學奧林匹亞初選、學科能力競賽（地區複賽）、清華盃</td></tr>
+      <tr><td class="n">Tier 1</td><td>大考模考級</td><td>學測、指考／分科歷屆；北模、中模、全模（翰林、南一、詮達）等學測與分科模考，多為跨章節題</td></tr>
+      <tr><td class="n">Tier 2</td><td>段考級</td><td>各校段考，多為單一章節題</td></tr>
+      <tr><td class="n">Tier 3</td><td>題庫光碟</td><td>龍騰題庫光碟</td></tr>
+    </table></div>
+    <h3>三條規則</h3>
+    <ul>
+      <li><span class="code">①</span><div><b>Tier 由來源決定，不可降級</b><span class="d">題型只要出現在競賽，一律 Tier 0；模考題不會因為簡單就降成 Tier 2。</span></div></li>
+      <li><span class="code">②</span><div><b>向上保留：組合 Tier</b><span class="d">低層級的題目若和高層級的題目是同一題，就同時標兩個，例如 Tier 0+1、1+2、0+1+2、0+3、2+3。</span></div></li>
+      <li><span class="code">③</span><div><b>0+1 從嚴：要「完全一樣」才算</b><span class="d">與競賽題同一情境（同反應、同物質、同實驗或同數據結構）、問同樣的東西、用同樣解法，只差數字、措辭或選項順序，才標 Tier 0+1。同觀念但不同情境、同實驗不同重點、只有部分選項重疊，都只算 Tier 1。</span></div></li>
+    </ul>
+  </section>
+
+  <section class="book" id="diff" style="--c:#4ade80">
+    <h2><span class="bk">二</span>難度分級：1～5 級<small>全題庫已逐題標好</small></h2>
+    <div class="tbl"><table>
+      <tr><th>級數</th><th>名稱</th><th>大致樣子</th></tr>
+      <tr><td class="n">1</td><td>基本觀念</td><td>記憶定義，一步就好，不用計算</td></tr>
+      <tr><td class="n">2</td><td>單一公式或觀念</td><td>套一個公式或用一個觀念就能解</td></tr>
+      <tr><td class="n">3</td><td>段考中上</td><td>2～3 步、兩個觀念、單位換算、讀圖表，或多選需逐項判斷</td></tr>
+      <tr><td class="n">4</td><td>模考後段</td><td>4 步以上、跨章節、陌生情境、實驗數據分析</td></tr>
+      <tr><td class="n">5</td><td>競賽級</td><td>超出課綱、非典型解法、長篇深度推理</td></tr>
+    </table></div>
+    <p>全題庫分布（2026-10-29 完成時）：</p>
+    <div class="bar"><span style="flex:14;background:#86efac">1</span><span style="flex:37;background:#4ade80">2</span><span style="flex:38;background:#facc15">3</span><span style="flex:10;background:#fb923c">4</span><span style="flex:1.2;background:#f87171"></span></div>
+    <div class="legend"><span>1 級 14%</span><span>2 級 37%</span><span>3 級 38%</span><span>4 級 10%</span><span>5 級 約 1%</span></div>
+    <p class="d">計算單位：一個題號一個難度；題組的每個小題各自算；非選題有多個小題時，以最難的小題為準。</p>
+  </section>
+
+  <section class="book" id="score" style="--c:#60a5fa">
+    <h2><span class="bk">三</span>難度怎麼算：積分制</h2>
+    <p>每題依下列七項打分，加總後換算成級數。</p>
+    <div class="tbl"><table>
+      <tr><th>項目</th><th>給分方式</th></tr>
+      <tr><td class="n">A 解題步驟</td><td>1 步＝0、2 步＝1、3 步＝2、4～5 步＝3、6 步以上＝4</td></tr>
+      <tr><td class="n">B 跨章節</td><td>單一小節＝0、同一冊跨小節＝1、跨冊＝2</td></tr>
+      <tr><td class="n">C 計算繁雜</td><td>不用算或好算＝0、數字或算式麻煩＝1、聯立、對數、近似＝2（步驟多寡只算在 A，不重複計分）</td></tr>
+      <tr><td class="n">D 情境</td><td>課本常見＝0、讀圖表數據或改編＝1、全新情境或長文萃取＝2</td></tr>
+      <tr><td class="n">E 題型</td><td>多選或非選＋1</td></tr>
+      <tr><td class="n">F 範圍</td><td>超出課綱＋2、需要競賽知識＋3</td></tr>
+      <tr><td class="n">G 出處</td><td>化奧＋1.5、清華盃＋1.2、學科能力競賽＋1、指考分科（含模考）＋0.8、學測（含模考）＋0.5、段考與題庫光碟＋0</td></tr>
+    </table></div>
+    <h3>總分換算級數</h3>
+    <div class="tbl"><table>
+      <tr><th>總分</th><td>未滿 1.5</td><td>1.5～未滿 3.5</td><td>3.5～未滿 6.5</td><td>6.5～未滿 9</td><td>9 以上</td></tr>
+      <tr><th>級數</th><td class="n">1</td><td class="n">2</td><td class="n">3</td><td class="n">4</td><td class="n">5</td></tr>
+    </table></div>
+    <p>每題的說明會寫成像「步2＋算2＋多選1＝5→3」這樣，一眼看得出分數從哪來。評分時也會另給一個直覺級數，公式和直覺差 2 級以上的題目，再由較強的模型複核。</p>
+  </section>
+
+  <section class="book" id="tag" style="--c:#fb923c">
+    <h2><span class="bk">四</span>分類寫法與特殊標籤</h2>
+    <p>每題答案的最後（簡答 → 詳解 →【注意】之後）固定放兩行分類：</p>
+    <div class="ex"><span class="tag">【新版分類】</span>Tier 0｜冊別 選II｜主要章節：選II 1-4 元素性質的週期性｜次要章節：選II 1-3 電子組態｜特殊標籤：單選、觀念題<br><b>判斷說明：</b>用各級游離能數據判斷價電子數……</div>
+    <ul>
+      <li><span class="code">①</span><div><b>題組、非選小題各寫一組</b><span class="d">標記寫成【新版分類 (a)】，括號內照卷面小題編號。</span></div></li>
+      <li><span class="code">②</span><div><b>特殊標籤順序</b><span class="d">題型（單選／多選／非選，必標）→ 超範圍 → 素養題 → 實驗 → 計算題、觀念題、圖表題、跨科。</span></div></li>
+      <li><span class="code">③</span><div><b>題目來源標籤</b><span class="d">每題開頭有【年度-試卷別-題型題號】，例如【112-全模E3-單選10】。競賽用西元年，其餘用封面學年度。</span></div></li>
+      <li><span class="code">④</span><div><b>學測類只用必修章節</b><span class="d">學測歷屆與學測模考一律分到必修 1-1～4-4；110 學年以前超出必修範圍的題目，章節後加「(*選修)」。</span></div></li>
+      <li><span class="code">⑤</span><div><b>超範圍</b><span class="d">ΔG°、熵、二級以上的積分速率式標「超範圍」；相圖歸選I 3-1。</span></div></li>
+    </ul>
+  </section>
+
+  <section class="book" id="rule" style="--c:#fbbf24">
+    <h2><span class="bk">五</span>章節仲裁規則：容易分錯的五組</h2>
+    <div class="tbl"><table>
+      <tr><th>主題</th><th>歸必修</th><th>歸選修</th></tr>
+      <tr><td class="n">溶液</td><td>M、ppm、溶解度 → 必修 3-1～3-3</td><td>m、X、拉午耳、依數性 → 選I 第3章</td></tr>
+      <tr><td class="n">酸鹼</td><td>常溫整數 pH、阿瑞尼斯 → 必修 3-4</td><td>Kw 隨溫度、布忍斯特、Ka、緩衝、滴定曲線 → 選III 第3章</td></tr>
+      <tr><td class="n">氧化還原</td><td>基礎觀念 → 必修 3-5</td><td>配平、半反應、E°、電解、法拉第 → 選IV</td></tr>
+      <tr><td class="n">原子</td><td>拉塞福、2n²、前 20 號 → 必修 1-2、1-4</td><td>氫光譜、軌域、電子組態 → 選II 第1章</td></tr>
+      <tr><td class="n">反應熱</td><td>定性判斷 → 必修 2-4</td><td>赫斯定律、生成熱、鍵能 → 選I 1-3</td></tr>
+    </table></div>
+  </section>
+  <footer>周逸化學專用</footer>
+</div>
+</body>
+</html>

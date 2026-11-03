@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>工作室公佈欄</title>
+<link rel="stylesheet" href="board.css">
+<style>
+  .post{display:block;text-decoration:none;color:var(--ink);background:var(--card);border:1px solid var(--line);border-left:5px solid var(--c);border-radius:12px;padding:12px 16px;margin:12px 0}
+  .post:hover{border-color:var(--c)}
+  .post b{font-size:17px;display:block}
+  .post .d{display:block;margin-top:4px}
+  .post .meta{margin-top:6px}
+  .pin{font-size:12px;color:#fbbf24;font-weight:700;margin-right:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="crumb"><a href="../">周逸化學工作室</a> ／ 私領域 ／ 公佈欄</div>
+  <h1>📌 公佈欄</h1>
+  <div class="meta">工作室內部公告、題庫規則與標準，新公告在最上面</div>
+  <div id="posts"></div>
+  <footer>周逸化學專用</footer>
+</div>
+<script>
+/* ===== 公告表：新增公告就在最上面加一筆，並在本資料夾放一個 .html ===== */
+const POSTS = [
+  {title:"題庫分級（Tier）與難度分級", date:"2026-11-03", author:"Eason", url:"grading.html", color:"#c084fc", pin:true,
+   desc:"Tier 0～3 怎麼分、0+1 從嚴規則、難度 1～5 的定義與積分算法、分類寫法、特殊標籤與章節仲裁規則。"},
+  {title:"高中化學題庫分類 章節細項", date:"2026-10-25", author:"Eason", url:"chapters.html", color:"#fbbf24", pin:true,
+   desc:"題庫分類用的標準分類對照表（2026-10-06 定案），共 76 小節，每節附細項關鍵字，可搜尋。"},
+];
+/* ============================================================ */
+const fmt=d=>{const [y,m,dd]=d.split("-");return `${y}年${+m}月${+dd}日`};
+document.getElementById("posts").innerHTML=POSTS.map(p=>`<a class="post" href="${p.url}" style="--c:${p.color||"#60a5fa"}">
+  <b>${p.pin?'<span class="pin">置頂</span>':''}${p.title}</b><span class="d">${p.desc}</span>
+  <div class="meta">${fmt(p.date)} · <span class="at">@${p.author}</span></div></a>`).join("");
+</script>
+</body>
+</html>

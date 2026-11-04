@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <title>離線出題系統</title>
 <meta name="viewport" content="width=1200">
-<link rel="stylesheet" href="app/style.css?v=202610300249">
+<link rel="stylesheet" href="app/style.css?v=202611050000">
 </head>
 <body>
 <header id="top">
@@ -127,8 +127,12 @@
   <div class="bcol narrow">
     <div class="card act">
       <h3>輸出 <span id="bCount2" class="org"></span></h3>
-      <button class="pri big" id="btnPrintQ" title="開啟預覽：手機版可分享 PDF，電腦版另存 PDF；同時記錄到出題紀錄並儲存考卷">輸出題目卷</button>
-      <button class="pri big" id="btnPrintA">輸出解答卷</button>
+      <button class="pri big" id="btnPrintQ" title="開啟預覽，可另存 PDF 或輸出 Word；同時記錄到出題紀錄並儲存考卷">輸出題目卷</button>
+      <button class="pri big" id="btnPrintA" title="開啟預覽，可另存 PDF 或輸出 Word">輸出解答卷</button>
+      <div class="opts-row">
+        <button id="btnWordQ" title="直接下載題目卷 Word（.docx）；同時記錄到出題紀錄">題目卷 Word</button>
+        <button id="btnWordA" title="直接下載解答卷 Word（.docx）">解答卷 Word</button>
+      </div>
       <div class="opts-row">
         <button id="btnSaveExam" title="存成 考卷\考卷名稱.json">儲存</button>
         <button id="btnLoadExam">載入…</button>
@@ -196,23 +200,22 @@
 <div id="printWrap">
   <div id="printBar">
     <span id="printTitle"></span>
-    <span class="steps">電腦版 → 目的地「另存為 PDF」→ 取消「頁首及頁尾」、勾「背景圖形」→ 儲存</span>
+    <span class="steps">PDF：目的地「另存為 PDF」→ 取消「頁首及頁尾」、勾「背景圖形」→ 儲存</span>
     <button id="btnSwitchPrint" title="切換題目卷／解答卷">切換</button>
-    <button class="pri" id="btnPdf" title="直接做成 PDF 並跳出分享選單（可傳 LINE）；同時存一份到考卷資料夾">手機版（分享）</button>
-    <button class="pri" id="btnDoPrint" title="開啟列印視窗，目的地選「另存為 PDF」">電腦版（另存 PDF）</button>
+    <button class="pri" id="btnDoPrint" title="開啟列印視窗，目的地選「另存為 PDF」">另存 PDF</button>
+    <button class="pri" id="btnWord" title="下載 Word（.docx）；同時存一份到考卷資料夾">輸出 Word</button>
     <button id="btnClosePrint">返回（Esc）</button>
   </div>
   <div id="printArea"></div>
 </div>
 <div id="toast"></div>
 
-<script src="app/config.js?v=202610300249"></script>
-<script src="app/drive.js?v=202610300249"></script>
-<script src="app/chapters.js?v=202610300249"></script>
-<script src="app/data.js?v=202610300249"></script>
-<script src="app/render.js?v=202610300249"></script>
-<script src="app/html2canvas.min.js?v=202610300249"></script>
-<script src="app/pdf.js?v=202610300249"></script>
-<script src="app/app.js?v=202610300249"></script>
+<script src="app/config.js?v=202611050000"></script>
+<script src="app/drive.js?v=202611050000"></script>
+<script src="app/chapters.js?v=202611050000"></script>
+<script src="app/data.js?v=202611050000"></script>
+<script src="app/render.js?v=202611050000"></script>
+<script src="app/docx.js?v=202611050000"></script>
+<script src="app/app.js?v=202611050000"></script>
 </body>
 </html>

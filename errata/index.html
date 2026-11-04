@@ -93,6 +93,7 @@
   .orig .cap{color:var(--mute);font-size:12.5px}
   .orig .ansbox{border-top:1px dashed var(--line);margin-top:8px;padding-top:6px}
   .orig .ans b,.orig .sol b{color:var(--acc)}
+  .orig .src{margin-top:8px;font-size:13.5px}.orig .src a{display:inline-block;margin:2px 12px 2px 0;color:var(--acc)}
   .orig .note{color:var(--wait)}.orig .cls,.orig .clsr{font-size:12.5px;color:var(--mute)}
   .hist{margin:10px 0 0;padding:0;list-style:none;font-size:12.5px;color:var(--mute)}
   .hist li{padding:2px 0}
@@ -508,13 +509,59 @@
       } else {
         const many = new Set(hits.map(h => h.file)).size > 1;
         box.innerHTML = (many ? `<p class="sub" style="margin:0 0 6px">標籤沒寫年級學期，有 ${new Set(hits.map(h => h.file)).size} 份卷同題號，請自己對是哪一份：</p>` : '')
-          + hits.map(({ r, file }) => `<div class="orig"><p class="ph"><span>出處 <b>${esc(file)}</b></span><span>${esc(r.paper.title || '')}</span></p>
-            ${groupHtml(r, { caption: true })}${questionHtml(r, null, { tag: true, caption: true })}<div class="ansbox">${answerHtml(r, true)}</div></div>`).join('');
+          + hits.map(({ r, file }, i) => `<div class="orig"><p class="ph"><span>出處 <b>${esc(file)}</b></span><span>${esc(r.paper.title || '')}</span></p>
+            ${groupHtml(r, { caption: true })}${questionHtml(r, null, { tag: true, caption: true })}<div class="ansbox">${answerHtml(r, true)}</div>
+            <div class="src"><button class="btn sm src-btn" data-i="${i}">📄 開原卷</button><span class="src-out"></span></div></div>`).join('');
+        box.querySelectorAll('.src-btn').forEach(sb => sb.onclick = () => showSrc(sb, hits[+sb.dataset.i].r.paper));
         await hydrate(box);
       }
       box.dataset.done = 1; b.textContent = '收起原題';
     } catch (e) { box.innerHTML = `<div class="empty">讀不到題庫：${esc(e.message)}</div>`; b.textContent = '🔍 再試一次'; }
     finally { b.disabled = false; }
+  }
+
+  // ---------- 開原卷：段考依資料夾結構找原檔；其他題庫給雲端搜尋 ----------
+  const DUANKAO = '1GF7zHoeQMlfv85ZQtDMDBGKhqTvYueW1';   // 【公開】段考題庫_資料夾不公開_單檔公開（資料夾本身不公開）
+  const kids = new Map();
+  async function listKids(id) {
+    if (kids.has(id)) return kids.get(id);
+    const out = []; let pt = '';
+    do {
+      const q = `'${id}' in parents and trashed=false`;
+      const d = await (await req(`${API}/drive/v3/files?q=${encodeURIComponent(q)}&fields=${encodeURIComponent('nextPageToken,files(id,name,mimeType,webViewLink)')}&pageSize=1000&supportsAllDrives=true&includeItemsFromAllDrives=true${pt ? '&pageToken=' + pt : ''}`)).json();
+      out.push(...(d.files || [])); pt = d.nextPageToken || '';
+    } while (pt);
+    kids.set(id, out); return out;
+  }
+  const dirs = l => l.filter(f => f.mimeType === FOLDER), plain = l => l.filter(f => f.mimeType !== FOLDER);
+  const CN = { '上': '一', '下': '二' };
+  async function duankaoFiles(P) {
+    const term = `${P.year}第${CN[P.semester] || P.semester}學期${P.exam_no}段考`;
+    const top = dirs(await listKids(DUANKAO)).find(f => squash(f.name) === squash(term)) || dirs(await listKids(DUANKAO)).find(f => f.name.startsWith(String(P.year)) && f.name.includes(CN[P.semester] + '學期') && f.name.includes(P.exam_no));
+    if (!top) return [];
+    const g = dirs(await listKids(top.id)).find(f => f.name === P.grade);
+    if (!g) return [];
+    const out = [];
+    for (const sub of dirs(await listKids(g.id))) {
+      for (const f of plain(await listKids(sub.id))) if (f.name.includes(P.school)) out.push({ name: f.name, url: f.webViewLink, where: sub.name });
+    }
+    return out;
+  }
+  function searchLink(P) {
+    const words = P.exam === '段考' ? [P.year, P.school, P.grade] : [P.year, P.exam || P.source || '', /^\d+$/.test(String(P.paper || '').replace(/[^\d]/g, '')) ? String(P.paper).replace(/[^\d]/g, '') : ''];
+    const q = words.filter(Boolean).join(' ');
+    return `<a href="https://drive.google.com/drive/search?q=${encodeURIComponent(q)}" target="_blank" rel="noopener">🔎 在雲端硬碟搜尋「${esc(q)}」</a>`;
+  }
+  async function showSrc(b, P) {
+    const out = b.nextElementSibling; b.disabled = true; b.textContent = '尋找原卷中…';
+    try {
+      let files = [];
+      if (P.exam === '段考') files = await duankaoFiles(P);
+      const order = f => /原|掃描/.test(f.name) ? 0 : /\.pdf$/i.test(f.name) ? 1 : /解答/.test(f.name) ? 3 : 2;
+      files.sort((a, b) => order(a) - order(b) || a.name.localeCompare(b.name));
+      out.innerHTML = ' ' + (files.length ? files.map(f => `<a href="${esc(f.url)}" target="_blank" rel="noopener">${/\.pdf$/i.test(f.name) ? '📕' : /\.docx?$/i.test(f.name) ? '📘' : '📄'} ${esc(f.name)}${f.where ? '（' + esc(f.where) + '）' : ''}</a>`).join('') + ' ' : (P.exam === '段考' ? '段考資料夾裡找不到這份卷，' : '這個題庫的原卷檔名不統一，請用搜尋：')) + searchLink(P);
+      b.remove();
+    } catch (e) { out.innerHTML = ` 找原卷失敗：${esc(e.message)}　${searchLink(P)}`; b.disabled = false; b.textContent = '📄 再試一次'; }
   }
 
   $('csv').onclick = () => {

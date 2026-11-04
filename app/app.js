@@ -434,7 +434,7 @@ function renderBasket() {
     + `<tr class="tot"><td>合計</td><td>${ex.items.length}</td><td></td><td></td><td></td><td>${ex.total}</td></tr>`;
   $('#basketBadge').innerHTML = `<span class="step">3</span>預覽試題${ex.items.length ? ` <span class="badge">${ex.items.length}</span>` : ''}`;
   $('#bRecorded').textContent = b.recorded ? '✔ 已記錄為出過' : '';
-  $('#btnPrintQ').disabled = $('#btnPrintA').disabled = !ex.items.length;
+  $('#btnPrintQ').disabled = $('#btnPrintA').disabled = $('#btnWordQ').disabled = $('#btnWordA').disabled = !ex.items.length;
   renderFlow();
   const full = $('#bFull').checked;
   let h = '';
@@ -576,6 +576,25 @@ async function openPrint(kind) {
 function outName(ex, kind) {
   const stem = (ex.title || '化學測驗').replace(/_\d{4}-\d{2}-\d{2}$/, '').replace(/[\\/:*?"<>|]/g, '_');
   return `${stem}_${kind}_${today()}`;
+}
+// 輸出 Word（.docx）：把預覽中的考卷轉成 Word，下載並存一份到考卷資料夾（使用者 2026-11-04）
+async function exportWord() {
+  const btn = $('#btnWord'); if (btn.disabled || !document.body.classList.contains('printing')) return;
+  const ex = examObject(), kind = S.printKind;
+  btn.disabled = true; btn.textContent = '產生中…'; toast('正在產生 Word，請稍候', 30000);
+  try {
+    await ensureLogin();
+    const miss = $$('#printArea .cap').filter(p => p.textContent.startsWith('〔圖檔遺失')).length;
+    if (miss) { toast(`有 ${miss} 張圖讀不到，重新載入圖片中…`, 4000); await openPrint(kind); }
+    const wm = ex.opts.watermark ? await imgUrl('素材/浮水印_周逸.png') : '';
+    const { blob } = await DOCX.make($('#printArea .paper'), { watermark: wm, title: outName(ex, kind), fontPt: S.settings.fontSize || 10 });
+    const fn = `${outName(ex, kind)}.docx`;
+    let saved = '';
+    try { if (S.fs && S.fs.writeBlob) { await S.fs.writeBlob(`${examDir()}/${fn}`, blob, blob.type); saved = `，並存到 ${examDir()}/${fn}`; } } catch (e) { }
+    DOCX.download(blob, fn);
+    toast(`已下載 ${fn}（${(blob.size / 1048576).toFixed(1)} MB）${saved}`, 6000);
+  } catch (e) { console.error(e); toast('產生 Word 失敗：' + e.message, 8000); }
+  btn.disabled = false; btn.textContent = '輸出 Word';
 }
 function closePrint() { document.body.classList.remove('printing'); document.title = '離線出題系統'; }
 async function recordExam(auto) {
@@ -844,24 +863,9 @@ function bindUI() {
   $('#btnPrintQ').onclick = () => openPrint('題目卷'); $('#btnPrintA').onclick = () => openPrint('解答卷');
   $('#btnDoPrint').onclick = () => window.print(); $('#btnClosePrint').onclick = closePrint;
   $('#btnSwitchPrint').onclick = () => openPrint(S.printKind === '題目卷' ? '解答卷' : '題目卷');
-  $('#btnPdf').onclick = async () => {
-    const btn = $('#btnPdf'); if (btn.disabled) return;
-    const ex = examObject(), kind = S.printKind;
-    btn.disabled = true; btn.textContent = '產生中…'; toast('正在產生 PDF，請稍候（約 10～30 秒）', 30000);
-    try {
-      await ensureLogin();
-      const miss = $$('#printArea .cap').filter(p => p.textContent.startsWith('〔圖檔遺失')).length;
-      if (miss) { toast(`有 ${miss} 張圖讀不到，重新載入圖片中…`, 4000); await openPrint(kind); }
-      const wm = ex.opts.watermark ? await imgUrl('素材/浮水印_周逸.png') : '';
-      const { blob, pages } = await PDF.make($('#printArea .paper'), { watermark: wm, title: outName(ex, kind) });
-      const fn = `${outName(ex, kind)}.pdf`;
-      let saved = '';
-      try { if (S.fs && S.fs.writeBlob) { await S.fs.writeBlob(`${examDir()}/${fn}`, blob, 'application/pdf'); saved = `，已存到 ${examDir()}/${fn}`; } } catch (e) {}
-      const how = await PDF.shareOrDownload(blob, fn);
-      toast(`PDF 共 ${pages} 頁（${(blob.size / 1048576).toFixed(1)} MB）${how === 'shared' ? '，已送出分享' : how === 'downloaded' ? '，已下載' : ''}${saved}`, 6000);
-    } catch (e) { console.error(e); toast('產生 PDF 失敗：' + e.message, 8000); }
-    btn.disabled = false; btn.textContent = '手機版（分享）';
-  };
+  $('#btnWord').onclick = () => exportWord();
+  $('#btnWordQ').onclick = async () => { await openPrint('題目卷'); exportWord(); };
+  $('#btnWordA').onclick = async () => { await openPrint('解答卷'); exportWord(); };
   // 紀錄
   $('#hList').addEventListener('click', e => {
     const btn = e.target.closest('button'); if (!btn) return;

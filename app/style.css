@@ -150,7 +150,6 @@ main { flex: 1; min-height: 0; }
 .paper .wm { display: none; }
 /* 預覽時不用兩欄 */
 .paper.pv .cols { column-count: 1; font-size: inherit; }
-.paper.pdf .cols { column-count: 1; }   /* 瀏覽器內產生 PDF 時用單欄，切頁才不會切到行中 */
 .paper.pv .space, .paper.pv .pspace { display: none; }
 
 /* ---------- 列印 ---------- */

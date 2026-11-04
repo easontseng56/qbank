@@ -2,7 +2,7 @@
 'use strict';
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };   // 本地日期（台灣時間），不用 UTC
 const DEFAULT_CONST = ['原子量：H ＝ 1、C ＝ 12、N ＝ 14、O ＝ 16、Na ＝ 23、Mg ＝ 24、Al ＝ 27、S ＝ 32、Cl ＝ 35.5、K ＝ 39、Ca ＝ 40、Fe ＝ 56、Cu ＝ 63.5、Zn ＝ 65、Ag ＝ 108（題目另有給定者依題目）'];
 const DIFF_NAME = { 1: '1 基本', 2: '2 單步', 3: '3 中上', 4: '4 進階', 5: '5 競賽' };
 const TIER_ORDER = ['0', '0+1', '0+1+2', '0+1+2+3', '0+2+3', '0+3', '1', '1+2', '1+2+3', '2', '2+3', '3'];
@@ -567,15 +567,19 @@ async function openPrint(kind) {
   $('#printTitle').textContent = `${ex.title}　${kind}`;
   document.body.classList.add('printing');
   await hydrateImages(area);
-  document.title = `${ex.title}_${kind}`;
+  document.title = outName(ex, kind);
+}
+// 輸出檔名：考卷名稱_題目卷_輸出當天日期（名稱末尾舊的自動日期先去掉，避免出現兩個日期）
+function outName(ex, kind) {
+  const stem = (ex.title || '化學測驗').replace(/_\d{4}-\d{2}-\d{2}$/, '').replace(/[\\/:*?"<>|]/g, '_');
+  return `${stem}_${kind}_${today()}`;
 }
 function closePrint() { document.body.classList.remove('printing'); document.title = '離線出題系統'; }
 async function recordExam(auto) {
   const b = S.basket, ex = examObject();
   if (!ex.items.length) return;
-  if (!b.title) { b.title = `化學測驗_${b.date}`; $('#bTitle').value = b.title; }
   S.history.exams = S.history.exams.filter(e => e.id !== b.id);
-  S.history.exams.push({ id: b.id, date: b.date, name: b.title, cls: b.cls, n: ex.items.length, qids: ex.items.map(r => r.id), tags: ex.items.map(r => r.tag) });
+  S.history.exams.push({ id: b.id, date: b.date, name: b.title || `化學測驗_${b.date}`, cls: b.cls, n: ex.items.length, qids: ex.items.map(r => r.id), tags: ex.items.map(r => r.tag) });
   S.history.exams.sort((a, b2) => a.date.localeCompare(b2.date));
   b.recorded = true; rebuildUsed();
   await writeJson(histPath(), S.history);
@@ -839,15 +843,15 @@ function bindUI() {
   $('#btnSwitchPrint').onclick = () => openPrint(S.printKind === '題目卷' ? '解答卷' : '題目卷');
   $('#btnPdf').onclick = async () => {
     const btn = $('#btnPdf'); if (btn.disabled) return;
-    const ex = examObject(), kind = S.printKind, stem = (ex.title || '化學測驗').replace(/[\\/:*?"<>|]/g, '_');
+    const ex = examObject(), kind = S.printKind;
     btn.disabled = true; btn.textContent = '產生中…'; toast('正在產生 PDF，請稍候（約 10～30 秒）', 30000);
     try {
       await ensureLogin();
       const miss = $$('#printArea .cap').filter(p => p.textContent.startsWith('〔圖檔遺失')).length;
       if (miss) { toast(`有 ${miss} 張圖讀不到，重新載入圖片中…`, 4000); await openPrint(kind); }
       const wm = ex.opts.watermark ? await imgUrl('素材/浮水印_周逸.png') : '';
-      const { blob, pages } = await PDF.make($('#printArea .paper'), { watermark: wm, title: `${ex.title}_${kind}` });
-      const fn = `${stem}_${kind}.pdf`;
+      const { blob, pages } = await PDF.make($('#printArea .paper'), { watermark: wm, title: outName(ex, kind) });
+      const fn = `${outName(ex, kind)}.pdf`;
       let saved = '';
       try { if (S.fs && S.fs.writeBlob) { await S.fs.writeBlob(`${examDir()}/${fn}`, blob, 'application/pdf'); saved = `，已存到 ${examDir()}/${fn}`; } } catch (e) {}
       const how = await PDF.shareOrDownload(blob, fn);

@@ -47,6 +47,7 @@ function examDir() { const a = acctSuffix(); return a ? `考卷/${a}` : '考卷'
 // ---------- 啟動 ----------
 async function init() {
   await IDB.open();
+  let later = null;   // 需要較久的雲端／資料夾掃描，等畫面綁好後再跑（不然掃描期間第 1 步一片空白、按鈕都沒反應）
   const isHttp = location.protocol.startsWith('http');
   if (isHttp) {
     let root = null;
@@ -54,24 +55,24 @@ async function init() {
     if (root != null) {
       S.fs = new ServerFS(root);
       $('#btnConnect').style.display = 'none';   // exe／伺服器模式不需要選資料夾
-      await loadSideFiles(); await loadCached(); if (!S.all.length) await rescan();
+      await loadSideFiles(); await loadCached(); if (!S.all.length) later = rescan;
     } else if (window.CONFIG && CONFIG.clientId) {   // 網路版：Google 登入 ＋ 雲端硬碟
       S.fs = new DriveFS(CONFIG);
       $('#btnConnect').textContent = '用 Google 登入';
       await loadCached();
-      if (S.fs.loggedIn()) { await afterLogin(); }
+      if (S.fs.loggedIn()) { later = afterLogin; }
       else status('請按右上「用 Google 登入」，系統會讀取你雲端硬碟裡的題庫。' + (S.all.length ? '（先顯示上次快取的題庫）' : ''));
     } else {
       S.fs = new HttpFS();
       $('#btnConnect').style.display = 'none';
-      await loadSideFiles(); await loadCached(); if (!S.all.length) await rescan();
+      await loadSideFiles(); await loadCached(); if (!S.all.length) later = rescan;
     }
   } else {
     const h = await IDB.get('root');
     if (h) {
       S.fs = new DirFS(h);
       const p = await h.queryPermission({ mode: 'readwrite' });
-      if (p === 'granted') { await loadSideFiles(); await loadCached(); if (!S.all.length) await rescan(); }
+      if (p === 'granted') { await loadSideFiles(); await loadCached(); if (!S.all.length) later = rescan; }
       else { status('請按「連線資料夾」重新授權（' + h.name + '）'); $('#btnConnect').textContent = '連線資料夾 ' + h.name; }
     } else status('第一次使用：請按「選擇資料夾」，指到「離線出題系統」這個資料夾。');
   }
@@ -79,6 +80,7 @@ async function init() {
   const draft = localStorage.getItem('basketDraft');
   if (draft) { try { const b = JSON.parse(draft); if (b.items.length) S.basket = b; } catch (e) { } }
   bindUI(); renderBasket(); renderSettings(); renderHistory();
+  if (later) await later();
 }
 async function afterLogin() {
   $('#btnConnect').textContent = '重新整理';
@@ -113,6 +115,7 @@ async function loadCached() {
 async function rescan() {
   if (!S.fs) return toast('請先連線資料夾');
   $('#btnScan').disabled = true;
+  status('讀取題庫清單中…（雲端題庫約需 10～60 秒，期間可以先操作）');
   try {
     const r = await scanBank(S.fs, (n, N, p) => status(`掃描題庫 ${n}/${N}　${p.split('/').pop()}`));
     afterIndex(buildIndex(r.papers));

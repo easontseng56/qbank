@@ -22,14 +22,24 @@ function imgsHtml(dir, list, caption) {
   return `<div class="imgrow" style="--k:${k}">` + list.map(i => `<div class="imgc">${imgHtml(dir, i, caption)}</div>`).join('') + '</div>';
 }
 // 原卷表格截圖（images 內 kind:'table'）：at＝表格前面有幾段非表格文字，對到「｜」文字表格的位置；有截圖就不再畫文字表格
+// 2026-11-04 法三（截圖只放圖形、文字只放文字）：任何圖都可用 line／n（n 省略＝1、0＝只插入）插進題幹；opt:'B' 接在選項 (B) 後（選項旁小圖）；
+// hide_options＝圖已含全部選項。規則與 _共用/題庫工具/layout.py 相同。
 const isTbl = i => i.kind === 'table';
-const tblFor = (dir, imgs, cap, site) => (imgs || []).filter(i => isTbl(i) && (i.site || 'stem') === (site || 'stem')).map(i => ({ at: Number(i.at) || 0, h: imgHtml(dir, i, cap) }));
+const isOpt = i => !!i.opt;
+const isLine = i => i.line != null && !isOpt(i);
+const inStem = i => !isOpt(i) && (isLine(i) || isTbl(i));   // 由 blocks() 放進題幹的圖
+const tblFor = (dir, imgs, cap, site) => (imgs || []).filter(i => !isOpt(i) && (isLine(i) || (isTbl(i) && (i.site || 'stem') === (site || 'stem')))).map(i => ({ at: Number(i.at) || 0, line: i.line == null ? null : Number(i.line), n: i.n == null ? 1 : Number(i.n), lead: i.lead || '', h: imgHtml(dir, i, cap) }));
+function optImgHtml(dir, im) {
+  const p = im.path.startsWith('/') ? im.path : `${dir}/${im.path}`;
+  return ` <img class="oimg" data-src="${esc(p)}" style="height:${((Number(im.height_mm) || 9) * IMG_SCALE).toFixed(1)}mm;vertical-align:middle;display:inline-block;margin:1px 0" alt="">`;
+}
+const optLetter = o => { const m = String(o).match(/^\s*[（(]\s*([A-Za-zＡ-Ｅ甲乙丙丁戊])\s*[)）]/); return m ? m[1] : null; };
 function groupHtml(r, opt) {
   const g = r.q.group;
   if (!g) return '';
   let h = `<div class="grp"><p class="gl">${esc(g.label || '題組')}</p>`;
   h += blocks(lines(g.stem), '', '', '', tblFor(r.dir, g.images, opt.caption)).join('');
-  h += imgsHtml(r.dir, (g.images || []).filter(i => !isTbl(i)), opt.caption);
+  h += imgsHtml(r.dir, (g.images || []).filter(i => !inStem(i) && !isOpt(i)), opt.caption);
   return h + '</div>';
 }
 // 「｜」分隔的文字表格（題庫轉錄時用文字寫的表）畫成真正的表格；連續 ≥2 行、每行 ≥2 個分隔符才算
@@ -41,14 +51,21 @@ function tableHtml(rows) {
 }
 // 段落陣列 → HTML 區塊陣列（<p> 或 <table>）；pre 加在第一個 <p> 前、tail 加在最後一個 <p> 後（最後是表格時另起一行）
 function blocks(list, pre = '', tail = '', cls = '', tbl = []) {
-  const out = []; let i = 0, np = 0; const c = cls ? ` class="${cls}"` : '';
+  const out = []; let i = 0, np = 0; const c = cls ? ` class="${cls}"` : ''; const doneL = new Set();
   while (i < list.length) {
+    const ml = doneL.has(i) ? [] : tbl.filter(t => t.line === i); doneL.add(i);
+    if (ml.length) {
+      let skip = 0;
+      for (const t of ml) { if (t.lead) { out.push({ t: 'p', h: `<p${c}>${esc(t.lead)}</p>` }); np++; } out.push({ t: 'tb', h: t.h }); skip = Math.max(skip, t.n); }
+      if (skip) { i += skip; continue; }
+    }
     if (isRow(list[i]) && i + 1 < list.length && isRow(list[i + 1])) {
       let j = i; while (j < list.length && isRow(list[j])) j++;
-      const m = tbl.find(t => t.at === np);
+      const m = tbl.find(t => t.line == null && t.at === np);
       out.push({ t: 'tb', h: m ? m.h : tableHtml(list.slice(i, j)) }); i = j;
     } else { out.push({ t: 'p', h: `<p${c}>${esc(list[i])}</p>` }); i++; np++; }
   }
+  for (const t of tbl) if (t.line != null && t.line >= list.length) out.push({ t: 'tb', h: t.h });   // line 超過題幹行數 → 放最後
   if (!out.length) out.push({ t: 'p', h: `<p${c}></p>` });
   if (pre) { if (out[0].t === 'p') out[0].h = out[0].h.replace(/^<p[^>]*>/, m => m + pre); else out.unshift({ t: 'p', h: `<p${c}>${pre}</p>` }); }
   if (tail) { const L = out[out.length - 1]; if (L.t === 'p') L.h = L.h.replace(/<\/p>$/, tail + '</p>'); else out.push({ t: 'p', h: `<p${c}>${tail}</p>` }); }
@@ -67,20 +84,22 @@ function questionHtml(r, n, opt = {}) {
   const imgs = q.images || [];
   const tagSpan = opt.tag === false ? '' : `<span class="tag">${esc(r.tag)}</span>`;
   h.push(...blocks(lines(q.stem), n != null ? `<b>${n}.</b> ` : '', tagSpan, '', tblFor(dir, imgs, opt.caption)));
-  h.push(imgsHtml(dir, imgs.filter(i => !isTbl(i) && !/after/.test(i.pos || '')), opt.caption));
+  h.push(imgsHtml(dir, imgs.filter(i => !inStem(i) && !isOpt(i) && !/after/.test(i.pos || '')), opt.caption));
   const optTbl = imgs.filter(i => isTbl(i) && i.site === 'options');
   for (const i of optTbl) h.push(imgHtml(dir, i, opt.caption));
-  const ops = optionsInImage(q) || optTbl.length ? [] : lines(q.options);
+  const ops = optionsInImage(q) || optTbl.length || imgs.some(i => i.hide_options) ? [] : lines(q.options);
   if (ops.length) {
+    const oi = imgs.filter(isOpt);
     const L = Math.max(...ops.map(o => String(o).length));
-    const cols = L <= 12 ? Math.min(ops.length, 5) : (L <= 28 ? 2 : 1);
-    h.push(`<div class="opts" style="grid-template-columns:repeat(${cols},1fr)">${ops.map(o => `<p>${esc(o)}</p>`).join('')}</div>`);
+    const cols = oi.length ? 1 : (L <= 12 ? Math.min(ops.length, 5) : (L <= 28 ? 2 : 1));
+    h.push(`<div class="opts" style="grid-template-columns:repeat(${cols},1fr)">${ops.map(o => `<p>${esc(o)}${oi.filter(i => i.opt === optLetter(o)).map(i => optImgHtml(dir, i)).join('')}</p>`).join('')}</div>`);
   }
-  h.push(imgsHtml(dir, imgs.filter(i => !isTbl(i) && /after/.test(i.pos || '')), opt.caption));
+  h.push(imgsHtml(dir, imgs.filter(i => !inStem(i) && !isOpt(i) && /after/.test(i.pos || '')), opt.caption));
   for (const pt of q.parts || []) {
     h.push(...blocks(lines(pt.stem), `<span class="pl">${esc(pt.label)}</span> `, '', 'pt', tblFor(dir, pt.images, opt.caption)));
-    h.push(...lines(pt.options).map(o => `<p class="pt opt">${esc(o)}</p>`));
-    h.push(imgsHtml(dir, (pt.images || []).filter(i => !isTbl(i)), opt.caption));
+    const poi = (pt.images || []).filter(isOpt);
+    if (!(pt.images || []).some(i => i.hide_options)) h.push(...lines(pt.options).map(o => `<p class="pt opt">${esc(o)}${poi.filter(i => i.opt === optLetter(o)).map(i => optImgHtml(dir, i)).join('')}</p>`));
+    h.push(imgsHtml(dir, (pt.images || []).filter(i => !inStem(i) && !isOpt(i)), opt.caption));
     if (opt.space) h.push('<div class="pspace"></div>');
   }
   if (opt.space && r.tg === '非選' && !(q.parts || []).length) h.push('<div class="space"></div>');

@@ -75,6 +75,25 @@
   .body .att a{display:inline-block;margin-right:10px;color:var(--acc)}
   .edit{display:grid;grid-template-columns:150px 1fr auto;gap:8px;align-items:start;background:var(--bg);border-radius:9px;padding:10px}
   .edit textarea{min-height:40px}
+  .orig-btn{margin:0 0 10px}
+  .orig{border:1px solid var(--line);border-radius:9px;padding:10px 14px;margin:0 0 10px;background:var(--card)}
+  .orig .ph{font-size:12.5px;color:var(--mute);margin:0 0 6px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+  .orig .ph b{color:var(--ink)}
+  .orig+.orig{margin-top:-2px}
+  .orig p{margin:4px 0;overflow-wrap:anywhere}
+  .orig .tag{color:var(--tag);font-weight:700;margin-left:4px}
+  .orig .opts{display:grid;gap:2px 16px;margin:4px 0}
+  .orig .opts p{margin:0}
+  .orig img{max-width:100%;height:auto;background:#fff;border-radius:4px;display:block;margin:6px 0}
+  .orig .imgrow{display:grid;grid-template-columns:repeat(var(--k),minmax(0,1fr));gap:8px}
+  .orig table.tt{border-collapse:collapse;margin:6px 0;font-size:14px}.orig table.tt th,.orig table.tt td{border:1px solid var(--line);padding:2px 8px}
+  .orig .grp{border-left:3px solid var(--line);padding-left:10px;margin-bottom:8px;color:var(--mute)}
+  .orig .gl{font-weight:600}
+  .orig .pt{padding-left:1em}.orig .pl{font-weight:600}
+  .orig .cap{color:var(--mute);font-size:12.5px}
+  .orig .ansbox{border-top:1px dashed var(--line);margin-top:8px;padding-top:6px}
+  .orig .ans b,.orig .sol b{color:var(--acc)}
+  .orig .note{color:var(--wait)}.orig .cls,.orig .clsr{font-size:12.5px;color:var(--mute)}
   .hist{margin:10px 0 0;padding:0;list-style:none;font-size:12.5px;color:var(--mute)}
   .hist li{padding:2px 0}
   .empty{color:var(--mute);padding:14px;border:1px dashed var(--line);border-radius:9px}
@@ -180,6 +199,10 @@
 </div>
 
 <script src="../app/config.js"></script>
+<script src="../app/drive.js"></script>
+<script src="../app/chapters.js"></script>
+<script src="../app/data.js"></script>
+<script src="../app/render.js"></script>
 <script>
 'use strict';
 (() => {
@@ -401,6 +424,8 @@
         ${att ? `<dt>附圖</dt><dd class="att">${att}</dd>` : ''}
         <dt>回報</dt><dd>${esc(x.reporter)}・${esc(x.created)}${x.source && x.source !== '網頁回報' ? '・來源 ' + esc(x.source) : ''}</dd>
       </dl>
+      <button class="btn sm orig-btn" data-id="${esc(x.id)}">🔍 看原題（題庫 JSON）</button>
+      <div class="origs"></div>
       <div class="edit">
         <select data-id="${esc(x.id)}" class="e-st">${STATES.map(s => `<option${s === x.status ? ' selected' : ''}>${s}</option>`).join('')}</select>
         <textarea class="e-note" placeholder="處理說明（改了哪裡、為什麼不改）">${esc(x.resolution)}</textarea>
@@ -416,6 +441,7 @@
     $('items').innerHTML = list.slice(0, shown).map(card).join('') || '<div class="empty">沒有符合的勘誤。</div>';
     $('more').hidden = list.length <= shown;
     $('items').querySelectorAll('.e-save').forEach(b => b.onclick = () => save(b));
+    $('items').querySelectorAll('.orig-btn').forEach(b => b.onclick = () => showOrig(b));
   }
   async function save(b) {
     const box = b.closest('.edit'), id = b.dataset.id, st = box.querySelector('.e-st').value, note = box.querySelector('.e-note').value.trim();
@@ -434,6 +460,63 @@
     $('q').value = id; $('fs').value = ''; $('fb').value = ''; $('fk').value = ''; renderList();
     const el = $(id); if (el) { el.open = true; el.scrollIntoView({ block: 'center' }); }
   }
+  // ---------- 看原題：從雲端 離線出題系統\題庫 找這題（沿用離線出題系統的讀檔與排版）----------
+  let bfs = null, fileList = null;
+  function bankFS() {
+    if (window.__bankFS) return window.__bankFS;          // 測試用
+    if (!bfs) bfs = new DriveFS(window.CONFIG);
+    if (token && Date.now() < exp) { bfs.token = token; bfs.exp = exp; }
+    return bfs;
+  }
+  async function files() { if (!fileList) fileList = await bankFS().listJson('題庫'); return fileList; }
+  const base = p => p.split('/').pop().replace(/\.json$/, '');
+  const squash = s => String(s || '').replace(/[-－\s]/g, '');
+  async function findQuestion(x) {
+    const all = await files();
+    const tag = normTag(x.tag), m = tag.match(/^(\d{2,4})-([^-]+)-(.+)$/);
+    let cand = [];
+    if (x.paper) { const pp = squash(x.paper); cand = all.filter(f => squash(base(f.path)) === pp); }
+    if (!cand.length && m) cand = all.filter(f => { const b = base(f.path); return b.startsWith(m[1]) && squash(b).includes(squash(m[2])); });
+    if (!cand.length) return { cand: 0, hits: [] };
+    const hits = []; let bad = 0;
+    for (const f of cand.slice(0, 40)) {
+      let P; try { P = JSON.parse(await bankFS().readText(f.path)); } catch (e) { bad++; continue; }
+      const recs = indexPaper(f.path, P);
+      const want = m ? m[3] : '';
+      const exact = recs.filter(r => normTag(r.tag) === tag);
+      const loose = exact.length || !want ? [] : recs.filter(r => (r.type + r.num) === want);
+      const sub = exact.length || loose.length || !want ? [] : recs.filter(r => want.startsWith(r.type + r.num) && /^[-(（]/.test(want.slice((r.type + r.num).length)));
+      for (const r of exact.concat(loose, sub)) hits.push({ r, file: base(f.path) });
+    }
+    if (!hits.length && bad === Math.min(cand.length, 40)) throw new Error('卷檔讀取失敗');
+    return { cand: cand.length, hits, paperOnly: !m };
+  }
+  async function hydrate(root) {
+    for (const im of root.querySelectorAll('img[data-src]')) {
+      try { im.src = URL.createObjectURL(await bankFS().readFile(im.dataset.src)); }
+      catch (e) { im.replaceWith(Object.assign(document.createElement('p'), { className: 'cap', textContent: '〔圖檔讀不到：' + im.dataset.src + '〕' })); }
+    }
+  }
+  async function showOrig(b) {
+    const box = b.nextElementSibling, x = data.items.find(y => y.id === b.dataset.id);
+    if (box.dataset.done) { box.hidden = !box.hidden; b.textContent = box.hidden ? '🔍 看原題（題庫 JSON）' : '收起原題'; return; }
+    b.disabled = true; b.textContent = fileList ? '尋找中…' : '讀取題庫目錄中（第一次約 10～30 秒）…';
+    try {
+      const { cand, hits, paperOnly } = await findQuestion(x);
+      if (!hits.length) {
+        box.innerHTML = `<div class="empty">${paperOnly ? '這筆是整份卷的問題，沒有單一題號。' : cand ? `找到 ${cand} 份可能的卷，但沒有這個題號，可能標籤寫法不同。` : '題庫裡找不到對應的卷（可能還沒建檔，或標籤寫法不同）。'}</div>`;
+      } else {
+        const many = new Set(hits.map(h => h.file)).size > 1;
+        box.innerHTML = (many ? `<p class="sub" style="margin:0 0 6px">標籤沒寫年級學期，有 ${new Set(hits.map(h => h.file)).size} 份卷同題號，請自己對是哪一份：</p>` : '')
+          + hits.map(({ r, file }) => `<div class="orig"><p class="ph"><span>出處 <b>${esc(file)}</b></span><span>${esc(r.paper.title || '')}</span></p>
+            ${groupHtml(r, { caption: true })}${questionHtml(r, null, { tag: true, caption: true })}<div class="ansbox">${answerHtml(r, true)}</div></div>`).join('');
+        await hydrate(box);
+      }
+      box.dataset.done = 1; b.textContent = '收起原題';
+    } catch (e) { box.innerHTML = `<div class="empty">讀不到題庫：${esc(e.message)}</div>`; b.textContent = '🔍 再試一次'; }
+    finally { b.disabled = false; }
+  }
+
   $('csv').onclick = () => {
     const cols = ['id', 'tag', 'paper', 'bank', 'kind', 'status', 'problem', 'suggestion', 'resolution', 'reporter', 'created', 'source'];
     const head = ['編號', '標籤', '卷名', '題庫', '類型', '狀態', '問題', '建議更正', '處理說明', '回報者', '回報時間', '來源'];

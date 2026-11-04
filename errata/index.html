@@ -512,7 +512,7 @@
           + hits.map(({ r, file }, i) => `<div class="orig"><p class="ph"><span>出處 <b>${esc(file)}</b></span><span>${esc(r.paper.title || '')}</span></p>
             ${groupHtml(r, { caption: true })}${questionHtml(r, null, { tag: true, caption: true })}<div class="ansbox">${answerHtml(r, true)}</div>
             <div class="src"><button class="btn sm src-btn" data-i="${i}">📄 開原卷</button><span class="src-out"></span></div></div>`).join('');
-        box.querySelectorAll('.src-btn').forEach(sb => sb.onclick = () => showSrc(sb, hits[+sb.dataset.i].r.paper));
+        box.querySelectorAll('.src-btn').forEach(sb => sb.onclick = () => showSrc(sb, hits[+sb.dataset.i].r.paper, hits[+sb.dataset.i].file));
         await hydrate(box);
       }
       box.dataset.done = 1; b.textContent = '收起原題';
@@ -552,16 +552,60 @@
     const q = words.filter(Boolean).join(' ');
     return `<a href="https://drive.google.com/drive/search?q=${encodeURIComponent(q)}" target="_blank" rel="noopener">🔎 在雲端硬碟搜尋「${esc(q)}」</a>`;
   }
-  async function showSrc(b, P) {
-    const out = b.nextElementSibling; b.disabled = true; b.textContent = '尋找原卷中…';
-    try {
-      let files = [];
-      if (P.exam === '段考') files = await duankaoFiles(P);
+  // 歷屆：02_原卷\模考與歷屆\{3.歷屆_學測 | 1.歷屆＿指考和分科…}\{年}\；模考、化奧、清華盃：讀 原卷索引.json（卷名 → 02_原卷 相對路徑）
+  const RAW = '1ZA7Zzxzb1DqUAKo66J0WNSSizaNU0FAs';      // 題庫池\02_原卷
+  let srcIdx = null;
+  async function loadIdx() {
+    if (srcIdx) return srcIdx;
+    await locate();
+    const f = await child(dirId, '原卷索引.json');
+    srcIdx = f ? ((await (await req(`${API}/drive/v3/files/${f.id}?alt=media&supportsAllDrives=true`)).json()).papers || {}) : {};
+    return srcIdx;
+  }
+  async function byPath(path) {   // '模考與歷屆/學測模考/…/x.pdf' → Drive 檔
+    let id = RAW, f = null;
+    for (const seg of path.split('/')) { f = (await listKids(id)).find(x => x.name === seg); if (!f) return null; id = f.id; }
+    return f;
+  }
+  async function pastFiles(P) {
+    const top = (await listKids(RAW)).find(f => f.name === '模考與歷屆'); if (!top) return [];
+    const isXc = /學測/.test(P.exam);
+    const bank = dirs(await listKids(top.id)).find(f => isXc ? /歷屆_學測/.test(f.name) : /歷屆.*指考/.test(f.name)); if (!bank) return [];
+    const yd = dirs(await listKids(bank.id)).find(f => f.name === String(P.year)); if (!yd) return [];
+    const fs = plain(await listKids(yd.id));
+    const q = fs.filter(f => /\.pdf$/i.test(f.name) && /試卷|試題|定稿/.test(f.name) && !/答案|解析|詳解/.test(f.name))
+      .concat(fs.filter(f => /\.pdf$/i.test(f.name) && /(化學|chem|che)\.pdf$/i.test(f.name)));
+    const a = fs.filter(f => /解析|詳解|最前線/.test(f.name) && /\.pdf$/i.test(f.name));
+    return [...(q[0] ? [{ label: '原卷', f: q[0] }] : []), ...(a[0] ? [{ label: '詳解', f: a[0] }] : [])];
+  }
+  async function findSrc(P, stem) {
+    if (P.exam === '段考') {
+      const fs = await duankaoFiles(P);
       const order = f => /原|掃描/.test(f.name) ? 0 : /\.pdf$/i.test(f.name) ? 1 : /解答/.test(f.name) ? 3 : 2;
-      files.sort((a, b) => order(a) - order(b) || a.name.localeCompare(b.name));
-      out.innerHTML = ' ' + (files.length ? files.map(f => `<a href="${esc(f.url)}" target="_blank" rel="noopener">${/\.pdf$/i.test(f.name) ? '📕' : /\.docx?$/i.test(f.name) ? '📘' : '📄'} ${esc(f.name)}${f.where ? '（' + esc(f.where) + '）' : ''}</a>`).join('') + ' ' : (P.exam === '段考' ? '段考資料夾裡找不到這份卷，' : '這個題庫的原卷檔名不統一，請用搜尋：')) + searchLink(P);
-      b.remove();
-    } catch (e) { out.innerHTML = ` 找原卷失敗：${esc(e.message)}　${searchLink(P)}`; b.disabled = false; b.textContent = '📄 再試一次'; }
+      fs.sort((a, b) => order(a) - order(b) || a.name.localeCompare(b.name));
+      return fs.map((f, i) => ({ label: i ? (f.where || '') : '原卷', name: f.name, url: f.url }));
+    }
+    if (/^(學測|指考|分科)$/.test(P.exam || '')) return (await pastFiles(P)).map(x => ({ label: x.label, name: x.f.name, url: x.f.webViewLink }));
+    const list = (await loadIdx())[stem] || [], out = [];
+    for (const x of list) { const f = await byPath(x.path); if (f) out.push({ label: x.label, name: f.name, url: f.webViewLink }); }
+    return out;
+  }
+  async function showSrc(b, P, stem) {
+    const out = b.nextElementSibling;
+    const w = window.open('about:blank', '_blank');   // 點按當下先開分頁，找到後直接導過去（一鍵開原卷）
+    if (w) w.document.write('<p style="font:16px sans-serif;padding:20px">正在找原卷…</p>');
+    b.disabled = true; b.textContent = '尋找原卷中…';
+    try {
+      const files = await findSrc(P, stem);
+      if (files.length && w) w.location.href = files[0].url; else if (w) w.close();
+      const icon = n => /\.pdf$/i.test(n) ? '📕' : /\.docx?$/i.test(n) ? '📘' : '📄';
+      out.innerHTML = ' ' + (files.length
+        ? files.map(f => `<a href="${esc(f.url)}" target="_blank" rel="noopener">${icon(f.name)} ${f.label ? '<b>' + esc(f.label) + '</b> ' : ''}${esc(f.name)}</a>`).join('') + ` <span class="sub">${w ? '已在新分頁開啟原卷。' : '（瀏覽器擋了彈出視窗，請點上面的連結）'}</span>`
+        : `找不到對應的原卷檔，請用搜尋：${searchLink(P)}`);
+      b.textContent = '📄 再開一次'; b.disabled = false;
+      b.onclick = () => { if (files[0]) window.open(files[0].url, '_blank', 'noopener'); };
+      if (!files.length) b.remove();
+    } catch (e) { if (w) w.close(); out.innerHTML = ` 找原卷失敗：${esc(e.message)}　${searchLink(P)}`; b.disabled = false; b.textContent = '📄 再試一次'; }
   }
 
   $('csv').onclick = () => {

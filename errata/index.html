@@ -75,7 +75,7 @@
   .body .att a{display:inline-block;margin-right:10px;color:var(--acc)}
   .edit{display:grid;grid-template-columns:150px 1fr auto;gap:8px;align-items:start;background:var(--bg);border-radius:9px;padding:10px}
   .edit textarea{min-height:40px}
-  .orig-btn{margin:0 0 10px}
+  .obar{margin:0 0 10px;font-size:13.5px}.obar a{display:inline-block;margin:2px 10px 2px 0;color:var(--acc)}
   .orig{border:1px solid var(--line);border-radius:9px;padding:10px 14px;margin:0 0 10px;background:var(--card)}
   .orig .ph{font-size:12.5px;color:var(--mute);margin:0 0 6px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
   .orig .ph b{color:var(--ink)}
@@ -425,7 +425,7 @@
         ${att ? `<dt>附圖</dt><dd class="att">${att}</dd>` : ''}
         <dt>回報</dt><dd>${esc(x.reporter)}・${esc(x.created)}${x.source && x.source !== '網頁回報' ? '・來源 ' + esc(x.source) : ''}</dd>
       </dl>
-      <button class="btn sm orig-btn" data-id="${esc(x.id)}">🔍 看原題（題庫 JSON）</button>
+      <div class="obar"><button class="btn sm orig-btn" data-id="${esc(x.id)}">🔍 看原題（題庫 JSON）</button> <button class="btn sm top-src" data-id="${esc(x.id)}">📄 開原卷</button><span class="top-out"></span></div>
       <div class="origs"></div>
       <div class="edit">
         <select data-id="${esc(x.id)}" class="e-st">${STATES.map(s => `<option${s === x.status ? ' selected' : ''}>${s}</option>`).join('')}</select>
@@ -443,6 +443,7 @@
     $('more').hidden = list.length <= shown;
     $('items').querySelectorAll('.e-save').forEach(b => b.onclick = () => save(b));
     $('items').querySelectorAll('.orig-btn').forEach(b => b.onclick = () => showOrig(b));
+    $('items').querySelectorAll('.top-src').forEach(b => b.onclick = () => topSrc(b));
   }
   async function save(b) {
     const box = b.closest('.edit'), id = b.dataset.id, st = box.querySelector('.e-st').value, note = box.querySelector('.e-note').value.trim();
@@ -499,7 +500,7 @@
     }
   }
   async function showOrig(b) {
-    const box = b.nextElementSibling, x = data.items.find(y => y.id === b.dataset.id);
+    const box = b.closest('.body').querySelector('.origs'), x = data.items.find(y => y.id === b.dataset.id);
     if (box.dataset.done) { box.hidden = !box.hidden; b.textContent = box.hidden ? '🔍 看原題（題庫 JSON）' : '收起原題'; return; }
     b.disabled = true; b.textContent = fileList ? '尋找中…' : '讀取題庫目錄中（第一次約 10～30 秒）…';
     try {
@@ -589,6 +590,44 @@
     const list = (await loadIdx())[stem] || [], out = [];
     for (const x of list) { const f = await byPath(x.path); if (f) out.push({ label: x.label, name: f.name, url: f.webViewLink }); }
     return out;
+  }
+  // 每筆勘誤直接「開原卷」：不用先看原題。先找出這筆對應的卷（可能多份），一份就直接開。
+  async function papersOf(x) {
+    const { hits } = await findQuestion(x);
+    const seen = new Map();
+    for (const h of hits) if (!seen.has(h.file)) seen.set(h.file, h.r.paper);
+    if (!seen.size && x.paper) {
+      const all = await files(), pp = squash(x.paper);
+      for (const f of all.filter(f => squash(base(f.path)) === pp).slice(0, 3)) { try { seen.set(base(f.path), JSON.parse(await bankFS().readText(f.path))); } catch (e) { } }
+    }
+    return [...seen].map(([stem, P]) => ({ stem, P }));
+  }
+  async function topSrc(b) {
+    const out = b.nextElementSibling, x = data.items.find(y => y.id === b.dataset.id);
+    const w = window.open('about:blank', '_blank');
+    if (w) w.document.write('<p style="font:16px sans-serif;padding:20px">正在找原卷…</p>');
+    b.disabled = true; b.textContent = fileList ? '尋找原卷中…' : '讀取題庫目錄中（第一次約 10～30 秒）…';
+    const icon = n => /\.pdf$/i.test(n) ? '📕' : /\.docx?$/i.test(n) ? '📘' : '📄';
+    try {
+      const ps = await papersOf(x);
+      if (!ps.length) { if (w) w.close(); out.innerHTML = ' 題庫裡找不到這份卷，請用雲端搜尋：' + `<a href="https://drive.google.com/drive/search?q=${encodeURIComponent((x.tag || x.paper).split('-').slice(0, 2).join(' '))}" target="_blank" rel="noopener">🔎 搜尋「${esc((x.tag || x.paper).split('-').slice(0, 2).join(' '))}」</a>`; b.remove(); return; }
+      if (ps.length > 1) {
+        if (w) w.close();
+        out.innerHTML = ` 標籤對到 ${ps.length} 份卷，請選：` + ps.map((p, i) => `<a href="#" data-i="${i}">${esc(p.stem)}</a>`).join('');
+        out.querySelectorAll('a[data-i]').forEach(a => a.onclick = async ev => {
+          ev.preventDefault(); const p = ps[+a.dataset.i]; const w2 = window.open('about:blank', '_blank');
+          const fs = await findSrc(p.P, p.stem).catch(() => []);
+          if (fs[0] && w2) w2.location.href = fs[0].url; else { if (w2) w2.close(); a.insertAdjacentHTML('afterend', ` ${searchLink(p.P)}`); }
+        });
+        b.remove(); return;
+      }
+      const fs = await findSrc(ps[0].P, ps[0].stem);
+      if (fs.length && w) w.location.href = fs[0].url; else if (w) w.close();
+      out.innerHTML = ' ' + (fs.length ? fs.map(f => `<a href="${esc(f.url)}" target="_blank" rel="noopener">${icon(f.name)} ${f.label ? '<b>' + esc(f.label) + '</b> ' : ''}${esc(f.name)}</a>`).join('') : `找不到對應的原卷檔，請用搜尋：${searchLink(ps[0].P)}`);
+      b.disabled = false; b.textContent = '📄 再開一次';
+      b.onclick = () => { if (fs[0]) window.open(fs[0].url, '_blank', 'noopener'); };
+      if (!fs.length) b.remove();
+    } catch (e) { if (w) w.close(); out.innerHTML = ` 找原卷失敗：${esc(e.message)}`; b.disabled = false; b.textContent = '📄 再試一次'; }
   }
   async function showSrc(b, P, stem) {
     const out = b.nextElementSibling;

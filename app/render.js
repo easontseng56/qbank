@@ -34,9 +34,24 @@ function optImgHtml(dir, im) {
   return ` <img class="oimg" data-src="${esc(p)}" style="height:${((Number(im.height_mm) || 9) * IMG_SCALE).toFixed(1)}mm;vertical-align:middle;display:inline-block;margin:1px 0" alt="">`;
 }
 const optLetter = o => { const m = String(o).match(/^\s*[（(]\s*([A-Za-zＡ-Ｅ甲乙丙丁戊])\s*[)）]/); return m ? m[1] : null; };
+// ---------- 原卷截圖模式（使用者 2026-11-07）----------
+// 題目有 q.img（原卷整題裁圖、題號已塗掉，200 dpi 16 階灰階）時，用「題號＋來源標籤」一行加原卷圖取代文字；
+// 題組共用題幹用 q.group_img；沒有裁圖的題自動改用原卷文字。圖寬＝原圖像素 ÷ 200 dpi × SHOT_K（照原卷字級縮 85%）× 圖片大小。
+const SHOT_DPI = 200, SHOT_K = 0.85;
+const hasShot = r => !!(r && r.q && r.q.img);
+function shotImg(dir, path) {
+  const p = path.startsWith('/') ? path : `${dir}/${path}`;
+  return `<img class="shot" data-src="${esc(p)}" style="max-width:100%" alt="">`;
+}
+// 圖讀進來後依原圖像素設定寬度（hydrateImages 呼叫）
+function sizeShot(im) {
+  if (!im.classList.contains('shot') || !im.naturalWidth) return;
+  im.style.width = Math.min(im.naturalWidth / SHOT_DPI * 2.54 * SHOT_K * IMG_SCALE, 17.5).toFixed(2) + 'cm';
+}
 function groupHtml(r, opt) {
   const g = r.q.group;
   if (!g) return '';
+  if (opt.shot && r.q.group_img) return `<div class="grp shotg">${shotImg(r.dir, r.q.group_img)}</div>`;
   let h = `<div class="grp"><p class="gl">${esc(g.label || '題組')}</p>`;
   h += blocks(lines(g.stem), '', '', '', tblFor(r.dir, g.images, opt.caption)).join('');
   h += imgsHtml(r.dir, (g.images || []).filter(i => !inStem(i) && !isOpt(i)), opt.caption);
@@ -83,6 +98,11 @@ function questionHtml(r, n, opt = {}) {
   const q = r.q, dir = r.dir, h = [];
   const imgs = q.images || [];
   const tagSpan = opt.tag === false ? '' : `<span class="tag">${esc(r.tag)}</span>`;
+  if (opt.shot && q.img) {   // 原卷截圖模式
+    h.push(`<p class="shotn">${n != null ? `<b>${n}.</b> ` : ''}${tagSpan}</p>`, shotImg(dir, q.img));
+    if (opt.space && r.tg === '非選') h.push('<div class="space"></div>');
+    return h.join('');
+  }
   h.push(...blocks(lines(q.stem), n != null ? `<b>${n}.</b> ` : '', tagSpan, '', tblFor(dir, imgs, opt.caption)));
   h.push(imgsHtml(dir, imgs.filter(i => !inStem(i) && !isOpt(i) && !/after/.test(i.pos || '')), opt.caption));
   const optTbl = imgs.filter(i => isTbl(i) && i.site === 'options');
@@ -198,7 +218,7 @@ function questionPaperHtml(exam) {
       const gk = r.q.group ? `${r.path}#${r.si}#${r.q.group.label}` : null;
       const showGroup = gk && gk !== lastGroup;
       lastGroup = gk;
-      out.push(`<div class="q">${showGroup ? groupHtml(r, o) : ''}${questionHtml(r, n, { tag: !o.hideTag, space: !!o.space, caption: false })}</div>`);
+      out.push(`<div class="q">${showGroup ? groupHtml(r, { ...o, caption: false }) : ''}${questionHtml(r, n, { tag: !o.hideTag, space: !!o.space, caption: false, shot: !!o.shot })}</div>`);
     }
   }
   return out.join('\n');

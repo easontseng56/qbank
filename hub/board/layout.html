@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>講義排版格式規則</title>
+<link rel="stylesheet" href="board.css">
+<style>
+  li .code{flex:0 0 28px}
+  li.chk{align-items:flex-start;cursor:pointer}
+  li.chk input{flex:0 0 auto;width:18px;height:18px;margin:3px 0 0;accent-color:#4ade80;cursor:pointer}
+  li.chk input:checked+label{color:var(--mute);text-decoration:line-through}
+  .note{background:#f8717122;border:1px solid #f8717166;border-radius:8px;padding:8px 12px;margin:10px 0 4px;font-size:14px}
+  .tbl td:first-child{white-space:nowrap}
+  @media (max-width:560px){.tbl td:first-child{white-space:normal}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="crumb"><a href="../">周逸化學工作室</a> ／ 私領域 ／ <a href="./">公佈欄</a> ／ 講義排版格式規則</div>
+  <h1>周逸講義排版格式規則</h1>
+  <div class="meta">2026年11月7日 · <span class="at">@Eason</span></div>
+  <div class="lead">所有講義一律以<b>選化2 CH1 光譜</b>〈CH1光譜與電子組態_全章_v19_20261104〉（AI改 資料夾）為格式範本，只輸出一個版本：<b>學生版、解答隨題</b>。以下是到 11/6 為止定下的規則，化學鍵 v6 已全部套用。</div>
+  <div class="tools">
+    <a href="#s1" style="--c:#60a5fa">頁面字型</a><a href="#s2" style="--c:#c084fc">全章結構</a><a href="#s3" style="--c:#fbbf24">標題編號</a><a href="#s4" style="--c:#fb923c">範例框</a><a href="#s5" style="--c:#4ade80">練習題</a><a href="#s6" style="--c:#22d3ee">參考解答</a><a href="#s7" style="--c:#f472b6">出處作答區</a><a href="#s8" style="--c:#a3e635">圖與表格</a><a href="#s9" style="--c:#f87171">檢查清單</a>
+  </div>
+
+  <section class="book" id="s1" style="--c:#60a5fa">
+    <h2><span class="bk">一</span>頁面、字型與文字</h2>
+    <div class="tbl"><table>
+      <tr><th>項目</th><th>規則</th></tr>
+      <tr><td class="n">紙張邊界</td><td>A4；上下 1.5 cm、左右 2 cm；頁首頁尾距離 1 cm</td></tr>
+      <tr><td class="n">頁首</td><td>不放頁首文字，只留「周逸」書法浮水印（置中、文字後方）</td></tr>
+      <tr><td class="n">頁尾</td><td>每頁同一版：「第一象限教育 — 頁碼 — 周逸化學團隊編輯」</td></tr>
+      <tr><td class="n">字型</td><td>中文一律標楷體（含標題、範例），英數 Cambria Math</td></tr>
+      <tr><td class="n">字級</td><td>章 16 pt、節 14 pt、內文 12 pt、出處 10 pt；練習題 12 pt、解答 11 pt</td></tr>
+      <tr><td class="n">行距</td><td>內文 1.15 倍</td></tr>
+      <tr><td class="n">配色</td><td>黑白，不用品牌色；標籤黑底白字，表格灰底可保留；光譜等內容圖可彩色</td></tr>
+      <tr><td class="n">半形全形</td><td>英數與符號一律半形（Ａ１＞＝（A）→ A1&gt;=(A)），中文標點保持全形（，。：（））</td></tr>
+      <tr><td class="n">方程式</td><td>用 Unicode：H₂O、Fe³⁺、⇌、−、×、6.02 × 10²³，運算符兩側空一格；單層簡單分式寫一行 (a × b)/c，多層或長分式保留 Word 方程式</td></tr>
+      <tr><td class="n">單位</td><td>放括號：r = 0.53 × n² (Å)</td></tr>
+      <tr><td class="n">用語</td><td>人名後不加英文；口語標籤改正式（愛考 → 高頻考題、上課特殊解法 → 解題技巧）；框名統一為重點筆記、延伸補充、觀念說明、生活比喻、重點整理、獨家整理</td></tr>
+      <tr><td class="n">文字框</td><td>文字不加框線，文字方塊不留外框，不可亂跳行或無故置中</td></tr>
+    </table></div>
+  </section>
+
+  <section class="book" id="s2" style="--c:#c084fc">
+    <h2><span class="bk">二</span>全章結構與順序</h2>
+    <p>每章由上到下依序為：</p>
+    <ul>
+      <li><span class="code">1.</span><div>目錄（頁碼依實際排版更新）</div></li>
+      <li><span class="code">2.</span><div>觀念地圖（一頁，各節觀念方塊＋箭頭＋節與節之間的銜接問題）</div></li>
+      <li><span class="code">3.</span><div>第 N 章 標題 → 本章命題分析（ANALYSIS：題型 × 年段題數，不含模考欄）＋命題趨勢</div></li>
+      <li><span class="code">4.</span><div>各節：導言（1–3 句）→ 重點內文與範例 → 精選練習題 → 參考解答</div></li>
+      <li><span class="code">5.</span><div>章末總整理：公式與口訣（FORMULA，約一頁）</div></li>
+      <li><span class="code">6.</span><div>第 N 章 大考題（EXAM &amp; CONTEST，依小節分，每小節題目後換頁附參考解答與詳解）</div></li>
+    </ul>
+    <div class="note"><b>一律刪除：</b>混合素養題、綜合測驗（全模）、章末化奧題、節內「大考實戰．競賽挑戰」區塊、舊範例空表格、與內容無關的照片。化奧／競賽題另收在各章「競賽題本」。</div>
+  </section>
+
+  <section class="book" id="s3" style="--c:#fbbf24">
+    <h2><span class="bk">三</span>標題與編號層級</h2>
+    <div class="tbl"><table>
+      <tr><th>層級</th><th>寫法</th><th>格式</th></tr>
+      <tr><td class="n">章</td><td>第二章　化學鍵與分子間作用力</td><td>標題1，16 pt 粗體置中</td></tr>
+      <tr><td class="n">節</td><td>2-1　2-2　…</td><td>標題2，14 pt 粗體，左粗線＋底線</td></tr>
+      <tr><td class="n">小節</td><td>一、二、…</td><td>標題3，12 pt 粗體</td></tr>
+      <tr><td class="n">第 4 層</td><td>(一)(二)…</td><td>內文</td></tr>
+      <tr><td class="n">第 5 層</td><td>1.　2.…</td><td>左縮 480、懸掛 480</td></tr>
+      <tr><td class="n">第 6 層</td><td>(1)(2)…</td><td>左縮 960、懸掛 480</td></tr>
+      <tr><td class="n">第 7 層</td><td>A.　B.…</td><td>左縮 1440、懸掛 480</td></tr>
+    </table></div>
+    <p>編號不加粗、不加框；表格內文字靠左，不置中也不分散對齊。</p>
+  </section>
+
+  <section class="book" id="s4" style="--c:#fb923c">
+    <h2><span class="bk">四</span>範例框</h2>
+    <ul>
+      <li><span class="code">•</span><div>樣式「C 單格細框」：單欄表格寬 9572、0.75 pt 框線，標題列灰底 E6E6E6「範例 N　標題」14 pt 粗體。</div></li>
+      <li><span class="code">•</span><div>範例編號每個小節（一、二、）從 1 重新編。</div></li>
+      <li><span class="code">•</span><div>課程內文 → 範例：第一個範例前換頁。參考解答 → 範例：也換頁。</div></li>
+      <li><span class="code">•</span><div>相鄰範例之間留一行空白，框不可相黏。</div></li>
+      <li><span class="code">•</span><div>範例本文不另加縮排。</div></li>
+      <li><span class="code">•</span><div>範例內每題只留一個【】，用出處格式；簡答併入，如「【108全模】A」；相鄰標籤合併，如「【90日大，重要】」；「【D】」改成「【答】D」。</div></li>
+      <li><span class="code">•</span><div>刪掉空白的【解說】段和空的舊範例表格。</div></li>
+    </ul>
+  </section>
+
+  <section class="book" id="s5" style="--c:#4ade80">
+    <h2><span class="bk">五</span>精選練習題（PRACTICE）</h2>
+    <ul>
+      <li><span class="code">•</span><div>每組前換頁，放書籤式標題「PRACTICE ／ 2-1 ① ／ 精選練習題」；①②③ 每節重新編。</div></li>
+      <li><span class="code">•</span><div>標題下一行放笑話「☞…」（笑話樣式，取自原檔）。</div></li>
+      <li><span class="code">•</span><div>題型標籤一律寫「題型：…」（題型樣式，粗體）。</div></li>
+      <li><span class="code">•</span><div>題目放在無框線的題目表，兩欄 397 ｜ 9175；題目 12 pt（練習題目樣式）；題號用「1.」，每組從 1 起。不可用一般段落或「(一)」當題號。</div></li>
+      <li><span class="code">•</span><div>不滿 5 題的組，併入同節相鄰的組（優先前一組），合併後不超過 12 題。</div></li>
+      <li><span class="code">•</span><div>題目列不跨頁；但含圖或內嵌表格的列不設。</div></li>
+    </ul>
+  </section>
+
+  <section class="book" id="s6" style="--c:#22d3ee">
+    <h2><span class="bk">六</span>參考解答（ANSWERS）</h2>
+    <ul>
+      <li><span class="code">•</span><div>緊接在該組練習題後，前面換頁，放「ANSWERS ／ 2-1 ① ／ 參考解答」。</div></li>
+      <li><span class="code">•</span><div>解答表三欄：題號 417 ｜ 答案 976 ｜ 詳解 8179（儲存格 417/976/8177），每一列寬度都要一樣。</div></li>
+      <li><span class="code">•</span><div>外框無、內框細線；字級 11 pt（解答樣式）。框線直接設在表格上，不靠樣式裡的 nil（Word 會忽略）。</div></li>
+      <li><span class="code">•</span><div>答案欄不得空白；短答案不可放在詳解欄；多小題放不下的寫「見詳解」。</div></li>
+      <li><span class="code">•</span><div>題數要等於解答數，同一組題號連續；一個 ANSWERS 後只有一張解答表。</div></li>
+      <li><span class="code">•</span><div>解答後若接範例或內文，先換頁。</div></li>
+    </ul>
+  </section>
+
+  <section class="book" id="s7" style="--c:#f472b6">
+    <h2><span class="bk">七</span>出處【】與作答區</h2>
+    <ul>
+      <li><span class="code">•</span><div>只含【…】的段落一律用出處樣式：靠右、灰色 595959、10 pt，獨立一行，不加其他字型或顏色。</div></li>
+      <li><span class="code">•</span><div>每題只一個【】：題末的【106指考】【重要】合併成「【106指考，重要】」。</div></li>
+      <li><span class="code">•</span><div>段考校名拿掉年份與答案（【竹北】），大考／模考保留年份（【72日大】）。</div></li>
+      <li><span class="code">•</span><div>作答空白不加框，用一個固定行高的空段（周逸作答區）取代一串空行。</div></li>
+    </ul>
+  </section>
+
+  <section class="book" id="s8" style="--c:#a3e635">
+    <h2><span class="bk">八</span>圖與表格</h2>
+    <ul>
+      <li><span class="code">•</span><div>圖內文字印出後至少 9 pt（緊湊排法 7.5–9 pt），圖說單行、不換行。</div></li>
+      <li><span class="code">•</span><div>同一主題的圖盡量放同一頁（例：軌域形狀 s｜p｜d｜f 一頁）。</div></li>
+      <li><span class="code">•</span><div>內嵌表格不可超過所在儲存格的寬度；浮動表格改成行內。</div></li>
+      <li><span class="code">•</span><div>自訂樣式六個：練習題目（12 pt）、解答（11 pt）、題型（粗體）、笑話、解答表、題目表；出處另有出處樣式。</div></li>
+      <li><span class="code">•</span><div>不可有空白頁或多餘的分頁（連續兩個分頁要刪一個）。</div></li>
+    </ul>
+  </section>
+
+  <section class="book" id="s9" style="--c:#f87171">
+    <h2><span class="bk">九</span>出檔前檢查清單<small>可勾選，重新整理會清空</small></h2>
+    <p>每次輸出前跑檢查腳本，下列項目必須全部為 0 問題才出檔：</p>
+    <ul>
+      <li class="chk"><input type="checkbox" id="c1"><label for="c1">解答表欄寬 417/976/8179，每列一致</label></li>
+      <li class="chk"><input type="checkbox" id="c2"><label for="c2">答案欄沒有空白</label></li>
+      <li class="chk"><input type="checkbox" id="c3"><label for="c3">每組題數 = 解答數，①②③ 編號連續</label></li>
+      <li class="chk"><input type="checkbox" id="c4"><label for="c4">每題只有一個【】</label></li>
+      <li class="chk"><input type="checkbox" id="c5"><label for="c5">沒有殘留「綜合測驗／化奧題／大考實戰／競賽挑戰」</label></li>
+      <li class="chk"><input type="checkbox" id="c6"><label for="c6">沒有文字框線、空表格，內嵌表格不超寬</label></li>
+      <li class="chk"><input type="checkbox" id="c7"><label for="c7">目錄頁碼已更新</label></li>
+    </ul>
+    <div class="note"><b>注意：</b>LibreOffice 排出來的頁面不等於 Word，最後仍需在 Word 看一次。</div>
+  </section>
+  <footer>周逸化學專用</footer>
+</div>
+</body>
+</html>

@@ -358,6 +358,7 @@ async function renderPreview(id) {
       ${r.tags.length ? '　標籤：' + r.tags.join('、') : ''}<br><span class="used">${usedLabel(r)}</span></div>
       <div class="pv-btn"><button class="${inB ? '' : 'pri'}" id="pvAdd" title="${inB ? '按一下從考卷籃移出' : '加入考卷籃'}">${inB ? '✓ 已加入（移出）' : '＋ 加入考卷籃'}</button><br><button id="pvPrev" title="上一題（↑）">▲ 上一題</button><button id="pvNext" title="下一題（↓）">▼ 下一題</button></div></div>
     <div class="paper pv">${(setImgScale(1), '')}${groupHtml(r, { caption: true })}<div class="q">${questionHtml(r, null, { caption: true })}</div>
+    ${hasShot(r) ? `<div class="q"><p class="cap">〔原卷截圖〕</p>${r.q.group_img ? groupHtml(r, { shot: true }) : ''}${questionHtml(r, null, { shot: true, tag: false })}</div>` : ''}
     <div class="q">${answerHtml(r, true)}</div></div>`;
   $('#pvAdd').onclick = () => { toggleBasket(id); renderPreview(id); };
   $('#pvPrev').onclick = () => stepSel(-1); $('#pvNext').onclick = () => stepSel(1);
@@ -388,7 +389,7 @@ async function hydrateImages(root) {
     while (i < imgs.length) {
       const im = imgs[i++];
       const u = await imgUrl(im.dataset.src);
-      if (u) { im.src = u; await new Promise(res => { im.onload = im.onerror = res; }); }
+      if (u) { im.src = u; await new Promise(res => { im.onload = im.onerror = res; }); sizeShot(im); }
       else { im.replaceWith(Object.assign(document.createElement('p'), { className: 'cap', textContent: '〔圖檔遺失：' + im.dataset.src + '〕' })); }
     }
   };
@@ -413,13 +414,19 @@ function examObject() {
   }
   return ex;
 }
+// 原卷截圖模式提示：考卷中幾題有原卷截圖、幾題會用文字
+function updShotInfo() {
+  const el = $('#bShotInfo'); if (!el || !S.basket) return;
+  const items = basketItems(), n = items.filter(hasShot).length;
+  el.textContent = S.basket.opts.shot && items.length ? `（${n}/${items.length} 題有原卷截圖${n < items.length ? '，其餘用文字' : ''}）` : '';
+}
 function renderBasket() {
   const b = S.basket; if (!b) return;
   $('#bTitle').value = b.title; $('#bSub').value = b.subtitle; $('#bRange').value = b.range || ''; $('#bDate').value = b.date;
   $('#bConst').value = b.constants.join('\n');
   $('#bCls').innerHTML = '<option value="">（未指定班級）</option>' + S.settings.classes.map(c => `<option ${c === b.cls ? 'selected' : ''}>${esc(c)}</option>`).join('')
     + (b.cls && !S.settings.classes.includes(b.cls) ? `<option selected>${esc(b.cls)}</option>` : '');
-  $('#bWm').checked = !!b.opts.watermark; $('#bTitleImg').checked = !!b.opts.titleImg; $('#bSpace').checked = !!b.opts.space; $('#bHideTag').checked = !!b.opts.hideTag; $('#bShowRange').checked = b.opts.showRange !== false; $('#bImgScale').value = String(b.opts.imgScale || 1);
+  $('#bWm').checked = !!b.opts.watermark; $('#bTitleImg').checked = !!b.opts.titleImg; $('#bSpace').checked = !!b.opts.space; $('#bHideTag').checked = !!b.opts.hideTag; $('#bShowRange').checked = b.opts.showRange !== false; $('#bImgScale').value = String(b.opts.imgScale || 1); $('#bMode').value = b.opts.shot ? 'shot' : 'text'; updShotInfo();
   $('#bScoreAuto').checked = b.score === 'auto'; $('#bScoreMan').checked = b.score !== 'auto';
   $('#manualScore').style.display = b.score === 'auto' ? 'none' : '';
   ['單選', '多選', '非選'].forEach(g => { $(`#ms${g}`).value = b.manual[g]; });
@@ -450,7 +457,7 @@ function renderBasket() {
       if (full) {
         const gk = r.q.group ? `${r.path}#${r.si}#${r.q.group.label}` : null;
         const showGroup = gk && gk !== lastGroup; lastGroup = gk;
-        h += `<div class="brow full" data-id="${esc(r.id)}"><div class="bq paper pv">${showGroup ? groupHtml(r, { caption: false }) : ''}${questionHtml(r, i + 1, { tag: true, caption: false })}<div class="bans" style="display:none">${answerHtml(r, false)}</div></div>
+        h += `<div class="brow full" data-id="${esc(r.id)}"><div class="bq paper pv">${showGroup ? groupHtml(r, { caption: false, shot: !!S.basket.opts.shot }) : ''}${questionHtml(r, i + 1, { tag: true, caption: false, shot: !!S.basket.opts.shot })}<div class="bans" style="display:none">${answerHtml(r, false)}</div></div>
           <div class="bfoot">${meta}${btns}</div></div>`;
       } else {
         h += `<div class="brow" data-id="${esc(r.id)}"><span class="n">${i + 1}</span><div class="bmain"><span class="tag">${esc(r.tag)}</span> ${meta}<br><span class="head">${esc(r.head).slice(0, 90)}</span></div>${btns}</div>`;
@@ -835,6 +842,7 @@ function bindUI() {
   $('#bTitleImg').onchange = e => { b().opts.titleImg = e.target.checked; saveDraft(); };
   $('#bSpace').onchange = e => { b().opts.space = e.target.checked; saveDraft(); };
   $('#bHideTag').onchange = e => { b().opts.hideTag = e.target.checked; saveDraft(); };
+  $('#bMode').onchange = e => { b().opts.shot = e.target.value === 'shot'; saveDraft(); updShotInfo(); renderBasket(); };
   $('#bScoreAuto').onchange = $('#bScoreMan').onchange = () => { b().score = $('#bScoreAuto').checked ? 'auto' : 'manual'; saveDraft(); renderBasket(); };
   ['單選', '多選', '非選'].forEach(g => $(`#ms${g}`).onchange = e => { b().manual[g] = Number(e.target.value) || 0; saveDraft(); renderBasket(); });
   $('#bList').addEventListener('click', e => {

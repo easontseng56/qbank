@@ -115,7 +115,7 @@ const BANK_INFO = [   // 資料夾名前綴 → 來源名稱、年份是否西�
 ];
 const SOURCE_ORDER = BANK_INFO.map(b => b[1]).concat(['其他']);
 const TYPE_ORDER = { '單選': 0, '多選': 1, '非選': 2 };
-const KNOWN_TAGS = ['素養題', '實驗', '計算題', '觀念題', '圖表題', '跨科', '超範圍'];
+const KNOWN_TAGS = ['周逸精選', '素養題', '實驗', '計算題', '觀念題', '圖表題', '跨科', '超範圍'];
 
 function bankOf(path) {   // path: 題庫/<bank>/...
   const bank = path.split('/')[1] || '';

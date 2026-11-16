@@ -110,6 +110,12 @@
   .res .act input{width:220px}
   .res .head{font-size:14px;margin-top:4px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
   .grp-h{font-weight:600;margin:16px 0 4px}
+  .drop{margin-top:10px;border:2px dashed var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;display:grid;gap:2px;font-size:13.5px;color:var(--mute)}
+  .drop b{color:var(--ink)}
+  .drop.over,.drop:hover,.drop:focus-visible{border-color:#d97706;background:#fef3c71a;outline:none}
+  .shot{display:flex;gap:10px;align-items:center;margin-top:8px;font-size:13px;flex-wrap:wrap}
+  .shot img{height:44px;max-width:120px;object-fit:cover;border:1px solid var(--line);border-radius:6px;background:#fff}
+  .shot .st{color:var(--mute)}.shot .st b{color:var(--tag)}.shot .st.bad{color:var(--bad)}
   .s-pick{background:#fef3c7;color:#b45309}
   @media (prefers-color-scheme:dark){:root:not([data-theme=light]) .s-pick{background:#3a2c14;color:#e6b268}}
   @media (max-width:640px){.res .act input{width:100%}}
@@ -146,6 +152,12 @@
         <form id="form" autocomplete="off">
           <textarea id="f-tag" style="min-height:64px" placeholder="例：114-竹中-單選5　或　【112-全模N2-多選25】&#10;一次可以貼好幾個，用換行或空白分開"></textarea>
           <div class="hint sub">照截圖上的橘色標籤打就好，括號可有可無。只有學校、沒寫年級學期的標籤，會列出所有同題號的卷讓你選。</div>
+          <div class="drop" id="drop" tabindex="0" role="button" aria-label="上傳截圖辨識標籤">
+            <b>📷 上傳截圖自動辨識標籤</b>
+            <span>點這裡選圖、把圖拖進來，或直接按 Ctrl+V 貼上（可多張）。辨識完會填進上面的框，請確認後再按「在題庫找題」。</span>
+            <input type="file" id="shot" accept="image/*" multiple hidden>
+          </div>
+          <div id="shots"></div>
           <div style="margin-top:10px"><button class="btn primary" id="find" type="submit">在題庫找題</button></div>
         </form>
         <div class="notice" id="notice" hidden></div>
@@ -367,6 +379,157 @@
       ${groupHtml(r, { caption: true })}${questionHtml(r, null, { tag: true, caption: true })}<div class="ansbox">${answerHtml(r, true)}</div></div>`;
   }
   const chap = r => (r.mains || []).map(c => typeof chapterName === 'function' ? chapterName(c) : c).join('、');
+
+  // ---------- 截圖辨識標籤（瀏覽器內 OCR，圖片不上傳）----------
+  // 做法：只留「橘色字」（標籤都是橘色粗體）→ 白底黑字 → 依行切開 → Tesseract.js 中文辨識 → 抓「年份-卷別-題號」→ 用題庫卷名校正。
+  // 沒有橘色字時（例如黑白截圖）改辨識整張灰階圖。
+  const TESS = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+  let ocrWorker = null;
+  function loadTess() {
+    if (window.Tesseract) return Promise.resolve();
+    return new Promise((res, rej) => { const s = document.createElement('script'); s.src = TESS; s.onload = res; s.onerror = () => rej(new Error('無法載入辨識元件，請確認網路')); document.head.appendChild(s); });
+  }
+  async function worker(onp) {
+    if (!ocrWorker) ocrWorker = (async () => {
+      await loadTess();
+      const w = await Tesseract.createWorker('chi_tra', 1, { logger: m => { if (onp && m.status === 'loading language traineddata') onp(m.progress); } });
+      await w.setParameters({ tessedit_pageseg_mode: '7', preserve_interword_spaces: '0' });
+      return w;
+    })().catch(e => { ocrWorker = null; throw e; });
+    return ocrWorker;
+  }
+  const readImg = blob => new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => rej(new Error('讀不到圖片')); im.src = URL.createObjectURL(blob); });
+  // 橘色判斷：卷面標籤色約 #C55A11～#E36C09，粗體邊緣會淡一點
+  function isOrange(r, g, b) {
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+    if (mx < 120 || mx - mn < 70 || r !== mx) return false;
+    const h = 60 * ((g - b) / (mx - mn));
+    return h >= 8 && h <= 48;
+  }
+  // 回傳要辨識的小圖（每行一張，白底黑字）
+  function bands(im) {
+    let k = Math.min(4, Math.max(1, 2000 / Math.max(im.width, 1)));
+    if (im.width * im.height * k * k > 2.4e7) k = Math.sqrt(2.4e7 / (im.width * im.height));
+    const W = Math.round(im.width * k), H = Math.round(im.height * k);
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(im, 0, 0, W, H);
+    const d = x.getImageData(0, 0, W, H), p = d.data, rows = new Int32Array(H);
+    let n = 0;
+    const ink = new Uint8Array(W * H);
+    for (let i = 0, j = 0; i < p.length; i += 4, j++) {
+      const r = p[i], g = p[i + 1], b = p[i + 2];
+      if (isOrange(r, g, b)) { rows[(j / W) | 0]++; n++; ink[j] = 1; }
+      // 柔性遮罩：越橘越黑，保留反鋸齒邊緣（小字才認得出來）；非橘色一律白
+      const v = (r > g && g >= b - 10 && r - b > 25) ? Math.min(1, (r - b - 25) / 110) : 0;
+      p[i] = p[i + 1] = p[i + 2] = Math.round(255 * (1 - v));
+    }
+    if (n < 40) return { orange: false, parts: [grayCanvas(im, k)] };
+    x.putImageData(d, 0, 0);
+    const out = [], gap = Math.max(3, Math.round(4 * k)), minH = Math.round(6 * k);
+    for (let y = 0; y < H;) {
+      if (rows[y] < 2) { y++; continue; }
+      let y2 = y, miss = 0;
+      while (y2 < H && miss <= gap) { if (rows[y2] >= 2) miss = 0; else miss++; y2++; }
+      y2 -= miss;
+      if (y2 - y >= minH) {
+        let x1 = W, x2 = 0;
+        for (let yy = y; yy < y2; yy++) for (let xx = 0; xx < W; xx++) if (ink[yy * W + xx]) { if (xx < x1) x1 = xx; if (xx > x2) x2 = xx; }
+        const pad = Math.round(8 * k), cw = x2 - x1 + 1 + 2 * pad, ch = y2 - y + 2 * pad;
+        const cc = document.createElement('canvas'); cc.width = cw; cc.height = ch;
+        const cx = cc.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, cw, ch); cx.drawImage(c, x1, y, x2 - x1 + 1, y2 - y, pad, pad, x2 - x1 + 1, y2 - y);
+        out.push(cc);
+      }
+      y = y2 + 1;
+    }
+    return { orange: true, parts: out.slice(0, 40) };
+  }
+  function grayCanvas(im, k) {
+    const c = document.createElement('canvas'); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+    const x = c.getContext('2d'); x.filter = 'grayscale(1) contrast(1.4)'; x.drawImage(im, 0, 0, c.width, c.height); return c;
+  }
+  // OCR 文字 → 標籤（容錯：- 常被認成「一」、全形符號、O/0、l/1、選→遷 等）
+  const TYPES = ['單選', '多選', '非選', '填充', '選填', '題組', '簡答', '計算'];
+  const CNUM = '一二三四五六七八九十';
+  function lev(a, b) {
+    const m = a.length, n = b.length, d = Array.from({ length: m + 1 }, (_, i) => [i, ...Array(n).fill(0)]);
+    for (let j = 1; j <= n; j++) d[0][j] = j;
+    for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    return d[m][n];
+  }
+  function parseTags(text) {
+    const out = [];
+    for (let line of String(text).split(/\n/)) {
+      line = line.normalize('NFKC').replace(/\s+/g, '').replace(/[【\[［]+(?=\d)/g, '【').replace(/[】\]］]+/g, '】')
+        .replace(/[—–－~～_=＝]/g, '-').replace(/(?<=\d)[oO]|[oO](?=\d)/g, '0').replace(/(?<=\d)[lI|]|[lI|](?=\d)/g, '1');
+      const re = /(\d{2,4})[-一](.+?)[-一]([單多非填選簡計題单罩軍簞][一-龥])([一二三四五六七八九十]*)(\d*)((?:[-一]\d+)?(?:\(\d+\))*)/g;
+      let m;
+      while ((m = re.exec(line))) {
+        let [, yr, mid, head, cn, num, sub] = m;
+        const fix = TYPES.reduce((best, t) => { const v = lev(head, t); return v < best[1] ? [t, v] : best; }, ['', 9]);
+        if (fix[1] <= 1) head = fix[0]; else if (/^[單多非单罩軍簞]/.test(head)) head = ({ '单': '單', '罩': '單', '軍': '單', '簞': '單' }[head[0]] || head[0]) + '選'; else continue;
+        if (cn.length >= 2 && cn.endsWith('一') && num && !sub) { cn = cn.slice(0, -1); sub = '-' + num; num = ''; }   // 非選三一1 → 非選三-1
+        sub = sub.replace(/^一/, '-');
+        if (!cn && !num) continue;
+        out.push(`${yr}-${mid.replace(/-+$/, '')}-${head}${cn}${num}${sub}`);
+      }
+    }
+    return out;
+  }
+  // 用題庫卷名校正卷別（例：竹巾→竹中、全模NI→全模N1）
+  async function fixTag(t) {
+    const m = t.match(/^(\d{2,4})-(.+)-([^-]*?(?:單選|多選|非選|填充|選填|題組|簡答|計算).*)$/); if (!m) return t;
+    let all; try { all = await files(); } catch (e) { return t; }
+    const labels = [...new Set(all.map(f => base(f.path)).filter(b => b.startsWith(m[1])).map(b => b.slice(m[1].length).split('_')[0]))];
+    if (!labels.length || labels.some(l => l.includes(m[2]))) return t;
+    let best = null, bd = 9;
+    for (const l of labels) {
+      for (const cut of new Set([m[2].length, l.length])) { const v = lev(m[2], l.slice(0, cut)); if (v < bd) { bd = v; best = l.slice(0, cut); } }
+    }
+    return best && bd <= Math.max(1, Math.floor(m[2].length / 3)) ? `${m[1]}-${best}-${m[3]}` : t;
+  }
+  async function ocrFile(blob) {
+    const row = document.createElement('div'); row.className = 'shot';
+    row.innerHTML = `<img alt=""><span class="st">準備辨識…</span>`; row.querySelector('img').src = URL.createObjectURL(blob);
+    $('shots').prepend(row); const st = row.querySelector('.st');
+    try {
+      const im = await readImg(blob);
+      const first = !ocrWorker;
+      if (first) st.textContent = '第一次使用，下載中文辨識檔（約 10 MB，之後會記住）…';
+      const w = await worker(p => { st.textContent = `下載中文辨識檔 ${Math.round(p * 100)}%…`; });
+      const { orange, parts } = bands(im);
+      if (!parts.length) throw new Error('圖上找不到橘色標籤');
+      const found = [];
+      for (let i = 0; i < parts.length; i++) {
+        st.textContent = `辨識中 ${i + 1}/${parts.length}…`;
+        if (!orange) await w.setParameters({ tessedit_pageseg_mode: '6' });
+        const { data } = await w.recognize(parts[i]);
+        if (!orange) await w.setParameters({ tessedit_pageseg_mode: '7' });
+        found.push(...parseTags(data.text));
+      }
+      const tags = [];
+      for (const t of found) { const f = await fixTag(t); if (!tags.includes(f)) tags.push(f); }
+      if (!tags.length) { st.className = 'st bad'; st.textContent = '沒有認出標籤，請手動輸入（或換一張清楚一點、放大一點的截圖）。'; return; }
+      const box = $('f-tag'), have = new Set(box.value.split(/[\s,，、；;]+/).map(normTag).filter(Boolean));
+      const add = tags.filter(t => !have.has(normTag(t)));
+      if (add.length) box.value = (box.value.trim() ? box.value.trim() + '\n' : '') + add.join('\n');
+      box.style.height = 'auto'; box.style.height = Math.min(320, box.scrollHeight + 4) + 'px';
+      st.innerHTML = `認出 ${tags.length} 個：${tags.map(t => `<b>${esc(t)}</b>`).join('、')}。已填進上面的框，請確認後按「在題庫找題」。`;
+    } catch (e) { st.className = 'st bad'; st.textContent = '辨識失敗：' + e.message; }
+  }
+  async function ocrFiles(list) { for (const f of list) if (/^image\//.test(f.type)) await ocrFile(f); }
+  const drop = $('drop');
+  drop.onclick = () => $('shot').click();
+  drop.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('shot').click(); } };
+  $('shot').onchange = e => { ocrFiles([...e.target.files]); e.target.value = ''; };
+  ['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove('over'); }));
+  drop.addEventListener('drop', e => ocrFiles([...e.dataTransfer.files]));
+  document.addEventListener('paste', e => {
+    if ($('v-add').hidden || $('app').hidden) return;
+    const imgs = [...(e.clipboardData || {}).items || []].filter(i => i.kind === 'file' && /^image\//.test(i.type)).map(i => i.getAsFile());
+    if (imgs.length) { e.preventDefault(); ocrFiles(imgs); }
+  });
+  window.__picksOCR = { parseTags, fixTag, bands, ocrFile };   // 測試用
 
   // ---------- 標記好題 ----------
   let lastHits = [];   // [{tag, hits:[r], cand, bad}]

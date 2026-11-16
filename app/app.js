@@ -132,6 +132,33 @@ async function loadSideFiles() {
   S.diff = await readJson('難度/難度.json', {});
   if (S.diff && S.diff.levels) S.diff = S.diff.levels;
   S.diffCount = Object.keys(S.diff).length;
+  S.picks = await loadPicks();
+}
+// 周逸精選：讀 題庫池\07_紀錄\好題精選\好題清單.json（由 picks/ 網頁維護）。讀不到就略過，不影響出題。
+const PICK_TAG = '周逸精選';
+const PICK_LOG = '1UfdFC4p6tGiCwU3juP8ZSpmq6Kz-Zgtc';   // 題庫池\07_紀錄（資料夾 ID 本身不含內容）
+const pickKey = (path, tag) => String(path || '').split('/').pop().replace(/\.json$/, '') + '|' + String(tag || '').trim().replace(/^【|】$/g, '').replace(/\s+/g, '');
+async function loadPicks() {
+  const m = new Map();
+  try {
+    if (S.fs.kind === 'drive') {
+      const q = s => encodeURIComponent(s);
+      const find = async (parent, name) => ((await (await S.fs.req(`${S.fs.api}/drive/v3/files?q=${q(`'${parent}' in parents and trashed=false and name='${name}'`)}&fields=files(id)&supportsAllDrives=true&includeItemsFromAllDrives=true`)).json()).files || [])[0];
+      const dir = await find(PICK_LOG, '好題精選'); if (!dir) return m;
+      const f = await find(dir.id, '好題清單.json'); if (!f) return m;
+      const d = await (await S.fs.req(`${S.fs.api}/drive/v3/files/${f.id}?alt=media&supportsAllDrives=true&t=${Date.now()}`, { cache: 'no-store' })).json();
+      for (const x of d.items || []) if (x.key) m.set(x.key, x);
+    }
+  } catch (e) { console.warn('讀不到周逸精選清單，略過', e); }
+  return m;
+}
+function applyPicks(all) {
+  for (const r of all) {
+    const x = S.picks && S.picks.get(pickKey(r.path, r.tag));
+    r.pick = x || null;
+    const i = r.tags.indexOf(PICK_TAG);
+    if (x && i < 0) r.tags.unshift(PICK_TAG); else if (!x && i >= 0) r.tags.splice(i, 1);
+  }
 }
 function rebuildUsed() {
   S.used = new Map();
@@ -149,6 +176,7 @@ function diffOf(r) {
   return typeof d === 'object' ? Number(d.level) : Number(d);
 }
 function afterIndex(all) {
+  applyPicks(all);
   S.all = all; S.byId = new Map(all.map(r => [r.id, r]));
   S.diffCount = all.reduce((n, r) => n + (diffOf(r) != null ? 1 : 0), 0);
   const subs = {};
@@ -285,7 +313,7 @@ function renderList() {
       <div class="rmain"><div class="paper pv">${showGroup ? groupHtml(r, { caption: false }) : ''}${questionHtml(r, null, { tag: false, caption: false })}${showAns ? `<div class="bans">${answerHtml(r, false)}</div>` : ''}</div>
       <div class="r1"><button class="addb ${inB.has(r.id) ? 'on' : ''}" data-add="${esc(r.id)}" title="${inB.has(r.id) ? '已加入，按一下移出' : '加入試卷'}">${inB.has(r.id) ? '✓ 已加入' : '⊕ 加入試題'}</button>
         <span class="tag">${esc(r.tag)}</span><span class="pill t${r.tg}">${esc(r.type)}</span>
-        <span class="pill tier">${tierLabel(r.tiers)}</span>${d ? `<span class="pill d${d}">難${d}</span>` : ''}${r.ltd ? `<span class="pill ltd">${r.ltd}</span>` : ''}${r.doubt ? '<span class="pill doubt">疑</span>' : ''}
+        <span class="pill tier">${tierLabel(r.tiers)}</span>${d ? `<span class="pill d${d}">難${d}</span>` : ''}${r.ltd ? `<span class="pill ltd">${r.ltd}</span>` : ''}${r.doubt ? '<span class="pill doubt">疑</span>' : ''}${r.pick ? '<span class="pill pick" title="周逸精選">★ 精選</span>' : ''}
         <span class="chapters">${r.mains.map(chapterName).join('、')}${r.secs.length ? '｜次 ' + r.secs.join('、') : ''}</span>
         <span class="used">${usedLabel(r)}</span></div></div></div>`;
   }).join('') || `<div class="empty"><p>沒有符合的題目。</p><p>試著少勾幾個條件，或 <button class="lnk" id="btnClear2">清除全部篩選</button></p></div>`;
@@ -355,7 +383,7 @@ async function renderPreview(id) {
     <div class="pv-head"><div><b>${esc(P.title || '')}</b> ${esc(P.subtitle || '')}<br><span class="tag">${esc(r.tag)}</span>
       ${r.type}　${tierLabel(r.tiers)}（Tier ${esc(r.tiers.join('、'))}）　${r.mains.map(chapterName).join('、')}${r.secs.length ? '　次要：' + r.secs.map(chapterName).join('、') : ''}
       ${d ? `　難度 ${d}${dd && dd.why ? '（' + esc(dd.why) + '）' : ''}` : ''}${r.ltd ? '　光碟難易：' + r.ltd : ''}
-      ${r.tags.length ? '　標籤：' + r.tags.join('、') : ''}<br><span class="used">${usedLabel(r)}</span></div>
+      ${r.tags.length ? '　標籤：' + r.tags.join('、') : ''}${r.pick ? `<br><span class="pick">★ 周逸精選${r.pick.note ? '：' + esc(r.pick.note) : ''}（${esc(r.pick.by || '')} ${esc(r.pick.created || '')}）</span>` : ''}<br><span class="used">${usedLabel(r)}</span></div>
       <div class="pv-btn"><button class="${inB ? '' : 'pri'}" id="pvAdd" title="${inB ? '按一下從考卷籃移出' : '加入考卷籃'}">${inB ? '✓ 已加入（移出）' : '＋ 加入考卷籃'}</button><br><button id="pvPrev" title="上一題（↑）">▲ 上一題</button><button id="pvNext" title="下一題（↓）">▼ 下一題</button></div></div>
     <div class="paper pv">${(setImgScale(1), '')}${groupHtml(r, { caption: true })}<div class="q">${questionHtml(r, null, { caption: true })}</div>
     <div class="q">${answerHtml(r, true)}</div></div>`;

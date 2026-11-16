@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>周逸精選</title>
+<!-- 周逸精選（好題標記）：本頁不含任何內部資料。登入 Google 後，從使用者雲端 題庫池\07_紀錄\好題精選\好題清單.json 讀寫；
+     沒有 題庫池 權限的帳號什麼都讀不到。 -->
+<style>
+  :root{--bg:#f6f7f9;--card:#fff;--ink:#1f2328;--mute:#6b7280;--line:#e5e7eb;--acc:#1f6f8b;--acc-soft:#e3f0f4;--acc-ink:#fff;
+        --tag:#c2410c;--ok:#15803d;--ok-soft:#dcfce7;--wait:#b45309;--wait-soft:#fef3c7;--bad:#b91c1c;--bad-soft:#fee2e2;--run:#1d4ed8;--run-soft:#dbeafe;--no:#4b5563;--no-soft:#e5e7eb}
+  @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f1115;--card:#171a21;--ink:#e6e8ec;--mute:#9aa3b2;--line:#2a2f3a;--acc:#6cb6d1;--acc-soft:#1b2d36;--acc-ink:#0f1a20;
+        --tag:#fb923c;--ok:#7ccf98;--ok-soft:#1b2e22;--wait:#e6b268;--wait-soft:#3a2c14;--bad:#ef8b84;--bad-soft:#3a1f1d;--run:#93b4f5;--run-soft:#1c2740;--no:#b0b7c3;--no-soft:#262b35}}
+  :root[data-theme=dark]{--bg:#0f1115;--card:#171a21;--ink:#e6e8ec;--mute:#9aa3b2;--line:#2a2f3a;--acc:#6cb6d1;--acc-soft:#1b2d36;--acc-ink:#0f1a20;
+        --tag:#fb923c;--ok:#7ccf98;--ok-soft:#1b2e22;--wait:#e6b268;--wait-soft:#3a2c14;--bad:#ef8b84;--bad-soft:#3a1f1d;--run:#93b4f5;--run-soft:#1c2740;--no:#b0b7c3;--no-soft:#262b35}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,"Noto Sans TC","Microsoft JhengHei",sans-serif}
+  .wrap{max-width:1000px;margin:0 auto;padding:20px 16px 48px}
+  header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+  h1{margin:0;font-size:22px}
+  .sub{color:var(--mute);font-size:13px;margin-top:4px}
+  .who{font-size:13px;color:var(--mute);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:9px;padding:8px 14px;font:inherit;font-weight:500;cursor:pointer;text-decoration:none}
+  .btn.primary{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+  .btn.sm{padding:4px 10px;font-size:13px}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn:focus-visible,nav a:focus-visible,summary:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+  nav{display:flex;gap:4px;margin-top:16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  nav a{padding:9px 14px;color:var(--mute);text-decoration:none;font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px}
+  nav a.on{color:var(--acc);border-bottom-color:var(--acc)}
+  .gate{margin-top:28px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:28px 20px;text-align:center}
+  .gate p{color:var(--mute);margin:8px 0 16px}
+  section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:14px 0;min-width:0}
+  h2{font-size:16px;margin:0 0 10px}
+  .form{display:grid;grid-template-columns:120px 1fr;gap:12px 14px;align-items:start}
+  .form>label{padding-top:8px;font-weight:500;font-size:14px}
+  .form>label i{color:var(--bad);font-style:normal}
+  .form .hint{color:var(--mute);font-size:12.5px;margin-top:4px}
+  select,input[type=text],input[type=search],textarea{font:inherit;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);min-width:0;width:100%}
+  textarea{min-height:92px;resize:vertical}
+  .inline{display:flex;gap:8px;flex-wrap:wrap}.inline select{width:auto}
+  .seg{display:flex;flex-wrap:wrap;gap:6px}
+  .seg label{border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-size:13.5px;cursor:pointer;user-select:none}
+  .seg input{position:absolute;opacity:0;pointer-events:none}
+  .seg input:checked+span{color:var(--acc);font-weight:600}
+  .seg label:has(input:checked){border-color:var(--acc);background:var(--acc-soft)}
+  .seg label:has(input:focus-visible){outline:2px solid var(--acc);outline-offset:2px}
+  .notice{margin-top:12px;padding:10px 14px;border-radius:9px;background:var(--wait-soft);color:var(--wait);font-size:14px}
+  .notice.ok{background:var(--ok-soft);color:var(--ok)}.notice.bad{background:var(--bad-soft);color:var(--bad)}
+  .dup{margin-top:8px;font-size:13px;border-left:3px solid var(--wait);padding:4px 10px;background:var(--wait-soft);border-radius:0 8px 8px 0}
+  .dup a{color:var(--wait);font-weight:600}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:14px 0}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;cursor:pointer;text-align:left;font:inherit;color:inherit}
+  .tile.on{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}
+  .tile .k{color:var(--mute);font-size:12px}.tile .v{font-size:24px;font-weight:700;line-height:1.2}
+  .filters{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px}
+  .bar{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0 4px;color:var(--mute);font-size:13px}
+  .items{display:grid;gap:10px}
+  details.it{border:1px solid var(--line);border-radius:10px;background:var(--card);min-width:0}
+  details.it[open]{border-color:var(--acc)}
+  details.it>summary{list-style:none;cursor:pointer;padding:10px 14px;display:grid;grid-template-columns:1fr auto;gap:2px 10px}
+  details.it>summary::-webkit-details-marker{display:none}
+  .tg{color:var(--tag);font-weight:700;overflow-wrap:anywhere}
+  .tg small{color:var(--mute);font-weight:400;margin-left:6px}
+  .chips{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+  .chip{font-size:12px;border-radius:6px;padding:1px 8px;background:var(--line);white-space:nowrap}
+  .s-待處理{background:var(--wait-soft);color:var(--wait)}.s-處理中{background:var(--run-soft);color:var(--run)}
+  .s-已修正{background:var(--ok-soft);color:var(--ok)}.s-不修正{background:var(--no-soft);color:var(--no)}
+  .pv{grid-column:1/-1;color:var(--ink);font-size:14px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  details[open] .pv{display:none}
+  .body{padding:0 14px 14px;border-top:1px solid var(--line)}
+  .body dl{display:grid;grid-template-columns:90px 1fr;gap:6px 12px;margin:12px 0}
+  .body dt{color:var(--mute);font-size:13px}.body dd{margin:0;overflow-wrap:anywhere;white-space:pre-wrap}
+  .body .att a{display:inline-block;margin-right:10px;color:var(--acc)}
+  .edit{display:grid;grid-template-columns:150px 1fr auto;gap:8px;align-items:start;background:var(--bg);border-radius:9px;padding:10px}
+  .edit textarea{min-height:40px}
+  .obar{margin:0 0 10px;font-size:13.5px}.obar a{display:inline-block;margin:2px 10px 2px 0;color:var(--acc)}
+  .orig{border:1px solid var(--line);border-radius:9px;padding:10px 14px;margin:0 0 10px;background:var(--card)}
+  .orig .ph{font-size:12.5px;color:var(--mute);margin:0 0 6px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+  .orig .ph b{color:var(--ink)}
+  .orig+.orig{margin-top:-2px}
+  .orig p{margin:4px 0;overflow-wrap:anywhere}
+  .orig .tag{color:var(--tag);font-weight:700;margin-left:4px}
+  .orig .opts{display:grid;gap:2px 16px;margin:4px 0}
+  .orig .opts p{margin:0}
+  .orig img{max-width:100%;height:auto;background:#fff;border-radius:4px;display:block;margin:6px 0}
+  .orig .imgrow{display:grid;grid-template-columns:repeat(var(--k),minmax(0,1fr));gap:8px}
+  .orig table.tt{border-collapse:collapse;margin:6px 0;font-size:14px}.orig table.tt th,.orig table.tt td{border:1px solid var(--line);padding:2px 8px}
+  .orig .grp{border-left:3px solid var(--line);padding-left:10px;margin-bottom:8px;color:var(--mute)}
+  .orig .gl{font-weight:600}
+  .orig .pt{padding-left:1em}.orig .pl{font-weight:600}
+  .orig .cap{color:var(--mute);font-size:12.5px}
+  .orig .ansbox{border-top:1px dashed var(--line);margin-top:8px;padding-top:6px}
+  .orig .ans b,.orig .sol b{color:var(--acc)}
+  .orig .src{margin-top:8px;font-size:13.5px}.orig .src a{display:inline-block;margin:2px 12px 2px 0;color:var(--acc)}
+  .orig .note{color:var(--wait)}.orig .cls,.orig .clsr{font-size:12.5px;color:var(--mute)}
+  .hist{margin:10px 0 0;padding:0;list-style:none;font-size:12.5px;color:var(--mute)}
+  .hist li{padding:2px 0}
+  .empty{color:var(--mute);padding:14px;border:1px dashed var(--line);border-radius:9px}
+  .steps{margin:0;padding-left:20px}.steps li{margin:6px 0}
+  code{background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:0 5px;font-size:13px}
+  footer{margin-top:24px;color:var(--mute);font-size:13px}
+  .star{color:#d97706}
+  .res{border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:10px 0;background:var(--card)}
+  .res.on{border-color:#d97706;box-shadow:0 0 0 1px #d97706}
+  .res .hd{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+  .res .meta{font-size:13px;color:var(--mute);margin-top:2px}
+  .res .act{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .res .act input{width:220px}
+  .res .head{font-size:14px;margin-top:4px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  .grp-h{font-weight:600;margin:16px 0 4px}
+  .s-pick{background:#fef3c7;color:#b45309}
+  @media (prefers-color-scheme:dark){:root:not([data-theme=light]) .s-pick{background:#3a2c14;color:#e6b268}}
+  @media (max-width:640px){.res .act input{width:100%}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1><span class="star">★</span> 周逸精選</h1>
+      <div class="sub">把覺得好的題目標成「周逸精選」，出題系統就能只挑精選題。需用有 題庫池 權限的 Google 帳號登入。</div>
+    </div>
+    <div class="who" id="who"></div>
+  </header>
+
+  <div class="gate" id="gate">
+    <strong>請先登入 Google</strong>
+    <p>精選清單存在雲端硬碟 題庫池\07_紀錄\好題精選 裡，本頁不存任何內部資料。只有對 題庫池 有權限的帳號才讀得到。</p>
+    <button class="btn primary" id="loginBtn">用 Google 登入</button>
+    <div class="notice bad" id="gateMsg" hidden></div>
+  </div>
+
+  <div id="app" hidden>
+    <nav id="tabs">
+      <a href="#add" data-v="add" class="on">標記好題</a>
+      <a href="#list" data-v="list">精選清單 <span id="nCount"></span></a>
+      <a href="#how" data-v="how">使用說明</a>
+    </nav>
+
+    <!-- 標記 -->
+    <div class="view" id="v-add">
+      <section>
+        <h2>輸入題目標籤</h2>
+        <form id="form" autocomplete="off">
+          <textarea id="f-tag" style="min-height:64px" placeholder="例：114-竹中-單選5　或　【112-全模N2-多選25】&#10;一次可以貼好幾個，用換行或空白分開"></textarea>
+          <div class="hint sub">照截圖上的橘色標籤打就好，括號可有可無。只有學校、沒寫年級學期的標籤，會列出所有同題號的卷讓你選。</div>
+          <div style="margin-top:10px"><button class="btn primary" id="find" type="submit">在題庫找題</button></div>
+        </form>
+        <div class="notice" id="notice" hidden></div>
+        <div id="results"></div>
+      </section>
+    </div>
+
+    <!-- 清單 -->
+    <div class="view" id="v-list" hidden>
+      <div class="tiles" id="tiles"></div>
+      <section>
+        <div class="filters" style="grid-template-columns:2fr 1fr">
+          <input type="search" id="q" placeholder="搜尋標籤、卷名、備註、標記者…">
+          <select id="fb"><option value="">全部題庫</option></select>
+        </div>
+        <div class="bar"><span id="cnt"></span><span><button class="btn sm" id="reload">重新整理</button> <button class="btn sm" id="csv">匯出 CSV</button></span></div>
+        <div class="items" id="items"><div class="empty">載入中…</div></div>
+        <div style="text-align:center;margin-top:12px"><button class="btn" id="more" hidden>顯示更多</button></div>
+      </section>
+    </div>
+
+    <!-- 說明 -->
+    <div class="view" id="v-how" hidden>
+      <section>
+        <h2>怎麼用</h2>
+        <ol class="steps">
+          <li><b>標記</b>：在「標記好題」輸入題目標籤（截圖上的【…】照打），按「在題庫找題」。系統只在已建好的題庫裡找，找到後按「★ 加入精選」，可順手寫一句理由。</li>
+          <li><b>同名卷</b>：段考標籤常只寫學校（如 114-竹中-單選5），會對到好幾份卷，每份都會列出來，按「看題目」確認後再加。</li>
+          <li><b>出題系統</b>：開 <a href="../" target="_blank" rel="noopener">離線出題系統</a>，左邊「特殊標籤」勾「周逸精選」，就只會出現精選題；題目卡片上也有 ★ 精選。剛標的題目，出題系統按右上「重新整理」就會看到。</li>
+          <li><b>取消</b>：到「精選清單」打開那一題，按「取消精選」再按一次確認。</li>
+        </ol>
+        <p class="sub">精選清單另外存成 題庫池\07_紀錄\好題精選\好題清單.json，不會改題庫正本。每次儲存都會留下時間與帳號紀錄。</p>
+      </section>
+    </div>
+  </div>
+  <footer>周逸化學專用</footer>
+</div>
+
+<script src="../app/config.js"></script>
+<script src="../app/drive.js"></script>
+<script src="../app/chapters.js"></script>
+<script src="../app/data.js"></script>
+<script src="../app/render.js"></script>
+<script>
+'use strict';
+(() => {
+  // 雲端位置（資料夾 ID 本身不含內容；沒有權限的帳號用它也讀不到任何東西）
+  const POOL = '1XTMgbxorvN3RlfKxak-9T0yR2fD53ztS';     // claude共用資料夾\題庫池
+  const LOG = '1UfdFC4p6tGiCwU3juP8ZSpmq6Kz-Zgtc';      // 題庫池\07_紀錄
+  const DIR = '好題精選', FILE = '好題清單.json';
+  const API = 'https://www.googleapis.com';
+  const SCOPE = 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email';
+  const FOLDER = 'application/vnd.google-apps.folder';
+  const CID = (window.CONFIG || {}).clientId;
+  const PAGE = 50;
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const now = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; };
+  const say = (msg, cls) => { const el = $('notice'); el.textContent = msg; el.className = 'notice ' + (cls || ''); el.hidden = !msg; };
+  const normTag = s => String(s || '').trim().replace(/^【|】$/g, '').replace(/\s+/g, '').replace(/[－—–]/g, '-').replace(/[（]/g, '(').replace(/[）]/g, ')');
+  const base = p => String(p || '').split('/').pop().replace(/\.json$/, '');
+  const squash = s => String(s || '').replace(/[-－\s]/g, '');
+  const keyOf = (path, tag) => base(path) + '|' + String(tag || '').trim().replace(/^【|】$/g, '').replace(/\s+/g, '');   // 與出題系統 app.js 的 pickKey 相同
+  const tierText = t => (t || []).join('、') || '—';
+
+  // ---------- Google 登入（與勘誤系統、控制台共用登入狀態）----------
+  let token = null, exp = 0, user = '', tokenClient = null;
+  try { const t = JSON.parse(localStorage.getItem('ctoken') || 'null'); if (t && t.exp > Date.now() + 60000) { token = t.token; exp = t.exp; user = t.user || ''; } } catch { }
+  const hint = () => user || (() => { try { return localStorage.getItem('chint') || ''; } catch { return ''; } })();
+  function loadGis() {
+    if (window.google && google.accounts) return Promise.resolve();
+    return new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.onload = res; s.onerror = () => rej(new Error('無法載入 Google 登入元件，請確認網路')); document.head.appendChild(s); });
+  }
+  async function login() {
+    if (!CID) throw new Error('沒有設定 Google 用戶端 ID（app/config.js）');
+    await loadGis();
+    if (!tokenClient) tokenClient = google.accounts.oauth2.initTokenClient({ client_id: CID, scope: SCOPE, callback: () => { } });
+    await new Promise((res, rej) => {
+      tokenClient.callback = r => { if (r.error) return rej(new Error(r.error_description || r.error)); token = r.access_token; exp = Date.now() + (Number(r.expires_in) - 60) * 1000; res(); };
+      tokenClient.error_callback = e => rej(new Error(e.message || e.type || '登入取消'));
+      const h = hint(); tokenClient.requestAccessToken(Object.assign({ prompt: '' }, h ? { hint: h } : {}));
+    });
+    try { const r = await fetch(API + '/oauth2/v3/userinfo', { headers: { Authorization: 'Bearer ' + token } }); if (r.ok) user = ((await r.json()).email || '').toLowerCase(); } catch { }
+    try { localStorage.setItem('ctoken', JSON.stringify({ token, exp, user })); localStorage.setItem('chint', user); } catch { }
+  }
+  function logout() { token = null; exp = 0; try { localStorage.removeItem('ctoken'); } catch { } location.reload(); }
+  async function req(url, opt = {}, retry = 0) {
+    if (!token || Date.now() > exp) await login();
+    opt.headers = Object.assign({}, opt.headers || {}, { Authorization: 'Bearer ' + token });
+    const r = await fetch(url, opt);
+    if (r.status === 401 && retry < 1) { token = null; await login(); return req(url, opt, retry + 1); }
+    if ((r.status === 429 || r.status >= 500) && retry < 4) { await new Promise(s => setTimeout(s, 600 * 2 ** retry)); return req(url, opt, retry + 1); }
+    if (!r.ok) { const e = new Error(`Drive ${r.status}：${(await r.text()).slice(0, 160)}`); e.status = r.status; throw e; }
+    return r;
+  }
+  async function child(parent, name, mime) {
+    const q = `'${parent}' in parents and trashed=false and name='${name.replace(/'/g, "\\'")}'` + (mime ? ` and mimeType='${mime}'` : '');
+    const d = await (await req(`${API}/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,modifiedTime)&supportsAllDrives=true&includeItemsFromAllDrives=true`)).json();
+    return (d.files || [])[0] || null;
+  }
+  async function mkdir(parent, name) {
+    const f = await child(parent, name, FOLDER); if (f) return f.id;
+    const r = await req(`${API}/drive/v3/files?supportsAllDrives=true&fields=id`, { method: 'POST', headers: { 'Content-Type': 'application/json; charset=UTF-8' }, body: JSON.stringify({ name, mimeType: FOLDER, parents: [parent] }) });
+    return (await r.json()).id;
+  }
+  async function multipart(meta, blob, fileId) {
+    const b = 'xx' + Math.random().toString(36).slice(2);
+    const body = new Blob([`--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${b}\r\nContent-Type: ${blob.type || 'application/octet-stream'}\r\n\r\n`, blob, `\r\n--${b}--`]);
+    const url = `${API}/upload/drive/v3/files${fileId ? '/' + fileId : ''}?uploadType=multipart&supportsAllDrives=true&fields=id,name,webViewLink,modifiedTime`;
+    return (await req(url, { method: fileId ? 'PATCH' : 'POST', headers: { 'Content-Type': 'multipart/related; boundary=' + b }, body })).json();
+  }
+
+  // ---------- 資料（題庫池\07_紀錄\好題精選\好題清單.json）----------
+  let dirId = null, fileId = null, data = { version: 1, label: '周逸精選', items: [] };
+  async function locate() {
+    if (!dirId) { const f = await child(LOG, DIR, FOLDER); dirId = f ? f.id : null; }
+    if (dirId && !fileId) { const f = await child(dirId, FILE); fileId = f ? f.id : null; }
+  }
+  async function fetchData() {
+    await locate();
+    if (!fileId) return { version: 1, label: '周逸精選', items: [] };
+    const d = await (await req(`${API}/drive/v3/files/${fileId}?alt=media&supportsAllDrives=true&t=${Date.now()}`, { cache: 'no-store' })).json();
+    d.items = d.items || []; return d;
+  }
+  // 改資料一律「先重讀最新版 → 套用變更 → 寫回」，降低兩人同時編輯互相覆蓋的機會
+  async function mutate(fn) {
+    const d = await fetchData();
+    const result = fn(d);
+    d.updated = new Date().toISOString();
+    const blob = new Blob([JSON.stringify(d, null, 1)], { type: 'application/json' });
+    if (!dirId) dirId = await mkdir(LOG, DIR);
+    if (fileId) await multipart({}, blob, fileId);
+    else fileId = (await multipart({ name: FILE, parents: [dirId], mimeType: 'application/json' }, blob)).id;
+    data = d; return result;
+  }
+  const nextId = d => 'P' + String(d.items.reduce((m, x) => Math.max(m, parseInt(String(x.id).slice(1)) || 0), 0) + 1).padStart(4, '0');
+  const picked = () => new Map(data.items.map(x => [x.key, x]));
+
+  // ---------- 啟動 ----------
+  async function start() {
+    $('gateMsg').hidden = true;
+    try { await req(`${API}/drive/v3/files/${POOL}?fields=id&supportsAllDrives=true`); }
+    catch (e) {
+      const no = e.status === 404 || e.status === 403;
+      $('gateMsg').textContent = no ? `這個帳號（${user || '未知'}）沒有 題庫池 的權限。請換成有權限的帳號登入。` : '登入失敗：' + e.message;
+      $('gateMsg').hidden = false;
+      $('who').innerHTML = user ? `${esc(user)} <button class="btn sm" id="out">換帳號</button>` : '';
+      const o = $('out'); if (o) o.onclick = logout; return;
+    }
+    $('gate').hidden = true; $('app').hidden = false;
+    $('who').innerHTML = `${esc(user)} <button class="btn sm" id="out">登出</button>`; $('out').onclick = logout;
+    load();
+    files().catch(() => { });   // 背景先讀題庫目錄，找題時就快
+  }
+  async function load() {
+    $('items').innerHTML = '<div class="empty">載入中…</div>';
+    try { data = await fetchData(); renderList(); refreshResults(); }
+    catch (e) { $('items').innerHTML = `<div class="empty">讀不到精選清單：${esc(e.message)}</div>`; }
+  }
+  $('loginBtn').onclick = async () => { try { await login(); await start(); } catch (e) { $('gateMsg').textContent = '登入失敗：' + e.message; $('gateMsg').hidden = false; } };
+  if (token) start();
+
+  // ---------- 分頁 ----------
+  const VIEWS = ['add', 'list', 'how'];
+  function showView() {
+    const h = location.hash.slice(1), v = VIEWS.includes(h) ? h : 'add';
+    VIEWS.forEach(k => { $('v-' + k).hidden = k !== v; });
+    document.querySelectorAll('#tabs a').forEach(a => a.classList.toggle('on', a.dataset.v === v));
+  }
+  window.addEventListener('hashchange', showView); showView();
+
+  // ---------- 題庫（雲端 離線出題系統\題庫，沿用出題系統的讀檔與排版）----------
+  let bfs = null, fileList = null, listing = null;
+  function bankFS() {
+    if (window.__bankFS) return window.__bankFS;          // 測試用
+    if (!bfs) bfs = new DriveFS(window.CONFIG);
+    if (token && Date.now() < exp) { bfs.token = token; bfs.exp = exp; }
+    return bfs;
+  }
+  function files() {
+    if (fileList) return Promise.resolve(fileList);
+    if (!listing) listing = bankFS().listJson('題庫').then(l => (fileList = l), e => { listing = null; throw e; });
+    return listing;
+  }
+  const paperCache = new Map();
+  async function paper(path) {
+    if (!paperCache.has(path)) paperCache.set(path, bankFS().readText(path).then(t => indexPaper(path, JSON.parse(t)), e => { paperCache.delete(path); throw e; }));
+    return paperCache.get(path);
+  }
+  // 標籤 → 候選題：先比卷名（完整標籤的前綴＝檔名），再比「年份＋校名／卷別」；題號完全相同，或只寫到大題（例：非選三 → 非選三-1、-2…）
+  async function findTag(raw) {
+    const tag = normTag(raw), m = tag.match(/^(\d{2,4})-(.+)-([^-]*?[單多非選填].*)$/) || tag.match(/^(\d{2,4})-([^-]+)-(.+)$/);
+    if (!m) return { tag, bad: true, hits: [] };
+    const all = await files();
+    const pre = squash(m[1] + m[2]);
+    let cand = all.filter(f => squash(base(f.path)) === pre);
+    if (!cand.length) cand = all.filter(f => { const b = base(f.path); return b.startsWith(m[1]) && squash(b).includes(squash(m[2])); });
+    const hits = []; let bad = 0;
+    for (const f of cand.slice(0, 40)) {
+      let recs; try { recs = await paper(f.path); } catch (e) { bad++; continue; }
+      const want = m[3];
+      const exact = recs.filter(r => normTag(r.tag) === tag);
+      const loose = exact.length ? [] : recs.filter(r => normTag(r.type + r.num) === want);
+      const sub = exact.length || loose.length ? [] : recs.filter(r => { const k = normTag(r.type + r.num); return k.startsWith(want) && /^[-(]/.test(k.slice(want.length)); });
+      for (const r of exact.concat(loose, sub)) hits.push(r);
+    }
+    if (!hits.length && cand.length && bad === Math.min(cand.length, 40)) throw new Error('卷檔讀取失敗');
+    return { tag, cand: cand.length, hits };
+  }
+  async function hydrate(root) {
+    for (const im of root.querySelectorAll('img[data-src]')) {
+      try { im.src = URL.createObjectURL(await bankFS().readFile(im.dataset.src)); }
+      catch (e) { im.replaceWith(Object.assign(document.createElement('p'), { className: 'cap', textContent: '〔圖檔讀不到：' + im.dataset.src + '〕' })); }
+    }
+  }
+  function origHtml(r) {
+    return `<div class="orig"><p class="ph"><span>出處 <b>${esc(base(r.path))}</b></span><span>${esc(r.paper.title || '')}</span></p>
+      ${groupHtml(r, { caption: true })}${questionHtml(r, null, { tag: true, caption: true })}<div class="ansbox">${answerHtml(r, true)}</div></div>`;
+  }
+  const chap = r => (r.mains || []).map(c => typeof chapterName === 'function' ? chapterName(c) : c).join('、');
+
+  // ---------- 標記好題 ----------
+  let lastHits = [];   // [{tag, hits:[r], cand, bad}]
+  $('form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const tags = [...new Set($('f-tag').value.split(/[\s,，、；;]+/).map(normTag).filter(Boolean))];
+    if (!tags.length) { say('請輸入題目標籤。', 'bad'); return; }
+    const btn = $('find'); btn.disabled = true;
+    say(fileList ? '尋找中…' : '讀取題庫目錄中（第一次約 10～30 秒）…', '');
+    try {
+      lastHits = [];
+      for (const t of tags) { try { lastHits.push(await findTag(t)); } catch (err) { lastHits.push({ tag: t, err: err.message, hits: [] }); } }
+      const n = lastHits.reduce((s, g) => s + g.hits.length, 0);
+      say(n ? `找到 ${n} 題，確認後按「★ 加入精選」。` : '題庫裡找不到，請檢查標籤寫法。', n ? 'ok' : 'bad');
+      refreshResults(true);
+    } catch (err) { say('找題失敗：' + err.message, 'bad'); }
+    finally { btn.disabled = false; }
+  });
+  function refreshResults(fresh) {
+    const box = $('results'); if (!lastHits.length) { box.innerHTML = ''; return; }
+    const pk = picked(), multi = lastHits.length > 1;
+    box.innerHTML = lastHits.map((g, gi) => {
+      const head = multi ? `<div class="grp-h">【${esc(g.tag)}】</div>` : '';
+      if (!g.hits.length) return head + `<div class="empty">${g.err ? '讀取失敗：' + esc(g.err) : g.bad ? `「${esc(g.tag)}」看起來不是題目標籤（格式：年份-卷別-題號，例 114-竹中-單選5）。` : g.cand ? `找到 ${g.cand} 份可能的卷，但沒有這個題號，可能標籤寫法不同。` : `題庫裡找不到「${esc(g.tag)}」對應的卷（可能還沒建檔，或標籤寫法不同）。`}</div>`;
+      const papers = new Set(g.hits.map(r => r.path)).size;
+      return head + (papers > 1 ? `<p class="sub" style="margin:6px 0">標籤沒寫年級學期，有 ${papers} 份卷同題號，請按「看題目」確認是哪一份：</p>` : '')
+        + g.hits.map((r, i) => {
+          const k = keyOf(r.path, r.tag), x = pk.get(k);
+          return `<div class="res${x ? ' on' : ''}" data-g="${gi}" data-i="${i}"><div class="hd"><div>
+            <div class="tg">${esc(r.tag)}${x ? ' <span class="star">★ 已精選</span>' : ''}</div>
+            <div class="meta">${esc(base(r.path))}・${esc(r.source)}・${esc(r.type)}・Tier ${esc(tierText(r.tiers))}${chap(r) ? '・' + esc(chap(r)) : ''}</div></div>
+            <div class="act">${x ? `<span class="sub">${esc(x.by)} ${esc(x.created)} 標記${x.note ? '：' + esc(x.note) : ''}</span>`
+              : `<input type="text" class="r-note" placeholder="理由（選填），例：觀念好、計算陷阱"><button class="btn sm primary r-add">★ 加入精選</button>`}
+              <button class="btn sm r-view">看題目</button></div></div>
+            <div class="head">${esc(String(r.head || '').replace(/<[^>]+>/g, '').slice(0, 120))}</div>
+            <div class="r-orig" hidden></div></div>`;
+        }).join('');
+    }).join('');
+    box.querySelectorAll('.res').forEach(el => {
+      const r = lastHits[+el.dataset.g].hits[+el.dataset.i];
+      const v = el.querySelector('.r-view'), o = el.querySelector('.r-orig');
+      v.onclick = async () => {
+        if (!o.dataset.done) { o.innerHTML = origHtml(r); o.dataset.done = 1; await hydrate(o); }
+        o.hidden = !o.hidden; v.textContent = o.hidden ? '看題目' : '收起題目';
+      };
+      const a = el.querySelector('.r-add');
+      if (a) a.onclick = () => addPick(r, el.querySelector('.r-note').value.trim(), a);
+    });
+    // 只找到一題時直接展開題目
+    const all = box.querySelectorAll('.res');
+    if (fresh && all.length === 1) all[0].querySelector('.r-view').click();
+  }
+  async function addPick(r, note, btn) {
+    btn.disabled = true; btn.textContent = '儲存中…';
+    try {
+      const k = keyOf(r.path, r.tag);
+      await mutate(d => {
+        if (d.items.some(x => x.key === k)) return;
+        const t = now();
+        d.items.push({ id: nextId(d), key: k, tag: normTag(r.tag), paper: base(r.path), path: r.path, bank: r.source, type: r.type,
+          tiers: r.tiers, chapters: r.mains, head: String(r.head || '').replace(/<[^>]+>/g, '').slice(0, 120), note, by: user, created: t,
+          history: [{ t, by: user, do: '加入精選' + (note ? '：' + note : '') }] });
+      });
+      renderList(); refreshResults();
+    } catch (e) { btn.disabled = false; btn.textContent = '★ 加入精選'; say('儲存失敗：' + e.message, 'bad'); }
+  }
+
+  // ---------- 精選清單 ----------
+  let shown = PAGE;
+  ['q', 'fb'].forEach(k => $(k).addEventListener('input', () => { shown = PAGE; renderList(); }));
+  $('reload').onclick = load;
+  $('more').onclick = () => { shown += PAGE; renderList(); };
+  function filtered() {
+    const q = $('q').value.trim().toLowerCase(), b = $('fb').value;
+    return data.items.filter(x => (!b || x.bank === b) && (!q || [x.id, x.tag, x.paper, x.note, x.by, x.head].join(' ').toLowerCase().includes(q)))
+      .sort((a, b) => String(b.created).localeCompare(String(a.created)) || String(b.id).localeCompare(String(a.id)));
+  }
+  function renderTiles() {
+    const banks = [...new Set(data.items.map(x => x.bank).filter(Boolean))].sort();
+    const fb = $('fb'), cur = fb.value;
+    fb.innerHTML = '<option value="">全部題庫</option>' + banks.map(b => `<option${b === cur ? ' selected' : ''}>${esc(b)}</option>`).join('');
+    $('tiles').innerHTML = [['', '全部', data.items.length], ...banks.map(b => [b, b, data.items.filter(x => x.bank === b).length])]
+      .map(([v, k, n]) => `<button class="tile${cur === v ? ' on' : ''}" data-b="${esc(v)}"><div class="k">${esc(k)}</div><div class="v">${n.toLocaleString('zh-TW')}</div></button>`).join('');
+    $('tiles').querySelectorAll('.tile').forEach(t => t.onclick = () => { $('fb').value = t.dataset.b; shown = PAGE; renderList(); });
+    $('nCount').textContent = data.items.length ? `(${data.items.length})` : '';
+  }
+  function card(x) {
+    return `<details class="it" id="${esc(x.id)}"><summary>
+      <div class="tg"><span class="star">★</span> 【${esc(x.tag)}】<small>${esc(x.paper)}</small></div>
+      <div class="chips"><span class="chip">${esc(x.bank || '')}</span><span class="chip">${esc(x.type || '')}</span><span class="chip s-pick">Tier ${esc(tierText(x.tiers))}</span></div>
+      <div class="pv">${esc(x.note || x.head || '')}</div></summary>
+      <div class="body"><dl>
+        ${x.head ? `<dt>題幹開頭</dt><dd>${esc(x.head)}</dd>` : ''}
+        <dt>標記</dt><dd>${esc(x.by)}・${esc(x.created)}</dd>
+      </dl>
+      <div class="obar"><button class="btn sm l-view" data-id="${esc(x.id)}">🔍 看題目</button></div>
+      <div class="l-orig" hidden></div>
+      <div class="edit">
+        <button class="btn sm l-del" data-id="${esc(x.id)}">取消精選</button>
+        <textarea class="e-note" placeholder="理由／備註（選填）">${esc(x.note || '')}</textarea>
+        <button class="btn sm primary e-save" data-id="${esc(x.id)}">儲存備註</button>
+      </div>
+      <ul class="hist">${(x.history || []).slice().reverse().map(h => `<li>${esc(h.t)}　${esc(h.by)}　${esc(h.do)}</li>`).join('')}</ul>
+      </div></details>`;
+  }
+  function renderList() {
+    renderTiles();
+    const list = filtered();
+    $('cnt').textContent = `${list.length.toLocaleString('zh-TW')} 題`;
+    $('items').innerHTML = list.slice(0, shown).map(card).join('') || '<div class="empty">還沒有精選題。到「標記好題」輸入標籤開始標記。</div>';
+    $('more').hidden = list.length <= shown;
+    $('items').querySelectorAll('.e-save').forEach(b => b.onclick = () => saveNote(b));
+    $('items').querySelectorAll('.l-view').forEach(b => b.onclick = () => viewItem(b));
+    $('items').querySelectorAll('.l-del').forEach(b => b.onclick = () => delItem(b));
+  }
+  async function saveNote(b) {
+    const box = b.closest('.edit'), id = b.dataset.id, note = box.querySelector('.e-note').value.trim();
+    b.disabled = true; b.textContent = '儲存中…';
+    try {
+      await mutate(d => {
+        const x = d.items.find(y => y.id === id); if (!x) throw new Error('找不到 ' + id + '（可能已被取消）');
+        if ((x.note || '') === note) return;
+        x.note = note; (x.history = x.history || []).push({ t: now(), by: user, do: '更新備註' });
+      });
+      renderList(); const el = $(id); if (el) el.open = true;
+    } catch (e) { b.disabled = false; b.textContent = '儲存備註'; alert('儲存失敗：' + e.message); }
+  }
+  async function delItem(b) {
+    if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = '確定取消？再按一次'; b.classList.add('primary'); setTimeout(() => { if (b.isConnected) { delete b.dataset.sure; b.textContent = '取消精選'; b.classList.remove('primary'); } }, 4000); return; }
+    b.disabled = true; b.textContent = '取消中…';
+    try { await mutate(d => { d.items = d.items.filter(y => y.id !== b.dataset.id); }); renderList(); refreshResults(); }
+    catch (e) { b.disabled = false; b.textContent = '取消精選'; alert('取消失敗：' + e.message); }
+  }
+  async function viewItem(b) {
+    const box = b.closest('.body').querySelector('.l-orig'), x = data.items.find(y => y.id === b.dataset.id);
+    if (box.dataset.done) { box.hidden = !box.hidden; b.textContent = box.hidden ? '🔍 看題目' : '收起題目'; return; }
+    b.disabled = true; b.textContent = '讀取中…';
+    try {
+      let rs = [];
+      try { rs = (await paper(x.path)).filter(r => normTag(r.tag) === x.tag); } catch (e) { }
+      if (!rs.length) rs = (await findTag(x.tag)).hits.filter(r => base(r.path) === x.paper);   // 題庫資料夾改名時，依卷名再找一次
+      box.innerHTML = rs.length ? rs.map(origHtml).join('') : '<div class="empty">題庫裡找不到這題了（卷可能改名或刪除）。</div>';
+      box.hidden = false; box.dataset.done = 1; b.textContent = '收起題目'; await hydrate(box);
+    } catch (e) { box.innerHTML = `<div class="empty">讀不到題庫：${esc(e.message)}</div>`; box.hidden = false; b.textContent = '🔍 再試一次'; }
+    finally { b.disabled = false; }
+  }
+
+  $('csv').onclick = () => {
+    const cols = ['id', 'tag', 'paper', 'bank', 'type', 'tiers', 'chapters', 'note', 'by', 'created', 'head'];
+    const head = ['編號', '標籤', '卷名', '題庫', '題型', 'Tier', '章節', '理由／備註', '標記者', '標記時間', '題幹開頭'];
+    const q = v => `"${String(Array.isArray(v) ? v.join('、') : v ?? '').replace(/"/g, '""')}"`;
+    const csv = '﻿' + [head.map(q).join(','), ...filtered().map(x => cols.map(c => q(x[c])).join(','))].join('\r\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    a.download = `周逸精選_${now().slice(0, 10)}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  };
+})();
+</script>
+</body>
+</html>

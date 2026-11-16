@@ -66,6 +66,8 @@ main { flex: 1; min-height: 0; }
 .pill.t單選 { background: #e3f1e3; } .pill.t多選 { background: #e3eafa; } .pill.t非選 { background: #fae9e3; }
 .pill.tier { background: #fff1d6; }
 .pill.doubt { background: #fdd; color: #900; }
+.pill.pick { background: #fde68a; color: #92400e; font-weight: 600; }
+.pv-head .pick { color: #b45309; font-weight: 600; }
 .pill.inb { background: var(--o); color: #fff; }
 .pill.d1 { background: #e4f5e4; } .pill.d2 { background: #d5efd5; } .pill.d3 { background: #fff3c4; } .pill.d4 { background: #ffd9b8; } .pill.d5 { background: #ffb8b8; }
 .chapters { color: #2E74B5; }

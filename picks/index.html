@@ -102,6 +102,7 @@
   code{background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:0 5px;font-size:13px}
   footer{margin-top:24px;color:var(--mute);font-size:13px}
   .star{color:#d97706}
+  .best{color:#15803d;font-size:.85em;background:#dcfce7;border-radius:6px;padding:1px 6px}
   .res{border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:10px 0;background:var(--card)}
   .res.on{border-color:#d97706;box-shadow:0 0 0 1px #d97706}
   .res .hd{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
@@ -528,8 +529,10 @@
       const b = cand.slice(i + 1).find(c => c.cx >= 0.53 && (c.line === a.line || c.line === a.line + 1));
       if (!b) return;
       const la = lines[a.line], lb = lines[b.line], h = la.y2 - la.y1;
-      if (b.line === a.line) { if (b.x1 - a.x2 > 2 * h) pairs.push([[a.line, a.x2 + 1, b.x1 - 1]]); }   // 只裁括號裡面（】常被認成 1）
-      else if (!cand.slice(i + 1).some(c => c.line === a.line && c.cx >= 0.53)) pairs.push([[a.line, a.x2 + 1, la.x2], [b.line, lb.x1, b.x1 - 1]]);
+      let sg = null;
+      if (b.line === a.line) { if (b.x1 - a.x2 > 2 * h) sg = [[a.line, a.x2 + 1, b.x1 - 1]]; }   // 只裁括號裡面（】常被認成 1）
+      else if (!cand.slice(i + 1).some(c => c.line === a.line && c.cx >= 0.53)) sg = [[a.line, a.x2 + 1, la.x2], [b.line, lb.x1, b.x1 - 1]];
+      if (sg) { sg.box = [a.line, a.x1, b.line, b.x2]; pairs.push(sg); }
     });
     const out = [];
     for (const segs of pairs.filter(sg => sg.every(([, a, b]) => b - a >= 8)).slice(0, 30)) {
@@ -540,8 +543,23 @@
       let ox = pad;
       for (const q of parts) { const w = Math.round((q.b - q.a + 1) * q.k), h = Math.round((q.L.y2 - q.L.y1 + 1) * q.k); cx.drawImage(c, q.a, q.L.y1, q.b - q.a + 1, q.L.y2 - q.L.y1 + 1, ox, pad + (T - h) / 2, w, h); ox += w + pad; }
       out.push(cc);
+      cc.stem = () => stemCrop(c, lines, segs.box, pairs);
     }
     return out;
+  }
+  // 標籤所在那幾行（題幹開頭）裁成一張圖，標籤本身塗白；用來在「同題號多份卷」時比對是哪一份
+  function stemCrop(c, lines, [la, ax, lb, bx], pairs) {
+    const nextTag = pairs.map(p => p.box[0]).filter(l => l > lb).sort((x, y) => x - y)[0];
+    const end = Math.min(lines.length - 1, la + 6, nextTag != null ? nextTag - 1 : 1e9);
+    const y1 = lines[la].y1, y2 = lines[end].y2, lh = lines[la].y2 - lines[la].y1 + 1;
+    const W = c.width, k = Math.min(2, 40 / lh, 2400 / W);
+    const cc = document.createElement('canvas'); cc.width = Math.round(W * k); cc.height = Math.round((y2 - y1 + 1) * k) + 20;
+    const x = cc.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, cc.width, cc.height); x.filter = 'grayscale(1)';
+    x.drawImage(c, 0, y1, W, y2 - y1 + 1, 0, 10, cc.width, cc.height - 20); x.filter = 'none';
+    const L1 = lines[la], L2 = lines[lb];   // 塗掉【…】
+    if (la === lb) x.fillRect(ax * k, 10 + (L1.y1 - y1) * k, (bx - ax + 1) * k, (L1.y2 - L1.y1 + 1) * k);
+    else { x.fillRect(ax * k, 10 + (L1.y1 - y1) * k, (W - ax) * k, (L1.y2 - L1.y1 + 1) * k); x.fillRect(0, 10 + (L2.y1 - y1) * k, (bx + 1) * k, (L2.y2 - L2.y1 + 1) * k); }
+    return cc;
   }
   function grayCanvas(im, k) {
     const c = document.createElement('canvas'); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
@@ -600,11 +618,11 @@
       const first = !ocrWorker;
       if (first) st.textContent = '第一次使用，下載中文辨識檔（約 10 MB，之後會記住）…';
       const w = await worker(p => { st.textContent = `下載中文辨識檔 ${Math.round(p * 100)}%…`; });
-      const found = [];
+      const found = [], from = new Map();   // 標籤 → 它的【】所在的圖（之後讀題幹用）
       const boxes = bracketCrops(im);   // 1) 找【】只辨識括號那一段（快，不管顏色）
       for (let i = 0; i < boxes.length; i++) {
         st.textContent = `找到 ${boxes.length} 個【】，辨識第 ${i + 1} 個…`;
-        try { found.push(...parseTags((await recog(w, boxes[i])).data.text)); } catch (e) { if (!/逾時/.test(e.message)) throw e; st.textContent = '這一段辨識逾時，略過…'; break; }
+        try { for (const t of parseTags((await recog(w, boxes[i])).data.text)) { found.push(t); if (!from.has(t)) from.set(t, boxes[i]); } } catch (e) { if (!/逾時/.test(e.message)) throw e; st.textContent = '這一段辨識逾時，略過…'; break; }
       }
       if (!found.length) {              // 2) 沒找到【】或認不出 → 橘色標籤逐行辨識
         const { orange, parts } = bands(im);
@@ -628,12 +646,24 @@
         return;
       }
       const tags = [];
-      for (const t of found) { const f = await fixTag(t); if (!tags.includes(f)) tags.push(f); }
+      const stemOf = new Map();
+      for (const t of found) { const f = await fixTag(t); if (!tags.includes(f)) tags.push(f); if (from.has(t) && !stemOf.has(f)) stemOf.set(f, from.get(t)); }
       if (!tags.length) { st.className = 'st bad'; st.textContent = '截圖裡沒有找到題目標籤【年份-卷別-題號】，請確認截圖有包含標籤，或直接手動輸入。'; return; }
       const box = $('f-tag'), have = new Set(box.value.split(/[\s,，、；;]+/).map(normTag).filter(Boolean));
       const add = tags.filter(t => !have.has(normTag(t)));
       if (add.length) box.value = (box.value.trim() ? box.value.trim() + '\n' : '') + add.join('\n');
       box.style.height = 'auto'; box.style.height = Math.min(320, box.scrollHeight + 4) + 'px';
+      // 順便讀標籤後面的題幹文字：標籤沒寫年級學期、同題號有好幾份卷時，用它挑出是哪一份
+      for (const [t, bx] of stemOf) {
+        if (!bx.stem || shotStems.has(normTag(t))) continue;
+        st.textContent = '讀取題幹文字（用來分辨同題號的卷）…';
+        try {
+          const w3 = ocrWorker ? await ocrWorker : await worker();
+          await w3.setParameters({ tessedit_pageseg_mode: '6' });
+          try { const txt = (await recog(w3, bx.stem(), 20000)).data.text; if (ntext(txt).length >= 6) shotStems.set(normTag(t), txt); }
+          finally { if (ocrWorker) await w3.setParameters({ tessedit_pageseg_mode: '7' }).catch(() => { }); }
+        } catch (e) { /* 讀不到題幹就照舊列出全部候選 */ }
+      }
       st.innerHTML = `認出 ${tags.length} 個：${tags.map(t => `<b>${esc(t)}</b>`).join('、')}。已填進上面的框，請確認後按「在題庫找題」。`;
     } catch (e) { st.className = 'st bad'; st.textContent = '辨識失敗：' + e.message; }
   }
@@ -670,6 +700,24 @@
     refreshResults(true);
     st.innerHTML = `截圖沒有標籤，用題目內容比對，最像的是 <b>${esc(normTag(hits[0].tag))}</b>（相似度 ${Math.round(hits[0]._score * 100)}%）。結果列在下面，請按「看題目」確認。`;
   }
+  const shotStems = new Map();   // 標籤 → 截圖裡讀到的題幹文字
+  // 截圖題幹 vs 候選題：截圖文字的兩字組有多少比例出現在候選題（題組題幹＋題幹＋選項）裡
+  function stemScore(text, r) {
+    const t = ntext(text), q = r.q || {};
+    const x = r._nt || (r._nt = ntext([...(q.group ? lines(q.group.stem) : []), ...lines(q.stem), ...lines(q.options)].join('')));
+    const have = new Set(); for (let i = 0; i + 1 < x.length; i++) have.add(x.slice(i, i + 2));
+    const Q = new Set(); for (let i = 0; i + 1 < t.length; i++) Q.add(t.slice(i, i + 2));
+    let hit = 0; for (const g of Q) if (have.has(g)) hit++;
+    return Q.size ? hit / Q.size : 0;
+  }
+  function rankByStem(g) {
+    const txt = shotStems.get(normTag(g.tag));
+    if (!txt || new Set(g.hits.map(r => r.path)).size < 2) return;
+    for (const r of g.hits) r._stem = stemScore(txt, r);
+    g.hits.sort((a, b) => b._stem - a._stem);
+    const [a, b] = g.hits;
+    g.best = a._stem >= 0.3 && a._stem - ((b && b._stem) || 0) >= 0.15;
+  }
   let ocrBusy = 0;
   async function ocrFiles(list) { ocrBusy++; try { for (const f of list) if (/^image\//.test(f.type)) await ocrFile(f); } finally { ocrBusy--; } }
   const drop = $('drop');
@@ -684,7 +732,7 @@
     const imgs = [...(e.clipboardData || {}).items || []].filter(i => i.kind === 'file' && /^image\//.test(i.type)).map(i => i.getAsFile());
     if (imgs.length) { e.preventDefault(); ocrFiles(imgs); }
   });
-  window.__picksOCR = { parseTags, fixTag, bands, bracketCrops, ocrFile };   // 測試用
+  window.__picksOCR = { parseTags, fixTag, bands, bracketCrops, ocrFile, shotStems, stemScore };   // 測試用
 
   // ---------- 標記好題 ----------
   let lastHits = [];   // [{tag, hits:[r], cand, bad}]
@@ -696,7 +744,7 @@
     say(fileList ? '尋找中…' : '讀取題庫目錄中（第一次約 5～15 秒）…', '');
     try {
       lastHits = [];
-      for (const t of tags) { try { lastHits.push(await findTag(t)); } catch (err) { lastHits.push({ tag: t, err: err.message, hits: [] }); } }
+      for (const t of tags) { try { const g = await findTag(t); rankByStem(g); lastHits.push(g); } catch (err) { lastHits.push({ tag: t, err: err.message, hits: [] }); } }
       const n = lastHits.reduce((s, g) => s + g.hits.length, 0);
       say(n ? `找到 ${n} 題，確認後按「★ 加入精選」。` : '題庫裡找不到，請檢查標籤寫法。', n ? 'ok' : 'bad');
       refreshResults(true);
@@ -711,16 +759,18 @@
       if (!g.hits.length) return head + `<div class="empty">${g.err ? '讀取失敗：' + esc(g.err) : g.bad ? `「${esc(g.tag)}」看起來不是題目標籤（格式：年份-卷別-題號，例 114-竹中-單選5）。` : g.cand ? `找到 ${g.cand} 份可能的卷，但沒有這個題號，可能標籤寫法不同。` : `題庫裡找不到「${esc(g.tag)}」對應的卷（可能還沒建檔，或標籤寫法不同）。`}</div>`;
       const papers = new Set(g.hits.map(r => r.path)).size;
       if (g.content) return `<div class="grp-h">截圖沒有標籤，依題目內容找到最像的 ${g.hits.length} 題（相似度由高到低）：</div>` + g.hits.map((r, i) => resHtml(r, gi, i, pk)).join('');
-      return head + (papers > 1 ? `<p class="sub" style="margin:6px 0">標籤沒寫年級學期，有 ${papers} 份卷同題號，請按「看題目」確認是哪一份：</p>` : '')
+      if (papers > 1 && g.best) return head + `<p class="sub" style="margin:6px 0">標籤沒寫年級學期，有 ${papers} 份卷同題號；用截圖的題幹比對，<b>第一題最符合</b>（已展開），其他列在後面備查：</p>`
+        + g.hits.map((r, i) => resHtml(r, gi, i, pk, i === 0)).join('');
+      return head + (papers > 1 ? `<p class="sub" style="margin:6px 0">標籤沒寫年級學期，有 ${papers} 份卷同題號${g.hits[0]._stem != null ? '（已依截圖題幹相似度排序）' : ''}，請按「看題目」確認是哪一份：</p>` : '')
         + g.hits.map((r, i) => resHtml(r, gi, i, pk)).join('');
     }).join('');
     bindResults(box, fresh);
   }
-  function resHtml(r, gi, i, pk) {
+  function resHtml(r, gi, i, pk, best) {
           const k = keyOf(r.path, r.tag), x = pk.get(k);
           return `<div class="res${x ? ' on' : ''}" data-g="${gi}" data-i="${i}"><div class="hd"><div>
-            <div class="tg">${esc(r.tag)}${x ? ' <span class="star">★ 已精選</span>' : ''}</div>
-            <div class="meta">${r._score != null && lastHits[gi] && lastHits[gi].content ? `<b>相似度 ${Math.round(r._score * 100)}%</b>・` : ''}${esc(base(r.path))}・${esc(r.source)}・${esc(r.type)}・Tier ${esc(tierText(r.tiers))}${chap(r) ? '・' + esc(chap(r)) : ''}</div></div>
+            <div class="tg">${esc(r.tag)}${best ? ' <span class="best">✔ 最符合截圖</span>' : ''}${x ? ' <span class="star">★ 已精選</span>' : ''}</div>
+            <div class="meta">${r._score != null && lastHits[gi] && lastHits[gi].content ? `<b>相似度 ${Math.round(r._score * 100)}%</b>・` : ''}${r._stem != null && !(lastHits[gi] && lastHits[gi].content) ? `題幹相似度 ${Math.round(r._stem * 100)}%・` : ''}${esc(base(r.path))}・${esc(r.source)}・${esc(r.type)}・Tier ${esc(tierText(r.tiers))}${chap(r) ? '・' + esc(chap(r)) : ''}</div></div>
             <div class="act">${x ? `<span class="sub">${esc(x.by)} ${esc(x.created)} 標記${x.note ? '：' + esc(x.note) : ''}</span>`
               : `<input type="text" class="r-note" placeholder="理由（選填），例：觀念好、計算陷阱"><button class="btn sm primary r-add">★ 加入精選</button>`}
               <button class="btn sm r-view">看題目</button></div></div>
@@ -740,7 +790,7 @@
     });
     // 只找到一題時直接展開題目
     const all = box.querySelectorAll('.res');
-    if (fresh && (all.length === 1 || (lastHits.length === 1 && lastHits[0].content))) all[0].querySelector('.r-view').click();
+    if (fresh && (all.length === 1 || (lastHits.length === 1 && (lastHits[0].content || lastHits[0].best)))) all[0].querySelector('.r-view').click();
   }
   async function addPick(r, note, btn) {
     btn.disabled = true; btn.textContent = '儲存中…';

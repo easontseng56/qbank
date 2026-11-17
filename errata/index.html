@@ -472,7 +472,8 @@
   }
   async function files() { if (!fileList) fileList = await bankFS().listJson('題庫'); return fileList; }
   const base = p => p.split('/').pop().replace(/\.json$/, '');
-  const squash = s => String(s || '').replace(/[-－\s]/g, '');
+  // 卷檔名用「第一次」、標籤用「一段」（2026-11-17 起），比對前統一成「一段」
+  const squash = s => String(s || '').replace(/第([一二三四])次/g, '$1段').replace(/[-－\s]/g, '');
   async function findQuestion(x) {
     const all = await files();
     const tag = normTag(x.tag), m = tag.match(/^(\d{2,4})-([^-]+)-(.+)$/);
@@ -537,8 +538,10 @@
   const dirs = l => l.filter(f => f.mimeType === FOLDER), plain = l => l.filter(f => f.mimeType !== FOLDER);
   const CN = { '上': '一', '下': '二' };
   async function duankaoFiles(P) {
-    const term = `${P.year}第${CN[P.semester] || P.semester}學期${P.exam_no}段考`;
-    const top = dirs(await listKids(DUANKAO)).find(f => squash(f.name) === squash(term)) || dirs(await listKids(DUANKAO)).find(f => f.name.startsWith(String(P.year)) && f.name.includes(CN[P.semester] + '學期') && f.name.includes(P.exam_no));
+    // 雲端資料夾 2026-11-17 起改名「113上學期第一次段考」（舊名「113第一學期第一次段考」也認得）
+    const terms = [`${P.year}${P.semester}學期${P.exam_no}段考`, `${P.year}第${CN[P.semester] || P.semester}學期${P.exam_no}段考`];
+    const tops = dirs(await listKids(DUANKAO));
+    const top = tops.find(f => terms.includes(f.name.trim())) || tops.find(f => f.name.startsWith(String(P.year)) && (f.name.includes(P.semester + '學期') || f.name.includes('第' + CN[P.semester] + '學期')) && f.name.includes(P.exam_no));
     if (!top) return [];
     const g = dirs(await listKids(top.id)).find(f => f.name === P.grade);
     if (!g) return [];

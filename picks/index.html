@@ -311,7 +311,8 @@
     $('gate').hidden = true; $('app').hidden = false;
     $('who').innerHTML = `${esc(user)} <button class="btn sm" id="out">登出</button>`; $('out').onclick = logout;
     load();
-    files().catch(() => { });   // 背景先讀題庫目錄，找題時就快
+    refreshFiles().catch(() => { });   // 背景讀（或更新）題庫目錄，找題時就快
+    setTimeout(() => worker().catch(() => { }), 1500);   // 背景先下載辨識元件與中文辨識檔，第一次上傳截圖就不用等
   }
   async function load() {
     $('items').innerHTML = '<div class="empty">載入中…</div>';
@@ -338,10 +339,40 @@
     if (token && Date.now() < exp) { bfs.token = token; bfs.exp = exp; }
     return bfs;
   }
+  // 題庫目錄：約 600 個資料夾，一個一個讀要幾分鐘 → 改成同時讀 16 個（約 5～10 秒），並把結果記在這台電腦，下次開頁立刻可用、背景再更新
+  const FL_KEY = 'picksFiles';
+  try { const c = JSON.parse(localStorage.getItem(FL_KEY) || 'null'); if (c && Array.isArray(c.list) && c.list.length) fileList = c.list; } catch { }
+  async function walkBank(fs) {
+    const out = [], did = await fs.dirId('題庫'); if (!did) return out;
+    const queue = [[did, '題庫/']]; let active = 0;
+    await new Promise((res, rej) => {
+      const pump = () => {
+        if (!queue.length && !active) return res();
+        while (active < 16 && queue.length) {
+          const [id, rel] = queue.shift(); active++;
+          fs.list(id).then(m => {
+            for (const e of m.values()) {
+              if (e.isDir) { if (e.name !== 'img') queue.push([e.id, rel + e.name + '/']); }
+              else if (e.name.endsWith('.json') && e.name !== 'manifest.json') out.push({ path: rel + e.name, mtime: e.mtime, size: e.size });
+            }
+            active--; pump();
+          }, rej);
+        }
+      };
+      pump();
+    });
+    return out;
+  }
+  function refreshFiles() {
+    if (!listing) listing = (window.__bankFS ? window.__bankFS.listJson('題庫') : walkBank(bankFS())).then(l => {
+      fileList = l; try { localStorage.setItem(FL_KEY, JSON.stringify({ t: Date.now(), list: l.map(f => ({ path: f.path, mtime: f.mtime })) })); } catch { }
+      return l;
+    }, e => { listing = null; throw e; });
+    return listing;
+  }
   function files() {
     if (fileList) return Promise.resolve(fileList);
-    if (!listing) listing = bankFS().listJson('題庫').then(l => (fileList = l), e => { listing = null; throw e; });
-    return listing;
+    return refreshFiles();
   }
   const paperCache = new Map();
   async function paper(path) {
@@ -397,6 +428,16 @@
       return w;
     })().catch(e => { ocrWorker = null; throw e; });
     return ocrWorker;
+  }
+  // 單次辨識加上時限：卡住（例如辨識元件當掉）就丟掉這個辨識器、下次重開，不會一直停在「辨識中」
+  async function recog(w, img, ms = 15000) {
+    let to;
+    try {
+      return await Promise.race([w.recognize(img), new Promise((_, rej) => { to = setTimeout(() => rej(new Error('辨識逾時')), ms); })]);
+    } catch (e) {
+      if (/逾時/.test(e.message)) { const old = ocrWorker; ocrWorker = null; old && old.then(x => x.terminate()).catch(() => { }); }
+      throw e;
+    } finally { clearTimeout(to); }
   }
   const readImg = blob => new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => rej(new Error('讀不到圖片')); im.src = URL.createObjectURL(blob); });
   // 橘色判斷：卷面標籤色約 #C55A11～#E36C09，粗體邊緣會淡一點
@@ -491,12 +532,13 @@
       else if (!cand.slice(i + 1).some(c => c.line === a.line && c.cx >= 0.53)) pairs.push([[a.line, a.x2 + 1, la.x2], [b.line, lb.x1, b.x1 - 1]]);
     });
     const out = [];
-    for (const segs of pairs.slice(0, 30)) {
+    for (const segs of pairs.filter(sg => sg.every(([, a, b]) => b - a >= 8)).slice(0, 30)) {
       const T = 52, pad = 10, parts = segs.map(([li, a, b]) => { const L = lines[li], k = T / (L.y2 - L.y1 + 1); return { L, a: Math.max(0, a), b: Math.min(W - 1, Math.max(a, b)), k }; });
+      for (const q of parts) q.k = Math.min(q.k, 1800 / (q.b - q.a + 1));   // 太寬就縮，避免超大圖
       const cw = parts.reduce((t, q) => t + Math.round((q.b - q.a + 1) * q.k) + pad, pad), cc = document.createElement('canvas'); cc.width = cw; cc.height = T + 2 * pad;
       const cx = cc.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, cc.width, cc.height); cx.filter = 'grayscale(1)';
       let ox = pad;
-      for (const q of parts) { const w = Math.round((q.b - q.a + 1) * q.k); cx.drawImage(c, q.a, q.L.y1, q.b - q.a + 1, q.L.y2 - q.L.y1 + 1, ox, pad, w, T); ox += w + pad; }
+      for (const q of parts) { const w = Math.round((q.b - q.a + 1) * q.k), h = Math.round((q.L.y2 - q.L.y1 + 1) * q.k); cx.drawImage(c, q.a, q.L.y1, q.b - q.a + 1, q.L.y2 - q.L.y1 + 1, ox, pad + (T - h) / 2, w, h); ox += w + pad; }
       out.push(cc);
     }
     return out;
@@ -538,7 +580,9 @@
   // 用題庫卷名校正卷別（例：竹巾→竹中、全模NI→全模N1）
   async function fixTag(t) {
     const m = t.match(/^(\d{2,4})-(.+)-([^-]*?(?:單選|多選|非選|填充|選填|題組|簡答|計算).*)$/); if (!m) return t;
-    let all; try { all = await files(); } catch (e) { return t; }
+    // 只用來修正 OCR 認錯的卷名；目錄還沒讀好就最多等 1.5 秒，不讓辨識結果卡住
+    let all; try { all = fileList || await Promise.race([files(), new Promise(r => setTimeout(() => r(null), 1500))]); } catch (e) { return t; }
+    if (!all) return t;
     const labels = [...new Set(all.map(f => base(f.path)).filter(b => b.startsWith(m[1])).map(b => b.slice(m[1].length).split('_')[0]))];
     if (!labels.length || labels.some(l => l.includes(m[2]))) return t;
     let best = null, bd = 9;
@@ -560,13 +604,13 @@
       const boxes = bracketCrops(im);   // 1) 找【】只辨識括號那一段（快，不管顏色）
       for (let i = 0; i < boxes.length; i++) {
         st.textContent = `找到 ${boxes.length} 個【】，辨識第 ${i + 1} 個…`;
-        found.push(...parseTags((await w.recognize(boxes[i])).data.text));
+        try { found.push(...parseTags((await recog(w, boxes[i])).data.text)); } catch (e) { if (!/逾時/.test(e.message)) throw e; st.textContent = '這一段辨識逾時，略過…'; break; }
       }
       if (!found.length) {              // 2) 沒找到【】或認不出 → 橘色標籤逐行辨識
         const { orange, parts } = bands(im);
         for (let i = 0; orange && i < parts.length; i++) {
           st.textContent = `辨識橘色標籤 ${i + 1}/${parts.length}…`;
-          found.push(...parseTags((await w.recognize(parts[i])).data.text));
+          try { found.push(...parseTags((await recog(ocrWorker ? await ocrWorker : await worker(), parts[i])).data.text)); } catch (e) { if (!/逾時/.test(e.message)) throw e; break; }
         }
       }
       if (!found.length) {
@@ -575,8 +619,9 @@
         st.querySelector('.cm').onclick = async () => {
           st.className = 'st'; st.textContent = '辨識整張圖的文字（較慢，約 10～40 秒）…';
           try {
-            await w.setParameters({ tessedit_pageseg_mode: '6' });
-            let full; try { full = (await w.recognize(grayCanvas(im, Math.min(1.5, 1600 / im.width)))).data.text; } finally { await w.setParameters({ tessedit_pageseg_mode: '7' }); }
+            const w2 = await worker();
+            await w2.setParameters({ tessedit_pageseg_mode: '6' });
+            let full; try { full = (await recog(w2, grayCanvas(im, Math.min(1.5, 1600 / im.width)), 60000)).data.text; } finally { if (ocrWorker) await w2.setParameters({ tessedit_pageseg_mode: '7' }).catch(() => { }); }
             await contentMatch(full, st);
           } catch (e) { st.className = 'st bad'; st.textContent = '比對失敗：' + e.message; }
         };
@@ -648,7 +693,7 @@
     const tags = [...new Set($('f-tag').value.split(/[\s,，、；;]+/).map(normTag).filter(Boolean))];
     if (!tags.length) { say(ocrBusy ? '截圖還在辨識中，請等辨識完成（標籤會自動填進上面的框）。' : '請輸入題目標籤，或上傳截圖。', 'bad'); return; }
     const btn = $('find'); btn.disabled = true;
-    say(fileList ? '尋找中…' : '讀取題庫目錄中（第一次約 10～30 秒）…', '');
+    say(fileList ? '尋找中…' : '讀取題庫目錄中（第一次約 5～15 秒）…', '');
     try {
       lastHits = [];
       for (const t of tags) { try { lastHits.push(await findTag(t)); } catch (err) { lastHits.push({ tag: t, err: err.message, hits: [] }); } }

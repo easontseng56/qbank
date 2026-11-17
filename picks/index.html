@@ -221,7 +221,8 @@
   const say = (msg, cls) => { const el = $('notice'); el.textContent = msg; el.className = 'notice ' + (cls || ''); el.hidden = !msg; };
   const normTag = s => String(s || '').trim().replace(/^【|】$/g, '').replace(/\s+/g, '').replace(/[－—–]/g, '-').replace(/[（]/g, '(').replace(/[）]/g, ')');
   const base = p => String(p || '').split('/').pop().replace(/\.json$/, '');
-  const squash = s => String(s || '').replace(/[-－\s]/g, '');
+  // 卷檔名用「第一次」、標籤用「一段」（2026-11-17 起），比對前統一成「一段」
+  const squash = s => String(s || '').replace(/第([一二三四])次/g, '$1段').replace(/[-－\s]/g, '');
   const keyOf = (path, tag) => base(path) + '|' + String(tag || '').trim().replace(/^【|】$/g, '').replace(/\s+/g, '');   // 與出題系統 app.js 的 pickKey 相同
   const tierText = t => (t || []).join('、') || '—';
 
@@ -601,7 +602,7 @@
     // 只用來修正 OCR 認錯的卷名；目錄還沒讀好就最多等 1.5 秒，不讓辨識結果卡住
     let all; try { all = fileList || await Promise.race([files(), new Promise(r => setTimeout(() => r(null), 1500))]); } catch (e) { return t; }
     if (!all) return t;
-    const labels = [...new Set(all.map(f => base(f.path)).filter(b => b.startsWith(m[1])).map(b => b.slice(m[1].length).split('_')[0]))];
+    const labels = [...new Set(all.map(f => base(f.path)).filter(b => b.startsWith(m[1])).map(b => b.slice(m[1].length).split('_')[0].replace(/第([一二三四])次/g, '$1段')))];
     if (!labels.length || labels.some(l => l.includes(m[2]))) return t;
     let best = null, bd = 9;
     for (const l of labels) {

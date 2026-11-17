@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>專案進度看板</title>
+<!-- 專案進度看板：本頁不含任何內部資料。登入 Google 後，從使用者雲端的 題庫池\05_工具\儀表板\進度資料.json 讀進度；
+     沒有 題庫池 權限的帳號什麼都讀不到。 -->
+<style>
+  :root{--bg:#f6f7f9;--card:#fff;--ink:#1f2328;--mute:#6b7280;--line:#e5e7eb;--acc:#1f6f8b;--acc-soft:#e3f0f4;--acc-ink:#fff;
+        --ok:#15803d;--ok-soft:#dcfce7;--wait:#b45309;--wait-soft:#fef3c7;--bad:#b91c1c;--bad-soft:#fee2e2;--run:#1d4ed8;--run-soft:#dbeafe}
+  @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f1115;--card:#171a21;--ink:#e6e8ec;--mute:#9aa3b2;--line:#2a2f3a;--acc:#6cb6d1;--acc-soft:#1b2d36;--acc-ink:#0f1a20;
+        --ok:#7ccf98;--ok-soft:#1b2e22;--wait:#e6b268;--wait-soft:#3a2c14;--bad:#ef8b84;--bad-soft:#3a1f1d;--run:#93b4f5;--run-soft:#1c2740}}
+  :root[data-theme=dark]{--bg:#0f1115;--card:#171a21;--ink:#e6e8ec;--mute:#9aa3b2;--line:#2a2f3a;--acc:#6cb6d1;--acc-soft:#1b2d36;--acc-ink:#0f1a20;
+        --ok:#7ccf98;--ok-soft:#1b2e22;--wait:#e6b268;--wait-soft:#3a2c14;--bad:#ef8b84;--bad-soft:#3a1f1d;--run:#93b4f5;--run-soft:#1c2740}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,"Noto Sans TC","Microsoft JhengHei",sans-serif}
+  .wrap{max-width:1240px;margin:0 auto;padding:20px 16px 48px}
+  header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+  h1{margin:0;font-size:22px}
+  .sub{color:var(--mute);font-size:13px;margin-top:4px}
+  .who{font-size:13px;color:var(--mute);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:9px;padding:8px 14px;font:inherit;font-weight:500;cursor:pointer;text-decoration:none}
+  .btn.primary{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+  .btn.sm{padding:4px 10px;font-size:13px}
+  .btn:focus-visible,a:focus-visible,.seg button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+  .gate{margin-top:28px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:28px 20px;text-align:center}
+  .gate p{color:var(--mute);margin:8px 0 16px}
+  .notice{margin-top:12px;padding:10px 14px;border-radius:9px;background:var(--bad-soft);color:var(--bad);font-size:14px}
+  .tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0;border-top:3px solid var(--c,var(--line))}
+  .tile .k{color:var(--mute);font-size:12.5px}.tile .v{font-size:28px;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums}.tile .v small{font-size:13px;font-weight:400;color:var(--mute)}
+  section.box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:14px 0;min-width:0}
+  h2{font-size:17px;margin:0 0 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  h2 .pdesc{font-size:13px;font-weight:400;color:var(--mute)}
+  .autos{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px}
+  .auto{border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0;border-left:4px solid var(--ok)}
+  .auto.warn{border-left-color:var(--wait)}.auto.bad{border-left-color:var(--bad)}
+  .auto .n{font-weight:600}
+  .auto .when{font-size:13px;margin-top:2px}
+  .auto .when b{color:var(--acc)}
+  .auto .d{font-size:12.5px;color:var(--mute);margin-top:4px}
+  .auto .warnline{font-size:12.5px;margin-top:4px;color:var(--wait)}.auto.bad .warnline{color:var(--bad)}
+  .bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:18px 0 4px}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--card)}
+  .seg button{border:0;background:transparent;color:var(--mute);font:inherit;padding:6px 14px;cursor:pointer}
+  .seg button.on{background:var(--acc);color:var(--acc-ink)}
+  .cols{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+  .col{background:var(--bg);border-radius:10px;padding:8px;min-width:0}
+  .col h3{margin:2px 4px 8px;font-size:13px;display:flex;align-items:center;gap:6px;color:var(--mute);font-weight:600}
+  .col h3 .dot{width:8px;height:8px;border-radius:50%;background:var(--c)}
+  .col h3 .cnt{margin-left:auto;font-variant-numeric:tabular-nums}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:8px 10px;margin-bottom:8px;min-width:0}
+  .card.me{border-color:var(--bad);box-shadow:inset 3px 0 0 var(--bad)}
+  .card .t{font-weight:500;overflow-wrap:anywhere;font-size:14px}
+  .card .m{font-size:12.5px;color:var(--mute);overflow-wrap:anywhere;margin-top:2px}
+  .card .tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px;align-items:center}
+  .tag{font-size:11.5px;border-radius:6px;padding:0 7px;background:var(--line);white-space:nowrap}
+  .tag.me{background:var(--bad-soft);color:var(--bad);font-weight:600}
+  .tag.auto{background:var(--acc-soft);color:var(--acc)}
+  .tag.date{background:transparent;color:var(--mute);padding:0}
+  .card a{color:var(--acc);font-size:12.5px}
+  .prod{display:block;text-decoration:none;color:var(--ink)}
+  .prod:hover{border-color:var(--acc)}
+  .prod .m{color:var(--mute)}
+  .empty{color:var(--mute);font-size:13px;padding:6px 4px}
+  .more{border:0;background:none;color:var(--acc);font:inherit;font-size:12.5px;cursor:pointer;padding:2px 4px}
+  footer{margin-top:24px;color:var(--mute);font-size:13px}
+  @media (max-width:980px){.cols{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media (max-width:600px){h1{font-size:19px}.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.tile .v{font-size:24px}.cols{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>專案進度看板</h1>
+      <div class="sub" id="sub">依專案看等待處理、正在做、已結束和成品，以及哪些事情會自動跑。</div>
+    </div>
+    <div class="who" id="who"></div>
+  </header>
+
+  <div class="gate" id="gate">
+    <strong>請先登入 Google</strong>
+    <p>進度資料在雲端硬碟的 題庫池 資料夾裡，本頁不存任何內部資料。只有對 題庫池 有權限的帳號才讀得到。</p>
+    <button class="btn primary" id="loginBtn">用 Google 登入</button>
+    <div class="notice" id="gateMsg" hidden></div>
+  </div>
+
+  <div id="app" hidden>
+    <div class="tiles" id="tiles"></div>
+    <section class="box">
+      <h2>⚙ 自動化 <span class="pdesc">下次執行時間都是台灣時間</span></h2>
+      <div class="autos" id="autos"></div>
+    </section>
+    <div class="bar">
+      <div class="seg" role="group" aria-label="篩選">
+        <button data-f="all" class="on">全部</button><button data-f="me">只看等我處理</button>
+      </div>
+      <button class="btn sm" id="reload">重新整理</button>
+    </div>
+    <div id="projects"></div>
+    <footer id="foot"></footer>
+  </div>
+</div>
+
+<script src="../app/config.js"></script>
+<script>
+'use strict';
+(() => {
+  const POOL = '1XTMgbxorvN3RlfKxak-9T0yR2fD53ztS';     // claude共用資料夾\題庫池（ID 本身不含內容）
+  const DATA_PATH = ['05_工具', '儀表板', '進度資料.json'];
+  const API = 'https://www.googleapis.com';
+  const SCOPE = 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email';
+  const CID = (window.CONFIG || {}).clientId;
+  const DONE_DAYS = 30;
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  // ---------- Google 登入 ----------
+  let token = null, exp = 0, user = '', tokenClient = null;
+  try { const t = JSON.parse(localStorage.getItem('ctoken') || 'null'); if (t && t.exp > Date.now() + 60000) { token = t.token; exp = t.exp; user = t.user || ''; } } catch { }
+  const hint = () => user || (() => { try { return localStorage.getItem('chint') || ''; } catch { return ''; } })();
+
+  function loadGis() {
+    if (window.google && google.accounts) return Promise.resolve();
+    return new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.onload = res; s.onerror = () => rej(new Error('無法載入 Google 登入元件，請確認網路')); document.head.appendChild(s); });
+  }
+  async function login() {
+    if (!CID) throw new Error('沒有設定 Google 用戶端 ID（app/config.js）');
+    await loadGis();
+    if (!tokenClient) tokenClient = google.accounts.oauth2.initTokenClient({ client_id: CID, scope: SCOPE, callback: () => { } });
+    await new Promise((res, rej) => {
+      tokenClient.callback = r => {
+        if (r.error) return rej(new Error(r.error_description || r.error));
+        token = r.access_token; exp = Date.now() + (Number(r.expires_in) - 60) * 1000; res();
+      };
+      tokenClient.error_callback = e => rej(new Error(e.message || e.type || '登入取消'));
+      const h = hint();
+      tokenClient.requestAccessToken(Object.assign({ prompt: '' }, h ? { hint: h } : {}));
+    });
+    try { const r = await fetch(API + '/oauth2/v3/userinfo', { headers: { Authorization: 'Bearer ' + token } }); if (r.ok) user = ((await r.json()).email || '').toLowerCase(); } catch { }
+    try { localStorage.setItem('ctoken', JSON.stringify({ token, exp, user })); localStorage.setItem('chint', user); } catch { }
+  }
+  function logout() { token = null; exp = 0; try { localStorage.removeItem('ctoken'); } catch { } location.reload(); }
+
+  async function req(url, opt = {}, retry = 0) {
+    if (!token || Date.now() > exp) await login();
+    opt.headers = Object.assign({ Authorization: 'Bearer ' + token }, opt.headers || {});
+    const r = await fetch(url, opt);
+    if (r.status === 401 && retry < 1) { token = null; await login(); return req(url, opt, retry + 1); }
+    if ((r.status === 429 || r.status >= 500) && retry < 4) { await new Promise(s => setTimeout(s, 600 * 2 ** retry)); return req(url, opt, retry + 1); }
+    if (!r.ok) { const e = new Error(`Drive ${r.status}：${(await r.text()).slice(0, 160)}`); e.status = r.status; throw e; }
+    return r;
+  }
+  async function children(folderId, extra = '') {
+    const out = []; let pt = '';
+    do {
+      const q = `'${folderId}' in parents and trashed=false${extra}`;
+      const u = `${API}/drive/v3/files?q=${encodeURIComponent(q)}&fields=${encodeURIComponent('nextPageToken,files(id,name,mimeType,modifiedTime,createdTime,size,description,webViewLink)')}&orderBy=${encodeURIComponent('createdTime desc')}&pageSize=200&supportsAllDrives=true&includeItemsFromAllDrives=true${pt ? '&pageToken=' + pt : ''}`;
+      const d = await (await req(u)).json();
+      out.push(...(d.files || [])); pt = d.nextPageToken || '';
+    } while (pt);
+    return out;
+  }
+  async function findPath(rootId, names) {
+    let id = rootId, f = null;
+    for (const name of names) {
+      const q = ` and name='${name.replace(/'/g, "\\'")}'`;
+      [f] = await children(id, q);
+      if (!f) return null;
+      id = f.id;
+    }
+    return f;
+  }
+
+  async function start() {
+    $('gateMsg').hidden = true;
+    try {
+      await req(`${API}/drive/v3/files/${POOL}?fields=id,name&supportsAllDrives=true`);
+    } catch (e) {
+      const no = e.status === 404 || e.status === 403;
+      $('gateMsg').textContent = no ? `這個帳號（${user || '未知'}）沒有 題庫池 的權限。請換成 yi0506 或 zhouyihuaxue 登入。` : '登入失敗：' + e.message;
+      $('gateMsg').hidden = false;
+      $('who').innerHTML = user ? `${esc(user)} <button class="btn sm" id="out">換帳號</button>` : '';
+      const o = $('out'); if (o) o.onclick = logout;
+      return;
+    }
+    $('gate').hidden = true; $('app').hidden = false;
+    $('who').innerHTML = `${esc(user)} <button class="btn sm" id="out">登出</button>`;
+    $('out').onclick = logout;
+    load();
+  }
+  $('loginBtn').onclick = async () => { try { await login(); await start(); } catch (e) { $('gateMsg').textContent = '登入失敗：' + e.message; $('gateMsg').hidden = false; } };
+  if (token) start();
+
+  // ---------- 台灣時間 ----------
+  const TZ = 8 * 3600e3, WD = '日一二三四五六';
+  const tw = d => new Date(d.getTime() + TZ);           // 用 UTC 欄位讀台灣時間
+  const pad = v => String(v).padStart(2, '0');
+  function fmtTW(d, withDay = true) { const t = tw(d); return `${t.getUTCMonth() + 1}/${t.getUTCDate()}${withDay ? `（${WD[t.getUTCDay()]}）` : ''} ${pad(t.getUTCHours())}:${pad(t.getUTCMinutes())}`; }
+  function rel(d) {
+    const m = Math.round((d - Date.now()) / 60000);
+    if (m < 0) return '已過';
+    if (m < 60) return `還有 ${m} 分鐘`;
+    const h = Math.round(m / 60); if (h < 24) return `還有 ${h} 小時`;
+    return `還有 ${Math.round(h / 24)} 天`;
+  }
+  function nextRun(s) {
+    const now = new Date();
+    if (s.type === 'hourly') { const d = new Date(now); d.setUTCMinutes(s.mm || 0, 0, 0); if (d <= now) d.setUTCHours(d.getUTCHours() + 1); return d; }
+    if (s.type === 'daily' || s.type === 'weekly') {
+      const t = tw(now);
+      let d = new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate(), s.hh, s.mm) - TZ);
+      if (s.type === 'weekly') { const add = (s.dow - t.getUTCDay() + 7) % 7; d = new Date(d.getTime() + add * 864e5); if (d <= now) d = new Date(d.getTime() + 7 * 864e5); }
+      else if (d <= now) d = new Date(d.getTime() + 864e5);
+      return d;
+    }
+    if (s.type === 'once') return new Date(s.at);
+    return null;
+  }
+  function whenText(s) {
+    if (s.type === 'event') return `觸發：${esc(s.text)}`;
+    const d = nextRun(s);
+    const every = s.type === 'hourly' ? '每小時' : s.type === 'daily' ? `每天 ${pad(s.hh)}:${pad(s.mm)}` : s.type === 'weekly' ? `每週${WD[s.dow]} ${pad(s.hh)}:${pad(s.mm)}` : '一次';
+    if (!d) return every;
+    if (s.type === 'once' && d < new Date()) return `${every}・${fmtTW(d)}（已過）`;
+    return `${every}・下次 <b>${s.type === 'hourly' ? fmtTW(d, false).split(' ')[1] : fmtTW(d)}</b>，${rel(d)}`;
+  }
+
+  // ---------- 讀資料 ----------
+  let DATA = null, filter = 'all';
+  const openMore = new Set();
+  async function findFile() {
+    let id = POOL, f = null;
+    for (const name of DATA_PATH) {
+      const q = `'${id}' in parents and trashed=false and name='${name.replace(/'/g, "\\'")}'`;
+      const u = `${API}/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,modifiedTime)&orderBy=modifiedTime%20desc&pageSize=5&supportsAllDrives=true&includeItemsFromAllDrives=true`;
+      [f] = (await (await req(u)).json()).files || [];
+      if (!f) return null;
+      id = f.id;
+    }
+    return f;
+  }
+  async function load() {
+    $('projects').innerHTML = '<section class="box"><div class="empty">載入中…</div></section>';
+    try {
+      const f = await findFile();
+      if (!f) throw new Error('找不到 題庫池\\05_工具\\儀表板\\進度資料.json');
+      DATA = await (await req(`${API}/drive/v3/files/${f.id}?alt=media&supportsAllDrives=true`)).json();
+      render();
+    } catch (e) { $('projects').innerHTML = `<section class="box"><div class="empty">讀不到進度資料：${esc(e.message)}</div></section>`; }
+  }
+  $('reload').onclick = load;
+  document.querySelectorAll('.seg button').forEach(b => b.onclick = () => {
+    filter = b.dataset.f; document.querySelectorAll('.seg button').forEach(x => x.classList.toggle('on', x === b)); render();
+  });
+
+  // ---------- 畫面 ----------
+  const daysAgo = s => (Date.now() - new Date(s + 'T23:59:59+08:00')) / 864e5;
+  const md = s => { if (!s) return ''; const [, m, d] = s.split('-'); return `${+m}/${+d}`; };
+  function render() {
+    const D = DATA, autos = D.automations || [], A = Object.fromEntries(autos.map(a => [a.id, a]));
+    const all = (D.projects || []).flatMap(p => p.items || []);
+    const meN = all.filter(i => i.status === 'wait' && i.who === 'eason').length;
+    const doingN = all.filter(i => i.status === 'doing').length;
+    const doneN = all.filter(i => i.status === 'done' && daysAgo(i.date) <= DONE_DAYS).length;
+    const warnN = autos.filter(a => a.status !== 'ok').length;
+    $('tiles').innerHTML = [
+      ['等你處理', meN, '項', 'var(--bad)'], ['正在做', doingN, '項', 'var(--run)'],
+      [`${DONE_DAYS} 天內完成`, doneN, '項', 'var(--ok)'], ['自動化', autos.length, warnN ? `項・${warnN} 項要注意` : '項，全部正常', warnN ? 'var(--wait)' : 'var(--acc)']
+    ].map(([k, v, u, c]) => `<div class="tile" style="--c:${c}"><div class="k">${k}</div><div class="v">${v} <small>${u}</small></div></div>`).join('');
+
+    const order = { bad: 0, warn: 1, ok: 2 };
+    $('autos').innerHTML = autos.slice().sort((a, b) => order[a.status] - order[b.status]).map(a => `<div class="auto ${esc(a.status)}">
+      <div class="n">${esc(a.name)}</div><div class="when">${whenText(a.schedule || {})}</div>
+      ${a.note ? `<div class="warnline">⚠ ${esc(a.note)}</div>` : ''}<div class="d">${esc(a.desc || '')}${a.last ? `　上次：${md(a.last)}` : ''}</div></div>`).join('');
+
+    const card = i => {
+      const me = i.status === 'wait' && i.who === 'eason', au = i.auto && A[i.auto];
+      return `<div class="card${me ? ' me' : ''}"><div class="t">${esc(i.title)}</div>${i.note ? `<div class="m">${esc(i.note)}</div>` : ''}
+        <div class="tags">${me ? '<span class="tag me">等你處理</span>' : ''}${au ? `<span class="tag auto" title="${esc(au.name)}">⚙ 自動</span>` : ''}
+        ${i.date ? `<span class="tag date">${md(i.date)}</span>` : ''}${i.link ? `<a href="${esc(i.link)}" target="_blank" rel="noopener">開啟 ↗</a>` : ''}</div></div>`;
+    };
+    const col = (title, c, list, extra = '') => `<div class="col"><h3><span class="dot" style="--c:${c}"></span>${title}<span class="cnt">${list.length}</span></h3>
+      ${list.length ? list.join('') : '<div class="empty">沒有</div>'}${extra}</div>`;
+
+    const html = (D.projects || []).map(p => {
+      const items = p.items || [];
+      let wait = items.filter(i => i.status === 'wait'), doing = items.filter(i => i.status === 'doing');
+      const doneAll = items.filter(i => i.status === 'done').sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+      if (filter === 'me') { wait = wait.filter(i => i.who === 'eason'); if (!wait.length) return ''; }
+      wait.sort((a, b) => (b.who === 'eason') - (a.who === 'eason') || (a.date || '').localeCompare(b.date || ''));
+      const recent = doneAll.filter(i => daysAgo(i.date) <= DONE_DAYS), old = doneAll.length - recent.length;
+      const shown = openMore.has(p.id) ? doneAll : recent;
+      const more = old ? `<button class="more" data-p="${esc(p.id)}">${openMore.has(p.id) ? '收起較早的' : `另有 ${old} 項較早完成`}</button>` : '';
+      const prods = (p.products || []).map(x => `<a class="card prod" href="${esc(x.url)}" target="_blank" rel="noopener"><div class="t">${esc(x.name)} ↗</div><div class="m">${esc(x.kind || '')}</div></a>`);
+      const meCnt = wait.filter(i => i.who === 'eason').length;
+      const cols = filter === 'me' ? `<div class="cols" style="grid-template-columns:1fr">${col('等待處理', 'var(--wait)', wait.map(card))}</div>`
+        : `<div class="cols">${col('等待處理', 'var(--wait)', wait.map(card))}${col('正在做', 'var(--run)', doing.map(card))}${col('已結束', 'var(--ok)', shown.map(card), more)}${col('成品區', 'var(--acc)', prods)}</div>`;
+      return `<section class="box"><h2>${esc(p.icon || '')} ${esc(p.name)} ${meCnt ? `<span class="tag me">等你 ${meCnt}</span>` : ''}<span class="pdesc">${esc(p.desc || '')}</span></h2>${cols}</section>`;
+    }).join('');
+    $('projects').innerHTML = html || '<section class="box"><div class="empty">目前沒有等你處理的事。</div></section>';
+    document.querySelectorAll('.more').forEach(b => b.onclick = () => { const k = b.dataset.p; openMore.has(k) ? openMore.delete(k) : openMore.add(k); render(); });
+    $('sub').textContent = `資料更新：${D.updated ? fmtTW(new Date(D.updated)) : '未知'}${D.updated_by ? '・' + D.updated_by : ''}`;
+    $('foot').textContent = '每週一 08:40 排程會自動更新這一頁；各 Claude 討論串做完事也會更新。要加項目或改狀態，到討論串說一聲。';
+  }
+  setInterval(() => { if (DATA) render(); }, 60000);
+})();
+</script>
+</body>
+</html>

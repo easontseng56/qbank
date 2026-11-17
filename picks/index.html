@@ -151,7 +151,7 @@
         <h2>輸入題目標籤</h2>
         <form id="form" autocomplete="off">
           <textarea id="f-tag" style="min-height:64px" placeholder="例：114-竹中-單選5　或　【112-全模N2-多選25】&#10;一次可以貼好幾個，用換行或空白分開"></textarea>
-          <div class="hint sub">照截圖上的橘色標籤打就好，括號可有可無。只有學校、沒寫年級學期的標籤，會列出所有同題號的卷讓你選。</div>
+          <div class="hint sub">照截圖上【】裡的標籤打就好，括號可有可無。只有學校、沒寫年級學期的標籤，會列出所有同題號的卷讓你選。</div>
           <div class="drop" id="drop" tabindex="0" role="button" aria-label="上傳截圖辨識標籤">
             <b>📷 上傳截圖自動辨識標籤</b>
             <span>點這裡選圖、把圖拖進來，或直接按 Ctrl+V 貼上（可多張）。辨識完會填進上面的框，請確認後再按「在題庫找題」。</span>
@@ -381,8 +381,8 @@
   const chap = r => (r.mains || []).map(c => typeof chapterName === 'function' ? chapterName(c) : c).join('、');
 
   // ---------- 截圖辨識標籤（瀏覽器內 OCR，圖片不上傳）----------
-  // 做法：只留「橘色字」（標籤都是橘色粗體）→ 白底黑字 → 依行切開 → Tesseract.js 中文辨識 → 抓「年份-卷別-題號」→ 用題庫卷名校正。
-  // 沒有橘色字時（例如黑白截圖）改辨識整張灰階圖。
+  // 做法：先在圖上找【】（看形狀，不分顏色、不用 OCR）→ 只把括號裡那一小段裁下來給 Tesseract.js 辨識 → 抓「年份-卷別-題號」→ 用題庫卷名校正。
+  // 找不到【】時再試橘色標籤逐行辨識；都認不出就請人手動輸入，或按按鈕改用題目內容比對（整張圖 OCR，較慢）。
   const TESS = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
   let ocrWorker = null;
   function loadTess() {
@@ -443,6 +443,64 @@
     }
     return { orange: true, parts: out.slice(0, 40), k };
   }
+  // 找【】：括號是又黑又實心、跟整行一樣高的窄長塊（一般中文字筆畫稀疏、數字英文較矮），
+  // 不用 OCR 就能在圖上定位，再只把【…】那一小段裁下來辨識，所以很快、而且不管標籤是什麼顏色。
+  function bracketCrops(im) {
+    const s = Math.min(2, Math.max(0.5, 1800 / Math.max(im.width, 1)));
+    const W = Math.round(im.width * s), H = Math.round(im.height * s);
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const x = c.getContext('2d', { willReadFrequently: true }); x.fillStyle = '#fff'; x.fillRect(0, 0, W, H); x.drawImage(im, 0, 0, W, H);
+    const p = x.getImageData(0, 0, W, H).data, bin = new Uint8Array(W * H), rows = new Int32Array(H);
+    for (let i = 0, j = 0; j < W * H; i += 4, j++) { if (0.3 * p[i] + 0.59 * p[i + 1] + 0.11 * p[i + 2] < 160) { bin[j] = 1; rows[(j / W) | 0]++; } }
+    // 行：依水平投影切
+    const band = new Int32Array(H).fill(-1), lines = [];
+    for (let y = 0; y < H;) {
+      if (!rows[y]) { y++; continue; }
+      let y2 = y; while (y2 < H && rows[y2]) y2++;
+      lines.push({ y1: y, y2, x1: W, x2: 0 }); for (let yy = y; yy < y2; yy++) band[yy] = lines.length - 1; y = y2;
+    }
+    for (const L of lines) for (let yy = L.y1; yy < L.y2; yy++) for (let xx = 0; xx < W; xx++) if (bin[yy * W + xx]) { if (xx < L.x1) L.x1 = xx; if (xx > L.x2) L.x2 = xx; }
+    // 連通塊
+    const lab = new Int32Array(W * H), stack = [], cand = [];
+    let id = 0;
+    for (let j0 = 0; j0 < W * H; j0++) {
+      if (!bin[j0] || lab[j0]) continue;
+      id++; let n = 0, sx = 0, x1 = W, x2 = 0, y1 = H, y2 = 0; stack.push(j0); lab[j0] = id;
+      while (stack.length) {
+        const j = stack.pop(), xx = j % W, yy = (j / W) | 0; n++; sx += xx;
+        if (xx < x1) x1 = xx; if (xx > x2) x2 = xx; if (yy < y1) y1 = yy; if (yy > y2) y2 = yy;
+        if (xx > 0 && bin[j - 1] && !lab[j - 1]) { lab[j - 1] = id; stack.push(j - 1); }
+        if (xx < W - 1 && bin[j + 1] && !lab[j + 1]) { lab[j + 1] = id; stack.push(j + 1); }
+        if (yy > 0 && bin[j - W] && !lab[j - W]) { lab[j - W] = id; stack.push(j - W); }
+        if (yy < H - 1 && bin[j + W] && !lab[j + W]) { lab[j + W] = id; stack.push(j + W); }
+      }
+      const h = y2 - y1 + 1, w = x2 - x1 + 1, L = lines[band[y1]];
+      if (!L || h < 7 || w / h < 0.14 || w / h > 0.42 || n / (w * h) < 0.58) continue;
+      if (h < 0.8 * (L.y2 - L.y1)) continue;
+      cand.push({ x1, x2, y1, y2, line: band[y1], cx: (sx / n - x1 + 0.5) / w });
+    }
+    cand.sort((a, b) => a.line - b.line || a.x1 - b.x1);
+    // 配對：【 的重心偏左、】偏右。每個【配它後面最近的】（同一行；同行沒有就接下一行，標籤被換行拆開時）
+    const pairs = [];
+    cand.forEach((a, i) => {
+      if (a.cx > 0.47) return;
+      const b = cand.slice(i + 1).find(c => c.cx >= 0.53 && (c.line === a.line || c.line === a.line + 1));
+      if (!b) return;
+      const la = lines[a.line], lb = lines[b.line], h = la.y2 - la.y1;
+      if (b.line === a.line) { if (b.x1 - a.x2 > 2 * h) pairs.push([[a.line, a.x2 + 1, b.x1 - 1]]); }   // 只裁括號裡面（】常被認成 1）
+      else if (!cand.slice(i + 1).some(c => c.line === a.line && c.cx >= 0.53)) pairs.push([[a.line, a.x2 + 1, la.x2], [b.line, lb.x1, b.x1 - 1]]);
+    });
+    const out = [];
+    for (const segs of pairs.slice(0, 30)) {
+      const T = 52, pad = 10, parts = segs.map(([li, a, b]) => { const L = lines[li], k = T / (L.y2 - L.y1 + 1); return { L, a: Math.max(0, a), b: Math.min(W - 1, Math.max(a, b)), k }; });
+      const cw = parts.reduce((t, q) => t + Math.round((q.b - q.a + 1) * q.k) + pad, pad), cc = document.createElement('canvas'); cc.width = cw; cc.height = T + 2 * pad;
+      const cx = cc.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, cc.width, cc.height); cx.filter = 'grayscale(1)';
+      let ox = pad;
+      for (const q of parts) { const w = Math.round((q.b - q.a + 1) * q.k); cx.drawImage(c, q.a, q.L.y1, q.b - q.a + 1, q.L.y2 - q.L.y1 + 1, ox, pad, w, T); ox += w + pad; }
+      out.push(cc);
+    }
+    return out;
+  }
   function grayCanvas(im, k) {
     const c = document.createElement('canvas'); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
     const x = c.getContext('2d'); x.filter = 'grayscale(1) contrast(1.4)'; x.drawImage(im, 0, 0, c.width, c.height); return c;
@@ -498,20 +556,32 @@
       const first = !ocrWorker;
       if (first) st.textContent = '第一次使用，下載中文辨識檔（約 10 MB，之後會記住）…';
       const w = await worker(p => { st.textContent = `下載中文辨識檔 ${Math.round(p * 100)}%…`; });
-      const { orange, parts, k } = bands(im);
       const found = [];
-      for (let i = 0; orange && i < parts.length; i++) {
-        st.textContent = `辨識橘色標籤 ${i + 1}/${parts.length}…`;
-        found.push(...parseTags((await w.recognize(parts[i])).data.text));
+      const boxes = bracketCrops(im);   // 1) 找【】只辨識括號那一段（快，不管顏色）
+      for (let i = 0; i < boxes.length; i++) {
+        st.textContent = `找到 ${boxes.length} 個【】，辨識第 ${i + 1} 個…`;
+        found.push(...parseTags((await w.recognize(boxes[i])).data.text));
       }
-      let full = '';
-      if (!found.length) {   // 標籤不是橘色（黑色、其他顏色）或橘色區沒認出 → 整張圖辨識
-        st.textContent = '辨識整張圖的文字…';
-        await w.setParameters({ tessedit_pageseg_mode: '6' });
-        try { full = (await w.recognize(grayCanvas(im, k))).data.text; found.push(...parseTags(full)); }
-        finally { await w.setParameters({ tessedit_pageseg_mode: '7' }); }
+      if (!found.length) {              // 2) 沒找到【】或認不出 → 橘色標籤逐行辨識
+        const { orange, parts } = bands(im);
+        for (let i = 0; orange && i < parts.length; i++) {
+          st.textContent = `辨識橘色標籤 ${i + 1}/${parts.length}…`;
+          found.push(...parseTags((await w.recognize(parts[i])).data.text));
+        }
       }
-      if (!found.length && ntext(full).length >= 12) return contentMatch(full, st);
+      if (!found.length) {
+        st.className = 'st bad';
+        st.innerHTML = `截圖裡${boxes.length ? '的【】內' : '沒有找到【】，'}認不出「年份-學校-題號」，請直接在上面的框手動輸入。 <button class="btn sm cm">改用題目內容比對題庫</button>`;
+        st.querySelector('.cm').onclick = async () => {
+          st.className = 'st'; st.textContent = '辨識整張圖的文字（較慢，約 10～40 秒）…';
+          try {
+            await w.setParameters({ tessedit_pageseg_mode: '6' });
+            let full; try { full = (await w.recognize(grayCanvas(im, Math.min(1.5, 1600 / im.width)))).data.text; } finally { await w.setParameters({ tessedit_pageseg_mode: '7' }); }
+            await contentMatch(full, st);
+          } catch (e) { st.className = 'st bad'; st.textContent = '比對失敗：' + e.message; }
+        };
+        return;
+      }
       const tags = [];
       for (const t of found) { const f = await fixTag(t); if (!tags.includes(f)) tags.push(f); }
       if (!tags.length) { st.className = 'st bad'; st.textContent = '截圖裡沒有找到題目標籤【年份-卷別-題號】，請確認截圖有包含標籤，或直接手動輸入。'; return; }
@@ -555,7 +625,8 @@
     refreshResults(true);
     st.innerHTML = `截圖沒有標籤，用題目內容比對，最像的是 <b>${esc(normTag(hits[0].tag))}</b>（相似度 ${Math.round(hits[0]._score * 100)}%）。結果列在下面，請按「看題目」確認。`;
   }
-  async function ocrFiles(list) { for (const f of list) if (/^image\//.test(f.type)) await ocrFile(f); }
+  let ocrBusy = 0;
+  async function ocrFiles(list) { ocrBusy++; try { for (const f of list) if (/^image\//.test(f.type)) await ocrFile(f); } finally { ocrBusy--; } }
   const drop = $('drop');
   drop.onclick = () => $('shot').click();
   drop.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('shot').click(); } };
@@ -568,14 +639,14 @@
     const imgs = [...(e.clipboardData || {}).items || []].filter(i => i.kind === 'file' && /^image\//.test(i.type)).map(i => i.getAsFile());
     if (imgs.length) { e.preventDefault(); ocrFiles(imgs); }
   });
-  window.__picksOCR = { parseTags, fixTag, bands, ocrFile };   // 測試用
+  window.__picksOCR = { parseTags, fixTag, bands, bracketCrops, ocrFile };   // 測試用
 
   // ---------- 標記好題 ----------
   let lastHits = [];   // [{tag, hits:[r], cand, bad}]
   $('form').addEventListener('submit', async e => {
     e.preventDefault();
     const tags = [...new Set($('f-tag').value.split(/[\s,，、；;]+/).map(normTag).filter(Boolean))];
-    if (!tags.length) { say('請輸入題目標籤。', 'bad'); return; }
+    if (!tags.length) { say(ocrBusy ? '截圖還在辨識中，請等辨識完成（標籤會自動填進上面的框）。' : '請輸入題目標籤，或上傳截圖。', 'bad'); return; }
     const btn = $('find'); btn.disabled = true;
     say(fileList ? '尋找中…' : '讀取題庫目錄中（第一次約 10～30 秒）…', '');
     try {

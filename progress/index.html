@@ -83,7 +83,7 @@
 
   <div class="gate" id="gate">
     <strong>請先登入 Google</strong>
-    <p>進度資料在雲端硬碟的 題庫池 資料夾裡，本頁不存任何內部資料。只有對 題庫池 有權限的帳號才讀得到。</p>
+    <p>進度資料在雲端硬碟的 題庫池 資料夾裡，本頁不存任何內部資料。只有 yi0506 帳號讀得到。</p>
     <button class="btn primary" id="loginBtn">用 Google 登入</button>
     <div class="notice" id="gateMsg" hidden></div>
   </div>
@@ -110,7 +110,8 @@
 'use strict';
 (() => {
   const POOL = '1XTMgbxorvN3RlfKxak-9T0yR2fD53ztS';     // claude共用資料夾\題庫池（ID 本身不含內容）
-  const DATA_PATH = ['05_工具', '儀表板', '進度資料.json'];
+  const DATA_PATH = ['05_工具', '儀表板', '_僅yi0506', '進度資料.json'];
+  const OWNER = 'yi0506@gmail.com';                       // 只有這個帳號能看（雲端資料夾也只有它有權限）
   const API = 'https://www.googleapis.com';
   const SCOPE = 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email';
   const CID = (window.CONFIG || {}).clientId;
@@ -181,10 +182,17 @@
       await req(`${API}/drive/v3/files/${POOL}?fields=id,name&supportsAllDrives=true`);
     } catch (e) {
       const no = e.status === 404 || e.status === 403;
-      $('gateMsg').textContent = no ? `這個帳號（${user || '未知'}）沒有 題庫池 的權限。請換成 yi0506 或 zhouyihuaxue 登入。` : '登入失敗：' + e.message;
+      $('gateMsg').textContent = no ? `這個帳號（${user || '未知'}）沒有 題庫池 的權限。請換成 yi0506 登入。` : '登入失敗：' + e.message;
       $('gateMsg').hidden = false;
       $('who').innerHTML = user ? `${esc(user)} <button class="btn sm" id="out">換帳號</button>` : '';
       const o = $('out'); if (o) o.onclick = logout;
+      return;
+    }
+    if (user !== OWNER) {
+      $('gateMsg').textContent = `這一頁只有 ${OWNER} 能看，目前登入的是 ${user || '未知帳號'}。`;
+      $('gateMsg').hidden = false;
+      $('who').innerHTML = `${esc(user)} <button class="btn sm" id="out">換帳號</button>`;
+      $('out').onclick = logout;
       return;
     }
     $('gate').hidden = true; $('app').hidden = false;

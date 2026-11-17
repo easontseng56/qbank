@@ -66,6 +66,14 @@
   .prod .m{color:var(--mute)}
   .empty{color:var(--mute);font-size:13px;padding:6px 4px}
   .more{border:0;background:none;color:var(--acc);font:inherit;font-size:12.5px;cursor:pointer;padding:2px 4px}
+  .opts{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+  .opt{border:1px solid var(--acc);background:var(--card);color:var(--acc);border-radius:7px;padding:3px 10px;font:inherit;font-size:12.5px;cursor:pointer}
+  .opt:hover{background:var(--acc-soft)}.opt.done{border-color:var(--ok);color:var(--ok)}.opt.done:hover{background:var(--ok-soft)}
+  .opt:disabled{opacity:.5;cursor:wait}
+  .dec{margin-top:6px;font-size:12.5px;background:var(--ok-soft);color:var(--ok);border-radius:7px;padding:4px 8px}
+  .dec button{border:0;background:none;color:var(--acc);font:inherit;font-size:12px;cursor:pointer;padding:0 0 0 6px;text-decoration:underline}
+  .card.decided{border-color:var(--ok)}
+  .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:9px;font-size:14px;z-index:9}
   footer{margin-top:24px;color:var(--mute);font-size:13px}
   @media (max-width:980px){.cols{grid-template-columns:repeat(2,minmax(0,1fr))}}
   @media (max-width:600px){h1{font-size:19px}.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.tile .v{font-size:24px}.cols{grid-template-columns:1fr}}
@@ -238,7 +246,7 @@
   }
 
   // ---------- 讀資料 ----------
-  let DATA = null, filter = 'all';
+  let DATA = null, FILE = null, filter = 'all';
   const openMore = new Set();
   async function findFile() {
     let id = POOL, f = null;
@@ -255,7 +263,8 @@
     $('projects').innerHTML = '<section class="box"><div class="empty">載入中…</div></section>';
     try {
       const f = await findFile();
-      if (!f) throw new Error('找不到 題庫池\\05_工具\\儀表板\\進度資料.json');
+      if (!f) throw new Error('找不到 進度資料.json');
+      FILE = f.id;
       DATA = await (await req(`${API}/drive/v3/files/${f.id}?alt=media&supportsAllDrives=true`)).json();
       render();
     } catch (e) { $('projects').innerHTML = `<section class="box"><div class="empty">讀不到進度資料：${esc(e.message)}</div></section>`; }
@@ -271,7 +280,8 @@
   function render() {
     const D = DATA, autos = D.automations || [], A = Object.fromEntries(autos.map(a => [a.id, a]));
     const all = (D.projects || []).flatMap(p => p.items || []);
-    const meN = all.filter(i => i.status === 'wait' && i.who === 'eason').length;
+    const isMe = i => i.status === 'wait' && i.who === 'eason' && !i.decision;
+    const meN = all.filter(isMe).length;
     const doingN = all.filter(i => i.status === 'doing').length;
     const doneN = all.filter(i => i.status === 'done' && daysAgo(i.date) <= DONE_DAYS).length;
     const warnN = autos.filter(a => a.status !== 'ok').length;
@@ -286,10 +296,12 @@
       ${a.note ? `<div class="warnline">⚠ ${esc(a.note)}</div>` : ''}<div class="d">${esc(a.desc || '')}${a.last ? `　上次：${md(a.last)}` : ''}</div></div>`).join('');
 
     const card = i => {
-      const me = i.status === 'wait' && i.who === 'eason', au = i.auto && A[i.auto];
-      return `<div class="card${me ? ' me' : ''}"><div class="t">${esc(i.title)}</div>${i.note ? `<div class="m">${esc(i.note)}</div>` : ''}
+      const me = isMe(i), au = i.auto && A[i.auto];
+      const dec = i.decision ? `<div class="dec">✔ 你選了「${esc(i.decision.label)}」（${md((i.decision.at || '').slice(0, 10))}）${i.status === 'wait' ? '，等 Claude 照這個做' : ''}${i.status === 'wait' ? `<button data-undo="${esc(i.id)}">改選</button>` : ''}</div>` : '';
+      const ops = i.status === 'wait' && !i.decision && (i.options || []).length ? `<div class="opts">${i.options.map((o, k) => `<button class="opt${o.done ? ' done' : ''}" data-id="${esc(i.id)}" data-k="${k}">${esc(o.label)}</button>`).join('')}</div>` : '';
+      return `<div class="card${me ? ' me' : ''}${i.decision && i.status === 'wait' ? ' decided' : ''}"><div class="t">${esc(i.title)}</div>${i.note ? `<div class="m">${esc(i.note)}</div>` : ''}
         <div class="tags">${me ? '<span class="tag me">等你處理</span>' : ''}${au ? `<span class="tag auto" title="${esc(au.name)}">⚙ 自動</span>` : ''}
-        ${i.date ? `<span class="tag date">${md(i.date)}</span>` : ''}${i.link ? `<a href="${esc(i.link)}" target="_blank" rel="noopener">開啟 ↗</a>` : ''}</div></div>`;
+        ${i.date ? `<span class="tag date">${md(i.date)}</span>` : ''}${i.link ? `<a href="${esc(i.link)}" target="_blank" rel="noopener">開啟 ↗</a>` : ''}</div>${dec}${ops}</div>`;
     };
     const col = (title, c, list, extra = '') => `<div class="col"><h3><span class="dot" style="--c:${c}"></span>${title}<span class="cnt">${list.length}</span></h3>
       ${list.length ? list.join('') : '<div class="empty">沒有</div>'}${extra}</div>`;
@@ -298,21 +310,46 @@
       const items = p.items || [];
       let wait = items.filter(i => i.status === 'wait'), doing = items.filter(i => i.status === 'doing');
       const doneAll = items.filter(i => i.status === 'done').sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-      if (filter === 'me') { wait = wait.filter(i => i.who === 'eason'); if (!wait.length) return ''; }
-      wait.sort((a, b) => (b.who === 'eason') - (a.who === 'eason') || (a.date || '').localeCompare(b.date || ''));
+      if (filter === 'me') { wait = wait.filter(isMe); if (!wait.length) return ''; }
+      wait.sort((a, b) => isMe(b) - isMe(a) || (a.date || '').localeCompare(b.date || ''));
       const recent = doneAll.filter(i => daysAgo(i.date) <= DONE_DAYS), old = doneAll.length - recent.length;
       const shown = openMore.has(p.id) ? doneAll : recent;
       const more = old ? `<button class="more" data-p="${esc(p.id)}">${openMore.has(p.id) ? '收起較早的' : `另有 ${old} 項較早完成`}</button>` : '';
       const prods = (p.products || []).map(x => `<a class="card prod" href="${esc(x.url)}" target="_blank" rel="noopener"><div class="t">${esc(x.name)} ↗</div><div class="m">${esc(x.kind || '')}</div></a>`);
-      const meCnt = wait.filter(i => i.who === 'eason').length;
+      const meCnt = wait.filter(isMe).length;
       const cols = filter === 'me' ? `<div class="cols" style="grid-template-columns:1fr">${col('等待處理', 'var(--wait)', wait.map(card))}</div>`
         : `<div class="cols">${col('等待處理', 'var(--wait)', wait.map(card))}${col('正在做', 'var(--run)', doing.map(card))}${col('已結束', 'var(--ok)', shown.map(card), more)}${col('成品區', 'var(--acc)', prods)}</div>`;
       return `<section class="box"><h2>${esc(p.icon || '')} ${esc(p.name)} ${meCnt ? `<span class="tag me">等你 ${meCnt}</span>` : ''}<span class="pdesc">${esc(p.desc || '')}</span></h2>${cols}</section>`;
     }).join('');
     $('projects').innerHTML = html || '<section class="box"><div class="empty">目前沒有等你處理的事。</div></section>';
     document.querySelectorAll('.more').forEach(b => b.onclick = () => { const k = b.dataset.p; openMore.has(k) ? openMore.delete(k) : openMore.add(k); render(); });
+    document.querySelectorAll('.opt').forEach(b => b.onclick = () => decide(b.dataset.id, +b.dataset.k, b));
+    document.querySelectorAll('[data-undo]').forEach(b => b.onclick = () => decide(b.dataset.undo, -1, b));
     $('sub').textContent = `資料更新：${D.updated ? fmtTW(new Date(D.updated)) : '未知'}${D.updated_by ? '・' + D.updated_by : ''}`;
-    $('foot').textContent = '每週一 08:40 排程會自動更新這一頁；各 Claude 討論串做完事也會更新。要加項目或改狀態，到討論串說一聲。';
+    $('foot').textContent = '每週一 08:40 排程會自動更新這一頁；各 Claude 討論串做完事也會更新。按選擇鈕會直接存回雲端；要加項目或改內容，到討論串說一聲。';
+  }
+  // ---------- 選擇鈕：重讀最新資料 → 套用 → 寫回雲端 ----------
+  function toast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3500); }
+  async function decide(id, k, btn) {
+    document.querySelectorAll('.opt,[data-undo]').forEach(b => b.disabled = true);
+    try {
+      const f = await findFile(); FILE = f.id;
+      const D = await (await req(`${API}/drive/v3/files/${FILE}?alt=media&supportsAllDrives=true`)).json();
+      const it = (D.projects || []).flatMap(p => p.items || []).find(i => i.id === id);
+      if (!it) throw new Error('找不到這個項目，可能剛被更新過，請重新整理');
+      const now = new Date(Date.now() + TZ).toISOString().slice(0, 19) + '+08:00';
+      let msg;
+      if (k < 0) { delete it.decision; msg = '已取消選擇'; }
+      else {
+        const o = (it.options || [])[k]; if (!o) throw new Error('選項不存在');
+        it.decision = { choice: k, label: o.label, at: now, by: user };
+        if (o.done) { it.status = 'done'; it.date = now.slice(0, 10); msg = `已記錄「${o.label}」，移到已結束`; }
+        else msg = `已記錄「${o.label}」，Claude 下週一（或你在討論串說一聲時）照做`;
+      }
+      D.updated = now; D.updated_by = '看板選擇鈕（' + user + '）';
+      await req(`${API}/upload/drive/v3/files/${FILE}?uploadType=media&supportsAllDrives=true`, { method: 'PATCH', headers: { 'Content-Type': 'application/json; charset=UTF-8' }, body: JSON.stringify(D, null, 1) });
+      DATA = D; render(); toast(msg);
+    } catch (e) { toast('沒存成功：' + e.message); render(); }
   }
   setInterval(() => { if (DATA) render(); }, 60000);
 })();

@@ -207,6 +207,7 @@ const DOCX = (() => {
         continue;
       }
       if (tag === 'TABLE') { items.push({ k: 'tbl', el: n, ctx: { ...ctx } }); continue; }
+      if (tag === 'IMG' && hasCls(n, 'shot')) { items.push({ k: 'p', p: { ind: (ctx.ind || 0) + tw(4), before: 20, after: 40, shd: ctx.shd }, runs: await doc.inlineImg(n, ((ctx.width || USABLE_TW) - tw(4)) / 15) }); continue; }
       if (tag === 'IMG') { items.push({ k: 'p', p: { jc: 'center', before: 60, after: 60 }, runs: await doc.inlineImg(n, (ctx.width || USABLE_TW) / 15) }); continue; }
       if (hasCls(n, 'timg')) { await blocksOf(n, ctx, doc, items); continue; }
       if (hasCls(n, 'imgrow')) {   // 同一處多張圖排成一列

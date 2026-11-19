@@ -114,7 +114,7 @@ class DriveFS {
     if (!did) return out;
     const walk = async (id, rel) => {
       for (const e of (await this.list(id)).values()) {
-        if (e.isDir) { if (e.name !== 'img') await walk(e.id, rel + e.name + '/'); }
+        if (e.isDir) { if (e.name !== 'img' && e.name !== 'images') await walk(e.id, rel + e.name + '/'); }
         else if (e.name.endsWith('.json') && e.name !== 'manifest.json') out.push({ path: rel + e.name, mtime: e.mtime, size: e.size });
       }
     };
@@ -146,7 +146,7 @@ class DriveFS {
     m.set(name, { id: d.id, name, isDir: false, mtime: Date.parse(d.modifiedTime) || Date.now(), size: Number(d.size) || blob.size || 0 });
   }
   async writeText(path, text) { return this.writeBlob(path, new Blob([text], { type: 'text/plain' })); }
-  async dirs(prefix = '題庫') { const id = await this.dirId(prefix); if (!id) return []; return [...(await this.list(id)).values()].filter(e => e.isDir && e.name !== 'img').map(e => e.name).sort(); }
+  async dirs(prefix = '題庫') { const id = await this.dirId(prefix); if (!id) return []; return [...(await this.list(id)).values()].filter(e => e.isDir && e.name !== 'img' && e.name !== 'images').map(e => e.name).sort(); }
 }
 
 // ---- zip 解析（瀏覽器內，用 DecompressionStream 解 deflate）----

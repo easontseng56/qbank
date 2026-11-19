@@ -112,13 +112,27 @@ class DriveFS {
     const out = [];
     const did = await this.dirId(prefix);
     if (!did) return out;
-    const walk = async (id, rel) => {
-      for (const e of (await this.list(id)).values()) {
-        if (e.isDir) { if (e.name !== 'img') await walk(e.id, rel + e.name + '/'); }
-        else if (e.name.endsWith('.json') && e.name !== 'manifest.json') out.push({ path: rel + e.name, mtime: e.mtime, size: e.size });
-      }
-    };
-    await walk(did, prefix + '/');
+    // 題庫約 600 個資料夾：一個一個讀要好幾分鐘，改成同時讀 16 個（約 5～15 秒）
+    const queue = [[did, prefix + '/']]; let active = 0;
+    await new Promise((res, rej) => {
+      let failed = false;
+      const pump = () => {
+        if (failed) return;
+        if (!queue.length && !active) return res();
+        while (active < 16 && queue.length) {
+          const [id, rel] = queue.shift(); active++;
+          this.list(id).then(m => {
+            for (const e of m.values()) {
+              if (e.isDir) { if (e.name !== 'img') queue.push([e.id, rel + e.name + '/']); }
+              else if (e.name.endsWith('.json') && e.name !== 'manifest.json') out.push({ path: rel + e.name, mtime: e.mtime, size: e.size });
+            }
+            active--; pump();
+          }, e => { failed = true; rej(e); });
+        }
+      };
+      pump();
+    });
+    out.sort((a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0);
     return out;
   }
   async readFile(path) {

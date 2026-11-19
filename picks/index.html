@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>周逸精選</title>
-<!-- 周逸精選（好題標記）：本頁不含任何內部資料。登入 Google 後，從使用者雲端 題庫池\07_紀錄\好題精選\好題清單.json 讀寫；
+<title>好題精選</title>
+<!-- 好題精選（好題標記）：本頁不含任何內部資料。登入 Google 後，從使用者雲端 題庫池\07_紀錄\好題精選\好題清單.json 讀寫；
      沒有 題庫池 權限的帳號什麼都讀不到。 -->
 <style>
   :root{--bg:#f6f7f9;--card:#fff;--ink:#1f2328;--mute:#6b7280;--line:#e5e7eb;--acc:#1f6f8b;--acc-soft:#e3f0f4;--acc-ink:#fff;
@@ -126,8 +126,8 @@
 <div class="wrap">
   <header>
     <div>
-      <h1><span class="star">★</span> 周逸精選</h1>
-      <div class="sub">把覺得好的題目標成「周逸精選」，出題系統就能只挑精選題。需用有 題庫池 權限的 Google 帳號登入。</div>
+      <h1><span class="star">★</span> 好題精選</h1>
+      <div class="sub">把覺得好的題目標成「好題精選」，出題系統就能只挑精選題。需用有 題庫池 權限的 Google 帳號登入。</div>
     </div>
     <div class="who" id="who"></div>
   </header>
@@ -187,7 +187,7 @@
         <ol class="steps">
           <li><b>標記</b>：在「標記好題」輸入題目標籤（截圖上的【…】照打），按「在題庫找題」。系統只在已建好的題庫裡找，找到後按「★ 加入精選」，可順手寫一句理由。</li>
           <li><b>同名卷</b>：段考標籤常只寫學校（如 114-竹中-單選5），會對到好幾份卷，每份都會列出來，按「看題目」確認後再加。</li>
-          <li><b>出題系統</b>：開 <a href="../" target="_blank" rel="noopener">離線出題系統</a>，左邊「特殊標籤」勾「周逸精選」，就只會出現精選題；題目卡片上也有 ★ 精選。剛標的題目，出題系統按右上「重新整理」就會看到。</li>
+          <li><b>出題系統</b>：開 <a href="../" target="_blank" rel="noopener">出題系統</a>，左邊「特殊標籤」勾「好題精選」，就只會出現精選題；題目卡片上也有 ★ 精選。剛標的題目，出題系統按右上「重新整理」就會看到。</li>
           <li><b>取消</b>：到「精選清單」打開那一題，按「取消精選」再按一次確認。</li>
         </ol>
         <p class="sub">精選清單另外存成 題庫池\07_紀錄\好題精選\好題清單.json，不會改題庫正本。每次儲存都會留下時間與帳號紀錄。</p>
@@ -894,7 +894,7 @@
     const q = v => `"${String(Array.isArray(v) ? v.join('、') : v ?? '').replace(/"/g, '""')}"`;
     const csv = '﻿' + [head.map(q).join(','), ...filtered().map(x => cols.map(c => q(x[c])).join(','))].join('\r\n');
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-    a.download = `周逸精選_${now().slice(0, 10)}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    a.download = `好題精選_${now().slice(0, 10)}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   };
 })();
 </script>

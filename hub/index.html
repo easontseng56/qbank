@@ -83,6 +83,8 @@ const ROOMS = {
      url:"https://easontseng56.github.io/qbank/picks/", color:"#facc15", gx:12.2, gy:16, prop:"star"},
     {name:"專案進度看板", desc:"各專案等待處理、正在做、已結束、成品，以及自動化下次執行時間（只限 yi0506 登入）",
      url:"https://easontseng56.github.io/qbank/progress/", color:"#38bdf8", gx:1, gy:16, prop:"board"},
+    {name:"解答索取回覆表", desc:"學生領取段考解答的表單回覆紀錄（老師內部用，只限受邀者）",
+     url:"https://docs.google.com/spreadsheets/d/1ZSqs_ZUxU3-TMSfkGyGLqNahpXtbtoZ1yE25MoFTiBU/edit", color:"#a3e635", gx:6.6, gy:16, prop:"sheet"},
   ]},
 };
 /* ============================================ */
@@ -338,7 +340,7 @@ function buildRoom(key){
     sofa(lounge,3.6,7.4,3.4);coffeeTable(lounge,5.2,9.2);
     plant(lounge,N-1.2,.4,true);plant(lounge,.4,N-1.2,true);plant(lounge,9.5,9.6);waterCooler(lounge,N-1,5.5);
   }else{
-    plant(lounge,N-1.2,.4,true);plant(lounge,.4,N-1.2,true);plant(lounge,N-1.2,N-1.2,true);plant(lounge,9.4,N-1.4);waterCooler(lounge,N-1,15.4);sofa(lounge,4.2,16.6,3.4);coffeeTable(lounge,5.8,18.6);
+    plant(lounge,N-1.2,.4,true);plant(lounge,.4,N-1.2,true);plant(lounge,N-1.2,N-1.2,true);plant(lounge,9.4,N-1.4);waterCooler(lounge,N-1,15.4);
   }
   [[N*.3,N*.3],[N*.7,N*.3],[N*.3,N*.7],[N*.7,N*.7]].forEach(([x,y])=>{const c=P(x,y,0);el("ellipse",{cx:c[0],cy:c[1],rx:70,ry:38,fill:"#fff7ed",opacity:.06})});
   svg.appendChild(badges);

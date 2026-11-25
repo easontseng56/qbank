@@ -3,5 +3,6 @@ window.CONFIG = {
   clientId: '521259342164-b5r1pjdassnfpspm2ulgo7hpdcsidq5c.apps.googleusercontent.com',                                 // Google Cloud 的 OAuth 用戶端 ID（xxxx.apps.googleusercontent.com）
   rootPath: 'claude共用資料夾/題庫池/06_打包/離線出題系統',    // 雲端硬碟裡系統資料夾的路徑（從「我的雲端硬碟」算起）
   rootFolderId: '1f8lVFyF9pcuOVNF2ZlWeTsk3uSRmQ-Ij',
+  jsonRootFolderId: '1_zFURWgziiP7NG4LGI3XYuxwptk8I5Ga',   // 題庫池\03_JSON（JSON 正本；Tier* 資料夾）。舊位置 離線出題系統\題庫 仍會一併讀取
   primaryAccount: 'yi0506@gmail.com',             // 主帳號用 紀錄/出題紀錄.json 與 考卷/（和電腦 exe 版同一份）；其他帳號各自分開                             // 直接指定資料夾 ID 可略過路徑查找（選填）
 };

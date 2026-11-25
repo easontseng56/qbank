@@ -3,6 +3,7 @@
 'use strict';
 
 const FOLDER = 'application/vnd.google-apps.folder';
+const BANK_VIRTUAL = '__bank__';   // 虛擬資料夾 id：合併 03_JSON 與舊 題庫 資料夾
 
 class DriveFS {
   constructor(cfg) {
@@ -62,6 +63,7 @@ class DriveFS {
   }
   async list(folderId) {   // 該資料夾全部子項（分頁），快取
     if (this.children.has(folderId)) return this.children.get(folderId);
+    if (folderId === BANK_VIRTUAL) return this.mergedBank();
     const m = new Map();
     let pageToken = '';
     do {
@@ -72,6 +74,17 @@ class DriveFS {
       pageToken = d.nextPageToken || '';
     } while (pageToken);
     this.children.set(folderId, m);
+    return m;
+  }
+  // 題庫資料夾（2026-11-25 起 JSON 正本搬到 題庫池\03_JSON）：設了 cfg.jsonRootFolderId 時，路徑 '題庫/…' 由
+  // 「03_JSON 底下的 Tier* 資料夾與 圖片尺寸.json」＋「舊位置 離線出題系統\題庫」合併而成（同名以 03_JSON 為準），搬移期間新舊位置都讀得到。
+  async mergedBank() {
+    const jr = this.cfg.jsonRootFolderId, m = new Map();
+    let legacy = null;
+    try { const r = await this.getRoot(); const e = (await this.list(r)).get('題庫'); if (e && e.isDir) legacy = await this.list(e.id); } catch (e) { }
+    if (legacy) for (const [k, v] of legacy) m.set(k, v);
+    for (const [k, v] of await this.list(jr)) if ((v.isDir && /^Tier/.test(k)) || k === '圖片尺寸.json') m.set(k, v);
+    this.children.set(BANK_VIRTUAL, m);
     return m;
   }
   async getRoot() {
@@ -87,12 +100,15 @@ class DriveFS {
   }
   async dirId(path, create = false) {   // 'a/b' → 資料夾 id
     let id = await this.getRoot();
-    for (const seg of path.split('/').filter(Boolean)) {
+    let segs = path.split('/').filter(Boolean);
+    if (this.cfg.jsonRootFolderId && segs[0] === '題庫') { id = BANK_VIRTUAL; segs = segs.slice(1); }
+    for (const seg of segs) {
       const m = await this.list(id);
       let e = m.get(seg);
       if (!e) {
         if (!create) return null;
-        const d = await (await this.req(`${this.api}/drive/v3/files?fields=id,name,mimeType,modifiedTime&supportsAllDrives=true`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: seg, mimeType: FOLDER, parents: [id] }) })).json();
+        const parent = id === BANK_VIRTUAL ? this.cfg.jsonRootFolderId : id;
+        const d = await (await this.req(`${this.api}/drive/v3/files?fields=id,name,mimeType,modifiedTime&supportsAllDrives=true`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: seg, mimeType: FOLDER, parents: [parent] }) })).json();
         e = { id: d.id, name: seg, isDir: true, mtime: Date.now(), size: 0 }; m.set(seg, e);
       }
       if (!e.isDir) return null;

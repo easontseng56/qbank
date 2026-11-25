@@ -24,7 +24,7 @@ class DirFS {
     try { d = await this._dir(prefix.split('/')); } catch (e) { return out; }
     const walk = async (dir, rel) => {
       for await (const [name, h] of dir.entries()) {
-        if (h.kind === 'directory') { if (name !== 'img') await walk(h, rel + name + '/'); }
+        if (h.kind === 'directory') { if (name !== 'img' && name !== 'images') await walk(h, rel + name + '/'); }
         else if (name.endsWith('.json') && name !== 'manifest.json') {
           const f = await h.getFile();
           out.push({ path: rel + name, mtime: f.lastModified, size: f.size });
